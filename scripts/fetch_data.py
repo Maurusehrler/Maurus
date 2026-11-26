@@ -245,7 +245,7 @@ def coingecko(eintraege: list[dict]) -> dict[str, dict]:
                 time.sleep(1.5)  # freundlich zum Gratis-Limit
                 chart = http_get(
                     f"https://api.coingecko.com/api/v3/coins/{m['id']}/market_chart",
-                    params={"vs_currency": "usd", "days": "365", "interval": "daily"},
+                    params={"vs_currency": "usd", "days": "400", "interval": "daily"},
                     headers={"Accept": "application/json"}, versuche=2,
                 ).json()
                 verlauf = []
