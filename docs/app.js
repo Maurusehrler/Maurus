@@ -3,19 +3,38 @@
    ---------------------------------------------------------------------
    Ablauf:
    1. data/markets.json laden (wird 2x täglich von GitHub Actions erneuert)
-   2. Alle Bereiche der Seite mit diesen Daten füllen
+   2. Den gewählten Tab mit diesen Daten füllen
    3. Service Worker anmelden -> letzte Daten auch offline verfügbar
+
+   Einstellungen, die sich die App merkt: Tab, Zeitraum, Region.
    ===================================================================== */
 "use strict";
 
 const DATEN_URL = "data/markets.json";
 const ZEITZONE = "Europe/Zurich";
-let daten = null;            // zuletzt geladene Daten
-let zeitraum = 5;            // Mini-Chart: 5 Tage oder 23 (= ca. 1 Monat)
-let geladenUm = 0;           // wann zuletzt geladen (für automatisches Neuladen)
 
-// Gewählten Zeitraum merken (falls der Browser das erlaubt)
-try { zeitraum = Number(localStorage.getItem("zeitraum")) || 5; } catch (e) { /* egal */ }
+// Zeiträume für den Umschalter (Kürzel -> Text in Überschriften)
+const ZEITRAEUME = { "1T": "1 Tag", "1W": "1 Woche", "1M": "1 Monat", "3M": "3 Monate", "YTD": "seit 1.1.", "1J": "1 Jahr" };
+const TABS = ["uebersicht", "aktien", "maerkte", "news"];
+
+// Zustand der App
+const zustand = {
+  daten: null,          // zuletzt geladene Daten
+  tab: "uebersicht",
+  zeitraum: "1T",
+  region: "alle",       // Sektoren: alle / ch / us
+  offline: false,
+  geladenUm: 0,
+};
+
+// Gespeicherte Einstellungen lesen (falls der Browser das erlaubt)
+function merken(schluessel, wert) { try { localStorage.setItem(schluessel, wert); } catch (e) { /* egal */ } }
+function erinnern(schluessel, erlaubt, standard) {
+  try { const w = localStorage.getItem(schluessel); return erlaubt.includes(w) ? w : standard; } catch (e) { return standard; }
+}
+zustand.tab = erinnern("tab", TABS, "uebersicht");
+zustand.zeitraum = erinnern("zeitraum2", Object.keys(ZEITRAEUME), "1T");
+zustand.region = erinnern("region", ["alle", "ch", "us"], "alle");
 
 /* ---------------------------------------------------------------------
    Hilfsfunktionen: Zahlen und Zeiten im Schweizer Format
@@ -29,15 +48,16 @@ function zahl(wert, stellen = 2) {
   return (wert < 0 ? "−" : "") + gruppiert + (nachkomma ? "." + nachkomma : "");
 }
 
-/** 1.234 -> "+1.23 %" */
+/** 1.234 -> "+1.23 %" (geschütztes Leerzeichen, damit nichts umbricht) */
 function prozent(p) {
   if (p === null || p === undefined || isNaN(p)) return "–";
-  return (p >= 0 ? "+" : "−") + Math.abs(p).toFixed(2) + "\u00a0%";
+  const stellen = Math.abs(p) >= 100 ? 0 : Math.abs(p) >= 10 ? 1 : 2;
+  return (p >= 0 ? "+" : "−") + Math.abs(p).toFixed(stellen) + " %";
 }
 
-/** Vorzeichen-Klasse für die Farbe */
+/** Farbklasse für Plus/Minus */
 function farbe(p) {
-  if (p === null || p === undefined || Math.abs(p) < 0.005) return "";
+  if (p === null || p === undefined || isNaN(p) || Math.abs(p) < 0.005) return "";
   return p > 0 ? "plus" : "minus";
 }
 
@@ -50,8 +70,8 @@ function stellen(e) {
   return 2;
 }
 
-const fmtDatumLang = new Intl.DateTimeFormat("de-CH", { timeZone: ZEITZONE, weekday: "long", day: "numeric", month: "long", year: "numeric" });
-const fmtDatumZeit = new Intl.DateTimeFormat("de-CH", { timeZone: ZEITZONE, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const fmtDatum = new Intl.DateTimeFormat("de-CH", { timeZone: ZEITZONE, weekday: "short", day: "numeric", month: "long" });
+const fmtDatumZeit = new Intl.DateTimeFormat("de-CH", { timeZone: ZEITZONE, day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 const fmtZeit = new Intl.DateTimeFormat("de-CH", { timeZone: ZEITZONE, hour: "2-digit", minute: "2-digit" });
 const fmtTagKurz = new Intl.DateTimeFormat("de-CH", { timeZone: ZEITZONE, weekday: "short", day: "numeric", month: "numeric" });
 const fmtWochentag = new Intl.DateTimeFormat("de-CH", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
@@ -72,13 +92,40 @@ function kurzDatum(iso) {
 function esc(t) {
   return String(t ?? "").replace(/[&<>"']/g, (z) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[z]));
 }
+function sichererLink(url) { return /^https?:\/\//i.test(url || "") ? url : "#"; }
+const $ = (id) => document.getElementById(id);
 
-/** Nur http(s)-Links zulassen */
-function sichererLink(url) {
-  return /^https?:\/\//i.test(url || "") ? url : "#";
+/* ---------------------------------------------------------------------
+   Werte für den gewählten Zeitraum
+   --------------------------------------------------------------------- */
+
+/** Veränderung in % für den gewählten Zeitraum (oder null) */
+function perf(e) {
+  if (!e || e.kurs === null || e.kurs === undefined) return null;
+  if (zustand.zeitraum === "1T") return e.diff_pct ?? null;
+  const p = e.perf && e.perf[zustand.zeitraum];
+  return p === undefined ? null : p;
 }
 
-const $ = (id) => document.getElementById(id);
+/** Wie viele der letzten Verlaufspunkte gehören zum Zeitraum? */
+function punkteImZeitraum(e) {
+  const n = (e.verlauf || []).length;
+  if (zustand.zeitraum === "1T") return Math.min(n, 5);         // bei 1 Tag: Mini-Chart der letzten Woche
+  return Math.min(n, (e.tage && e.tage[zustand.zeitraum]) || n);
+}
+
+/** Veränderung in Punkten (Kurs heute minus Kurs am Anfang des Zeitraums) */
+function diffPunkte(e) {
+  if (zustand.zeitraum === "1T") return e.diff;
+  const v = e.verlauf || [], n = e.tage && e.tage[zustand.zeitraum];
+  if (!n || v.length < n) return null;
+  return e.kurs - v[v.length - n];
+}
+
+/** Aktien mit gültigem Wert, sortiert (bester zuerst) */
+function sortiertNachPerf(liste) {
+  return (liste || []).filter((a) => perf(a) !== null && !a.fehler).sort((a, b) => perf(b) - perf(a));
+}
 
 /* ---------------------------------------------------------------------
    Börsenstatus (offen / geschlossen) – wird live im Browser berechnet
@@ -97,20 +144,28 @@ function boersenStatus(b, jetzt = new Date()) {
   return { offen: false, text: "geschlossen" };
 }
 
-function zeigeBoersenStatus() {
-  if (!daten) return;
-  $("boersen-status").innerHTML = (daten.boersen || []).map((b) => {
+function zeigeKopf() {
+  const d = zustand.daten;
+  $("datum").textContent = fmtDatum.format(new Date());
+  if (!d) return;
+  const erstellt = new Date(d.erstellt);
+  // Heute: nur Uhrzeit, sonst Datum + Uhrzeit
+  $("aktualisiert").textContent = isoTag(erstellt) === isoTag(new Date())
+    ? `Stand ${fmtZeit.format(erstellt)}` : `Stand ${fmtDatumZeit.format(erstellt)}`;
+  $("boersen-status").innerHTML = (d.boersen || []).map((b) => {
     const s = boersenStatus(b);
     return `<span class="chip ${s.offen ? "offen" : ""}" title="Ortszeit der Börse"><span class="punkt"></span><b>${esc(b.name)}</b> ${esc(s.text)}</span>`;
   }).join("");
-  $("datum").textContent = fmtDatumLang.format(new Date());
 }
 
 /* ---------------------------------------------------------------------
-   Mini-Chart (Sparkline) als SVG
+   Bausteine
    --------------------------------------------------------------------- */
-function sparkline(werte) {
-  const w = (werte || []).filter((v) => v !== null && !isNaN(v)).slice(-zeitraum);
+
+/** Mini-Chart (Sparkline) als SVG für den gewählten Zeitraum */
+function sparkline(e) {
+  const alle = e.verlauf || [];
+  const w = alle.slice(-punkteImZeitraum(e)).filter((v) => v !== null && !isNaN(v));
   if (w.length < 2) return '<svg viewBox="0 0 100 30"></svg>';
   const min = Math.min(...w), max = Math.max(...w), spanne = max - min || 1;
   const punkte = w.map((v, i) => [(i / (w.length - 1)) * 100, 28 - ((v - min) / spanne) * 26]);
@@ -118,93 +173,155 @@ function sparkline(werte) {
   const klasse = w[w.length - 1] >= w[0] ? "plus" : "minus";
   return `<svg viewBox="0 0 100 30" preserveAspectRatio="none" class="${klasse}" aria-hidden="true">
     <polygon points="0,30 ${linie} 100,30" fill="currentColor" opacity="0.12"/>
-    <polyline points="${linie}" fill="none" stroke="currentColor" stroke-width="1.8" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+    <polyline points="${linie}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
   </svg>`;
 }
 
-/* ---------------------------------------------------------------------
-   Bausteine
-   --------------------------------------------------------------------- */
 function veraltetBadge(e) {
   if (!e.veraltet) return "";
-  const t = e.kurs === null ? "keine Daten" : `Stand ${kurzDatum(e.datum)}`;
+  const t = e.kurs === null || e.kurs === undefined ? "keine Daten" : `Stand ${kurzDatum(e.datum)}`;
   return `<span class="badge" title="${esc(e.hinweis || "Quelle nicht erreichbar")}">⚠ ${t}</span>`;
 }
 
 function kachel(e) {
-  const f = farbe(e.diff_pct);
+  const p = perf(e), d = diffPunkte(e);
+  const aenderung = p === null ? "&nbsp;" : `${d === null ? "" : `${d >= 0 ? "+" : "−"}${zahl(Math.abs(d), 2)} `}(${prozent(p)})`;
   return `<article class="kachel">
     <div class="name"><span>${esc(e.name)}</span><span class="region">${esc(e.region || "")}</span></div>
     <div class="kurs">${zahl(e.kurs, stellen(e))}</div>
-    <div class="veraenderung ${f}">${e.kurs === null ? "&nbsp;" : `${e.diff >= 0 ? "+" : "−"}${zahl(Math.abs(e.diff), 2)} (${prozent(e.diff_pct)})`}</div>
+    <div class="veraenderung ${farbe(p)}">${aenderung}</div>
     ${veraltetBadge(e) ? `<div>${veraltetBadge(e)}</div>` : ""}
-    ${sparkline(e.verlauf)}
+    ${sparkline(e)}
   </article>`;
 }
 
-function zeile(e, mitEinheit = true) {
-  const einheit = mitEinheit && e.einheit ? `<span class="einheit">${esc(e.einheit)}</span>` : "";
-  const zusatz = e.zeitraum ? `<span class="einheit">Veränderung ${esc(e.zeitraum)}</span>` : "";
-  return `<div class="zeile">
-    <div class="n">${esc(e.name)}${veraltetBadge(e)}${einheit}${zusatz}</div>
-    <div class="k">${zahl(e.kurs, stellen(e))}</div>
-    <div><span class="pill ${farbe(e.diff_pct)}">${prozent(e.diff_pct)}</span></div>
+/** Eine Listenzeile: Name | Kurs | Veränderung */
+function zeile(e, { unter = "", mitKurs = true, rang = "" } = {}) {
+  const p = perf(e);
+  const unterText = unter || e.einheit || "";
+  return `<div class="zeile ${mitKurs ? "" : "ohne-kurs"}">
+    <div class="n">${rang ? `<span class="rang">${rang}</span>` : ""}${esc(e.name)}${veraltetBadge(e)}${unterText ? `<span class="unter">${esc(unterText)}</span>` : ""}</div>
+    ${mitKurs ? `<div class="k">${zahl(e.kurs, stellen(e))}</div>` : ""}
+    <div><span class="pill ${farbe(p)}">${prozent(p)}</span></div>
   </div>`;
 }
 
-function liste(eintraege) {
+function liste(eintraege, optionen = {}) {
   if (!eintraege || !eintraege.length) return '<p class="leise">Keine Daten.</p>';
-  return `<div class="zeilen">${eintraege.map((e) => zeile(e)).join("")}</div>`;
+  return `<div class="zeilen">${eintraege.map((e) => zeile(e, optionen)).join("")}</div>`;
 }
 
-/** Top-Gewinner und -Verlierer (nur Titel mit frischen Daten) */
-function mover(aktien, anzahl = 3) {
-  const gueltig = (aktien || []).filter((a) => a.kurs !== null && !a.veraltet).sort((a, b) => b.diff_pct - a.diff_pct);
-  if (!gueltig.length) return '<p class="leise">Keine aktuellen Daten.</p>';
-  const gewinner = gueltig.slice(0, anzahl);
-  const verlierer = gueltig.slice(-anzahl).reverse();
-  const mini = (l) => l.map((a) => `<div class="zeile" style="grid-template-columns:minmax(0,1fr) auto"><div class="n">${esc(a.name)}</div><div><span class="pill ${farbe(a.diff_pct)}">${prozent(a.diff_pct)}</span></div></div>`).join("");
+/** Top & Flop (je 3) */
+function topFlop(aktien, anzahl = 3) {
+  const s = sortiertNachPerf(aktien);
+  if (!s.length) return '<p class="leise">Keine Daten für diesen Zeitraum.</p>';
+  const top = s.slice(0, anzahl), flop = s.slice(-anzahl).reverse();
   return `<div class="mover">
-    <div><h3>▲ Gewinner</h3><div class="zeilen">${mini(gewinner)}</div></div>
-    <div><h3>▼ Verlierer</h3><div class="zeilen">${mini(verlierer)}</div></div>
+    <div><h3>▲ Top</h3>${liste(top, { mitKurs: false })}</div>
+    <div><h3>▼ Flop</h3>${liste(flop, { mitKurs: false })}</div>
   </div>`;
 }
 
+/** Balkendiagramm mit Nullpunkt in der Mitte (grün nach rechts, rot nach links) */
+function balkenDiagramm(eintraege, { klickbar = false } = {}) {
+  const gueltig = eintraege.filter((x) => x.wert !== null);
+  if (!gueltig.length) return '<p class="leise">Keine Daten für diesen Zeitraum.</p>';
+  const maxAbs = Math.max(...gueltig.map((x) => Math.abs(x.wert)), 0.01);
+  return gueltig.map((x) => {
+    const breite = (Math.abs(x.wert) / maxAbs) * 50;          // max. halbe Breite
+    const tag = klickbar ? "button" : "div";
+    return `<${tag} class="balken-zeile" ${klickbar ? `type="button" data-sektor="${esc(x.name)}"` : ""} title="${esc(x.name)}: ${prozent(x.wert)}${x.info ? " · " + esc(x.info) : ""}">
+      <span class="n">${esc(x.name)}${x.anzahl ? ` <span class="anz">(${x.anzahl})</span>` : ""}</span>
+      <span class="spur"><span class="balken ${farbe(x.wert) || "plus"}" style="width:${breite.toFixed(2)}%"></span></span>
+      <span class="wert ${farbe(x.wert)}">${prozent(x.wert)}</span>
+    </${tag}>`;
+  }).join("");
+}
+
+/* ---------------------------------------------------------------------
+   Sektoren: eigene Aktien nach Branche gruppieren
+   --------------------------------------------------------------------- */
+function sektorGruppen() {
+  const d = zustand.daten;
+  const aktien = [
+    ...(zustand.region !== "us" ? (d.aktien_ch || []).map((a) => ({ ...a, land: "CH" })) : []),
+    ...(zustand.region !== "ch" ? (d.aktien_us || []).map((a) => ({ ...a, land: "US" })) : []),
+  ];
+  const gruppen = new Map();
+  for (const a of aktien) {
+    const s = a.sektor || "Ohne Sektor";
+    if (!gruppen.has(s)) gruppen.set(s, []);
+    gruppen.get(s).push(a);
+  }
+  return [...gruppen.entries()].map(([name, titel]) => {
+    const werte = titel.map(perf).filter((p) => p !== null);
+    const schnitt = werte.length ? werte.reduce((a, b) => a + b, 0) / werte.length : null;
+    return { name, titel, wert: schnitt, anzahl: titel.length };
+  }).sort((a, b) => (b.wert ?? -1e9) - (a.wert ?? -1e9));
+}
+
+function zeigeSektoren() {
+  const gruppen = sektorGruppen();
+  $("sektor-balken").innerHTML = balkenDiagramm(gruppen, { klickbar: true });
+
+  $("sektor-karten").innerHTML = gruppen.map((g) => {
+    const s = sortiertNachPerf(g.titel);
+    const ohneWert = g.titel.filter((a) => perf(a) === null);
+    const zeilen = [...s, ...ohneWert].map((a, i) => {
+      const rang = s.length > 1 && i === 0 ? "▲" : s.length > 1 && i === s.length - 1 ? "▼" : "";
+      return zeile(a, { unter: zustand.region === "alle" ? (a.land === "CH" ? "Schweiz" : "USA") : "", rang });
+    }).join("");
+    return `<section class="karte" id="sektor-${encodeURIComponent(g.name)}">
+      <div class="sektor-kopf"><h2>${esc(g.name)}</h2><span class="pill ${farbe(g.wert)}" title="Durchschnitt">Ø ${prozent(g.wert)}</span></div>
+      <div class="zeilen">${zeilen}</div>
+    </section>`;
+  }).join("");
+
+  // US-Sektor-ETFs
+  const us = (zustand.daten.sektoren_us || []).map((e) => ({ name: e.name, wert: perf(e), info: e.symbol }))
+    .sort((a, b) => (b.wert ?? -1e9) - (a.wert ?? -1e9));
+  $("us-sektoren").innerHTML = us.length ? balkenDiagramm(us) : '<p class="leise">Noch keine Daten (erscheinen nach dem nächsten Update).</p>';
+
+  // Alle Aktien sortiert
+  const d = zustand.daten;
+  const alle = [
+    ...(zustand.region !== "us" ? (d.aktien_ch || []) : []),
+    ...(zustand.region !== "ch" ? (d.aktien_us || []) : []),
+  ];
+  const s = sortiertNachPerf(alle);
+  $("alle-aktien").innerHTML = liste([...s, ...alle.filter((a) => !s.includes(a))], { unter: "" });
+}
+
+/* ---------------------------------------------------------------------
+   News & Kalender
+   --------------------------------------------------------------------- */
 function newsZeit(iso) {
   if (!iso) return "";
   const d = new Date(iso);
-  const heute = isoTag(new Date());
-  const gestern = isoTag(new Date(Date.now() - 864e5));
   const tag = isoTag(d);
-  if (tag === heute) return fmtZeit.format(d);
-  if (tag === gestern) return "gestern " + fmtZeit.format(d);
+  if (tag === isoTag(new Date())) return fmtZeit.format(d);
+  if (tag === isoTag(new Date(Date.now() - 864e5))) return "gestern " + fmtZeit.format(d);
   return fmtTagKurz.format(d) + " " + fmtZeit.format(d);
 }
 
-function zeigeNews(news) {
-  if (!news || !news.length) {
-    $("news").innerHTML = '<li class="leise">Keine Schlagzeilen verfügbar.</li>';
-    return;
-  }
-  $("news").innerHTML = news.map((n) => `<li>
+function newsHtml(news) {
+  if (!news || !news.length) return '<li class="leise">Keine Schlagzeilen verfügbar.</li>';
+  return news.map((n) => `<li>
     <a href="${esc(sichererLink(n.link))}" target="_blank" rel="noopener noreferrer">${esc(n.titel)}</a>
     <div class="meta">${esc(n.quelle)} · ${newsZeit(n.zeit)}${(n.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}${n.veraltet ? ' <span class="badge">älter</span>' : ""}</div>
   </li>`).join("");
 }
 
-function zeigeKalender(termine) {
-  if (!termine || !termine.length) {
-    $("kalender").innerHTML = '<p class="leise">Keine wichtigen Termine gefunden.</p>';
-    return;
-  }
+function kalenderHtml(termine, { maxTage = 99 } = {}) {
   const heute = isoTag(new Date());
   const morgen = isoTag(new Date(Date.now() + 864e5));
   const gestern = isoTag(new Date(Date.now() - 864e5));
   const kuerzel = { Schweiz: "CH", USA: "US", Eurozone: "EU" };
-  let html = "", letzterTag = "";
-  for (const t of termine) {
-    if (t.datum < gestern) continue;
+  let html = "", letzterTag = "", tage = 0;
+  for (const t of termine || []) {
+    if (t.datum < (maxTage < 99 ? heute : gestern)) continue;
     if (t.datum !== letzterTag) {
+      if (++tage > maxTage) break;
       const [j, m, d] = t.datum.split("-").map(Number);
       const name = fmtWochentag.format(new Date(Date.UTC(j, m - 1, d)));
       const vorsatz = t.datum === heute ? "Heute · " : t.datum === morgen ? "Morgen · " : t.datum === gestern ? "Gestern · " : "";
@@ -218,14 +335,14 @@ function zeigeKalender(termine) {
       ${details ? `<div class="detail">${details}</div>` : ""}</div>
     </div>`;
   }
-  $("kalender").innerHTML = html || '<p class="leise">Keine anstehenden Termine.</p>';
+  return html || '<p class="leise">Keine anstehenden Termine.</p>';
 }
 
-function zeigeQuellen(q) {
-  if (!q) return;
+function quellenHtml(q) {
+  if (!q) return "";
   const feeds = (q.feeds || []).map((f) => `<tr><td>${f.ok ? "✅" : "❌"}</td><td>${esc(f.name)}</td><td class="leise">${f.ok ? `${f.anzahl} Meldungen` : esc(f.fehler || "Fehler")}</td></tr>`).join("");
   const kurse = Object.entries(q.kurse || {}).map(([k, v]) => `${esc(k)}: ${v}`).join(" · ");
-  $("quellen").innerHTML = `
+  return `
     <p><b>Kurse frisch geladen:</b> ${esc(q.kurse_frisch || "–")}<br><span class="leise">${kurse}</span></p>
     <p><b>Wirtschaftskalender:</b> ${esc(q.kalender || "–")}<br><b>Quartalszahlen:</b> ${esc(q.quartalszahlen || "–")}</p>
     <p><b>News-Feeds beim letzten Update:</b></p>
@@ -233,53 +350,70 @@ function zeigeQuellen(q) {
 }
 
 /* ---------------------------------------------------------------------
-   Gesamte Seite aufbauen
+   Seite aufbauen (nur der sichtbare Tab wird neu gezeichnet)
    --------------------------------------------------------------------- */
-function zeigeAlles(offline) {
-  const d = daten;
-  zeigeBoersenStatus();
-
-  const erstellt = new Date(d.erstellt);
-  $("aktualisiert").textContent = `Daten vom ${fmtDatumZeit.format(erstellt)} Uhr · ${d.lauf || "Update"}`;
+function zeigeAlles() {
+  const d = zustand.daten;
+  zeigeKopf();
+  zeigeSteuerung();
+  if (!d) return;
 
   // Hinweise oben (Beispieldaten, alte Daten, offline)
   const hinweise = [];
   if (d.beispieldaten) hinweise.push("Dies sind BEISPIELDATEN. Echte Kurse erscheinen nach dem ersten automatischen Update.");
-  const alterStd = (Date.now() - erstellt.getTime()) / 36e5;
+  const alterStd = (Date.now() - new Date(d.erstellt).getTime()) / 36e5;
   if (alterStd > 16) hinweise.push(`Die Daten sind ${Math.round(alterStd)} Stunden alt – das letzte automatische Update hat evtl. nicht geklappt.`);
-  if (offline) hinweise.push("Offline: Es werden die zuletzt gespeicherten Daten angezeigt.");
+  if (zustand.offline) hinweise.push("Offline: Es werden die zuletzt gespeicherten Daten angezeigt.");
   $("hinweise").innerHTML = hinweise.map((h) => `<div class="banner">${esc(h)}</div>`).join("");
 
-  // Tagesüberblick
-  $("ueberblick").innerHTML = (d.zusammenfassung || []).map((s) => `<p>${esc(s)}</p>`).join("");
+  const zt = zustand.zeitraum === "1T" ? "heute" : ZEITRAEUME[zustand.zeitraum];
+  document.querySelectorAll(".zeitraum-text").forEach((el) => { el.textContent = zt; });
 
-  // Auffälligkeiten
-  const auff = d.auffaelligkeiten || [];
-  $("sek-auffaellig").classList.toggle("versteckt", !auff.length);
-  $("auffaellig").innerHTML = auff.map((a) => `<li class="pill ${farbe(a.diff_pct)}" style="text-align:left">${a.diff_pct >= 0 ? "▲" : "▼"} ${esc(a.text)}</li>`).join("");
+  switch (zustand.tab) {
+    case "uebersicht": {
+      $("ueberblick").innerHTML = (d.zusammenfassung || []).map((s) => `<p>${esc(s)}</p>`).join("");
+      $("auffaellig").innerHTML = (d.auffaelligkeiten || []).map((a) =>
+        `<li class="${farbe(a.diff_pct)}">${a.diff_pct >= 0 ? "▲" : "▼"} ${esc(a.text)}</li>`).join("");
+      $("indizes").innerHTML = (d.indizes || []).map(kachel).join("");
+      $("mover-ch").innerHTML = topFlop(d.aktien_ch);
+      $("mover-us").innerHTML = topFlop(d.aktien_us);
+      $("kalender-kurz").innerHTML = kalenderHtml(d.kalender, { maxTage: 2 });
+      $("news-kurz").innerHTML = newsHtml((d.news || []).slice(0, 5));
+      break;
+    }
+    case "aktien":
+      zeigeSektoren();
+      break;
+    case "maerkte":
+      $("indizes-liste").innerHTML = liste(d.indizes, { unter: "" });
+      $("krypto").innerHTML = liste(d.krypto);
+      $("rohstoffe").innerHTML = liste(d.rohstoffe);
+      $("devisen").innerHTML = liste(d.devisen);
+      $("weitere").innerHTML = liste(d.weitere);
+      break;
+    case "news":
+      $("news").innerHTML = newsHtml(d.news);
+      $("kalender").innerHTML = kalenderHtml(d.kalender);
+      $("quellen").innerHTML = quellenHtml(d.quellen);
+      break;
+  }
+}
 
-  // Indizes
-  $("indizes").innerHTML = (d.indizes || []).map(kachel).join("");
-  document.querySelectorAll(".umschalter button").forEach((b) => b.classList.toggle("aktiv", Number(b.dataset.zeitraum) === zeitraum));
+/** Aktive Knöpfe markieren, richtigen Tab einblenden */
+function zeigeSteuerung() {
+  document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("aktiv", b.dataset.tab === zustand.tab));
+  document.querySelectorAll(".seite").forEach((s) => s.classList.toggle("aktiv", s.dataset.seite === zustand.tab));
+  document.querySelectorAll("#zeitraum-wahl button").forEach((b) => b.classList.toggle("aktiv", b.dataset.zeitraum === zustand.zeitraum));
+  document.querySelectorAll("#region-wahl button").forEach((b) => b.classList.toggle("aktiv", b.dataset.region === zustand.region));
+  // Auf der News-Seite braucht es keinen Zeitraum
+  $("zeitleiste").classList.toggle("versteckt", zustand.tab === "news");
+}
 
-  // Gewinner/Verlierer
-  $("mover-ch").innerHTML = mover(d.aktien_ch);
-  $("mover-us").innerHTML = mover(d.aktien_us);
-
-  // Kompakte Listen
-  $("krypto").innerHTML = liste(d.krypto);
-  $("rohstoffe").innerHTML = liste(d.rohstoffe);
-  $("devisen").innerHTML = liste(d.devisen);
-  $("weitere").innerHTML = liste(d.weitere);
-
-  // Alle Aktien (sortiert nach Tagesveränderung)
-  const sortiert = (l) => [...(l || [])].sort((a, b) => (b.diff_pct ?? -999) - (a.diff_pct ?? -999));
-  $("alle-ch").innerHTML = liste(sortiert(d.aktien_ch));
-  $("alle-us").innerHTML = liste(sortiert(d.aktien_us));
-
-  zeigeNews(d.news);
-  zeigeKalender(d.kalender);
-  zeigeQuellen(d.quellen);
+function wechsleTab(tab) {
+  zustand.tab = tab;
+  merken("tab", tab);
+  zeigeAlles();
+  window.scrollTo({ top: 0 });
 }
 
 /* ---------------------------------------------------------------------
@@ -292,15 +426,18 @@ async function laden() {
     // "?t=..." umgeht den Browser-Zwischenspeicher -> immer die neueste Datei
     const antwort = await fetch(`${DATEN_URL}?t=${Date.now()}`, { cache: "no-store" });
     if (!antwort.ok) throw new Error(`HTTP ${antwort.status}`);
-    daten = await antwort.json();
-    geladenUm = Date.now();
+    zustand.daten = await antwort.json();
+    zustand.geladenUm = Date.now();
     // Der Service Worker markiert Antworten aus dem Offline-Speicher
-    zeigeAlles(antwort.headers.get("X-Aus-Speicher") === "1");
+    zustand.offline = antwort.headers.get("X-Aus-Speicher") === "1";
+    zeigeAlles();
   } catch (fehler) {
     console.error(fehler);
-    if (daten) {
-      zeigeAlles(true);
+    zustand.offline = true;
+    if (zustand.daten) {
+      zeigeAlles();
     } else {
+      zeigeSteuerung();
       $("hinweise").innerHTML = `<div class="banner">Die Daten konnten nicht geladen werden (${esc(fehler.message)}). Bitte Internetverbindung prüfen und neu laden.</div>`;
     }
   } finally {
@@ -321,7 +458,7 @@ function pullToRefresh() {
   }, { passive: true });
   window.addEventListener("touchmove", (e) => {
     if (startY === null) return;
-    distanz = (e.touches[0].clientY - startY) / 2;   // gedämpft
+    distanz = (e.touches[0].clientY - startY) / 2;
     if (distanz <= 0) return;
     ptr.classList.add("ziehen");
     ptr.style.transform = `translateY(${Math.min(distanz, 70) - 60}px)`;
@@ -344,24 +481,45 @@ function pullToRefresh() {
 }
 
 /* ---------------------------------------------------------------------
-   Start
+   Start: Knöpfe verbinden
    --------------------------------------------------------------------- */
 $("neu-laden").addEventListener("click", laden);
 
-document.querySelectorAll(".umschalter button").forEach((b) => b.addEventListener("click", () => {
-  zeitraum = Number(b.dataset.zeitraum);
-  try { localStorage.setItem("zeitraum", String(zeitraum)); } catch (e) { /* egal */ }
-  if (daten) zeigeAlles(false);
+document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => wechsleTab(b.dataset.tab)));
+document.querySelectorAll("[data-gehe]").forEach((b) => b.addEventListener("click", () => wechsleTab(b.dataset.gehe)));
+
+document.querySelectorAll("#zeitraum-wahl button").forEach((b) => b.addEventListener("click", () => {
+  zustand.zeitraum = b.dataset.zeitraum;
+  merken("zeitraum2", zustand.zeitraum);
+  zeigeAlles();
 }));
+
+document.querySelectorAll("#region-wahl button").forEach((b) => b.addEventListener("click", () => {
+  zustand.region = b.dataset.region;
+  merken("region", zustand.region);
+  zeigeAlles();
+}));
+
+// Tipp auf einen Sektor-Balken -> zur passenden Sektor-Karte springen
+$("sektor-balken").addEventListener("click", (ev) => {
+  const knopf = ev.target.closest("[data-sektor]");
+  if (!knopf) return;
+  const karte = document.getElementById("sektor-" + encodeURIComponent(knopf.dataset.sektor));
+  if (!karte) return;
+  karte.scrollIntoView({ behavior: "smooth", block: "center" });
+  karte.classList.add("hervor");
+  setTimeout(() => karte.classList.remove("hervor"), 1500);
+});
 
 // Wenn die App aus dem Hintergrund zurückkommt und die Daten älter als 10 Min. sind: neu laden
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && Date.now() - geladenUm > 10 * 60 * 1000) laden();
+  if (document.visibilityState === "visible" && Date.now() - zustand.geladenUm > 10 * 60 * 1000) laden();
 });
 
 // Börsenstatus jede Minute aktualisieren
-setInterval(zeigeBoersenStatus, 60 * 1000);
+setInterval(zeigeKopf, 60 * 1000);
 
+zeigeSteuerung();
 pullToRefresh();
 laden();
 

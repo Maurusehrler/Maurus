@@ -59,7 +59,9 @@ USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
     "(KHTML, like Gecko) Version/17.0 Safari/605.1.15"
 )
-VERLAUF_PUNKTE = 23        # ca. 1 Monat Handelstage für die Mini-Charts
+VERLAUF_PUNKTE = 270       # ca. 1 Jahr Handelstage (für Charts und Zeiträume 1W…1J)
+# Zeiträume für den Umschalter in der App (Kürzel -> Kalendertage zurück)
+ZEITRAEUME = {"1W": 7, "1M": 30, "3M": 91, "1J": 365}
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)-7s %(message)s")
 log = logging.getLogger("boerse")
@@ -150,7 +152,7 @@ def yahoo_mehrere(symbole: list[str]) -> dict[str, list[tuple[str, float]]]:
         return ergebnis
     try:
         import yfinance as yf
-        df = yf.download(symbole, period="2mo", interval="1d", group_by="ticker",
+        df = yf.download(symbole, period="2y", interval="1d", group_by="ticker",
                          auto_adjust=False, progress=False, threads=True)
     except Exception as e:  # noqa: BLE001
         log.warning("Yahoo (Sammelabfrage) fehlgeschlagen: %s", e)
@@ -177,9 +179,9 @@ def yahoo_einzeln(symbol: str) -> list[tuple[str, float]] | None:
     for versuch in ("history", "download"):
         try:
             if versuch == "history":
-                df = yf.Ticker(symbol).history(period="2mo", interval="1d", auto_adjust=False)
+                df = yf.Ticker(symbol).history(period="2y", interval="1d", auto_adjust=False)
             else:
-                df = yf.download(symbol, period="3mo", interval="1d", auto_adjust=False,
+                df = yf.download(symbol, period="2y", interval="1d", auto_adjust=False,
                                  progress=False, multi_level_index=False)
             serie = df["Close"].dropna()
             punkte = [(idx.strftime("%Y-%m-%d"), float(v)) for idx, v in serie.items()]
@@ -200,7 +202,7 @@ def stooq(symbol: str) -> list[tuple[str, float]] | None:
         if not zeilen or not zeilen[0].lower().startswith("date"):
             return None
         punkte = []
-        for z in zeilen[1:][-45:]:
+        for z in zeilen[1:][-400:]:
             teile = z.split(",")
             punkte.append((teile[0], float(teile[4])))   # Datum, Schlusskurs
         return punkte if len(punkte) >= 2 else None
@@ -210,7 +212,7 @@ def stooq(symbol: str) -> list[tuple[str, float]] | None:
 
 def frankfurter(basis: str, ziel: str) -> list[tuple[str, float]] | None:
     """Ersatzquelle für Devisen: offizielle EZB-Referenzkurse."""
-    start = (date.today() - timedelta(days=45)).isoformat()
+    start = (date.today() - timedelta(days=400)).isoformat()
     for url in (f"https://api.frankfurter.app/{start}..?from={basis}&to={ziel}",
                 f"https://api.frankfurter.dev/v1/{start}..?base={basis}&symbols={ziel}"):
         try:
@@ -239,14 +241,20 @@ def coingecko(eintraege: list[dict]) -> dict[str, dict]:
     for m in markt:
         try:
             verlauf = None
-            try:   # Verlauf der letzten 30 Tage (eine Anfrage pro Coin)
+            try:   # Verlauf des letzten Jahres (eine Anfrage pro Coin)
                 time.sleep(1.5)  # freundlich zum Gratis-Limit
                 chart = http_get(
                     f"https://api.coingecko.com/api/v3/coins/{m['id']}/market_chart",
-                    params={"vs_currency": "usd", "days": "30", "interval": "daily"},
+                    params={"vs_currency": "usd", "days": "365", "interval": "daily"},
                     headers={"Accept": "application/json"}, versuche=2,
                 ).json()
-                verlauf = [float(p[1]) for p in chart["prices"]]
+                verlauf = []
+                for ms, wert in chart["prices"]:
+                    tag = datetime.fromtimestamp(ms / 1000, timezone.utc).strftime("%Y-%m-%d")
+                    if verlauf and verlauf[-1][0] == tag:
+                        verlauf[-1] = (tag, float(wert))   # pro Tag nur ein Wert
+                    else:
+                        verlauf.append((tag, float(wert)))
             except Exception:  # noqa: BLE001
                 pass
             ergebnis[m["id"]] = {
@@ -260,12 +268,38 @@ def coingecko(eintraege: list[dict]) -> dict[str, dict]:
     return ergebnis
 
 
+def zeitraeume(punkte: list[tuple[str, float]]) -> tuple[dict, dict]:
+    """Berechnet die Veränderung in % für 1W, 1M, 3M, YTD, 1J.
+
+    Rückgabe:
+      perf = {"1W": 1.2, "1M": -3.4, ...}   Veränderung in Prozent
+      tage = {"1W": 6, "1M": 22, ...}       wie viele der letzten Punkte zum
+                                            Zeitraum gehören (für die Mini-Charts)
+    Ist die Kursreihe zu kurz, fehlt der Zeitraum einfach.
+    """
+    letzter_tag = date.fromisoformat(punkte[-1][0])
+    stichtage = {k: letzter_tag - timedelta(days=v) for k, v in ZEITRAEUME.items()}
+    stichtage["YTD"] = date(letzter_tag.year - 1, 12, 31)     # Jahresschluss Vorjahr
+    perf, tage = {}, {}
+    n = min(len(punkte), VERLAUF_PUNKTE)
+    for kuerzel, stichtag in stichtage.items():
+        # letzter Kurs am oder vor dem Stichtag
+        idx = next((i for i in range(len(punkte) - 1, -1, -1)
+                    if date.fromisoformat(punkte[i][0]) <= stichtag), None)
+        if idx is None or punkte[idx][1] == 0:
+            continue
+        perf[kuerzel] = round((punkte[-1][1] / punkte[idx][1] - 1) * 100, 3)
+        tage[kuerzel] = min(len(punkte) - idx, n)
+    return perf, tage
+
+
 def eintrag_aus_serie(item: dict, kategorie: str, punkte: list[tuple[str, float]],
                       quelle: str) -> dict:
     """Baut aus einer Kursreihe einen Eintrag mit Stand, Veränderung und Verlauf."""
     werte = [v for _, v in punkte]
     kurs, vortag = werte[-1], werte[-2]
     diff = kurs - vortag
+    perf, tage = zeitraeume(punkte)
     return {
         **basis_eintrag(item, kategorie),
         "kurs": runden(kurs),
@@ -274,6 +308,8 @@ def eintrag_aus_serie(item: dict, kategorie: str, punkte: list[tuple[str, float]
         "diff_pct": round(diff / vortag * 100, 3) if vortag else 0.0,
         "datum": punkte[-1][0],
         "verlauf": [runden(v) for v in werte[-VERLAUF_PUNKTE:]],
+        "perf": perf,
+        "tage": tage,
         "quelle": quelle,
         "stand": jetzt_utc().isoformat(timespec="seconds"),
         "veraltet": False,
@@ -282,7 +318,7 @@ def eintrag_aus_serie(item: dict, kategorie: str, punkte: list[tuple[str, float]
 
 def basis_eintrag(item: dict, kategorie: str) -> dict:
     e = {"symbol": item["symbol"], "name": item["name"], "kategorie": kategorie}
-    for feld in ("region", "einheit"):
+    for feld in ("region", "einheit", "sektor"):
         if feld in item:
             e[feld] = item[feld]
     return e
@@ -315,6 +351,7 @@ def lade_kurse(cfg: dict, vorher: dict, statistik: dict) -> dict[str, list[dict]
         ("rohstoffe", "rohstoff", cfg.get("rohstoffe", [])),
         ("devisen", "devisen", cfg.get("devisen", [])),
         ("weitere", "weitere", cfg.get("weitere", [])),
+        ("sektoren_us", "sektor", cfg.get("sektoren_us", [])),
     ]
     krypto_cfg = cfg.get("krypto", [])
 
@@ -370,16 +407,15 @@ def lade_kurse(cfg: dict, vorher: dict, statistik: dict) -> dict[str, list[dict]
     krypto = []
     for item in krypto_cfg:
         d = cg.get(item["coingecko"])
-        if d:
-            e = {**basis_eintrag(item, "krypto"), "kurs": runden(d["kurs"]),
-                 "diff": runden(d["diff"]), "diff_pct": round(d["diff_pct"], 3),
-                 "datum": datetime.now(ZoneInfo("Europe/Zurich")).strftime("%Y-%m-%d"),
-                 "verlauf": [runden(v) for v in (d["verlauf"] or [])][-31:]
-                 or (vorher.get(f"krypto:{item['symbol']}", {}).get("verlauf") or []),
-                 "quelle": "CoinGecko", "stand": jetzt_utc().isoformat(timespec="seconds"),
-                 "veraltet": False, "zeitraum": "24 Std."}
-        elif item["symbol"] in reihen:
-            e = eintrag_aus_serie(item, "krypto", reihen[item["symbol"]], "Yahoo Finance")
+        reihe_yahoo = reihen.get(item["symbol"])
+        if d and (d["verlauf"] or reihe_yahoo):
+            # Verlauf von CoinGecko (sonst Yahoo), aktueller Kurs + 24h-Veränderung von CoinGecko
+            reihe = d["verlauf"] if d["verlauf"] and len(d["verlauf"]) >= 2 else reihe_yahoo
+            e = eintrag_aus_serie(item, "krypto", reihe, "CoinGecko")
+            e.update({"kurs": runden(d["kurs"]), "diff": runden(d["diff"]),
+                      "diff_pct": round(d["diff_pct"], 3), "zeitraum": "24 Std."})
+        elif reihe_yahoo:
+            e = eintrag_aus_serie(item, "krypto", reihe_yahoo, "Yahoo Finance")
         else:
             e = ersatz_aus_vorherigem(item, "krypto", vorher)
         zaehle(statistik, e)
@@ -812,7 +848,7 @@ BEISPIEL_KURSE = {
 def beispiel_kurse(cfg: dict) -> dict[str, list[dict]]:
     rnd = random.Random(42)
     heute = date.today()
-    tage = [heute - timedelta(days=i) for i in range(40, -1, -1) if (heute - timedelta(days=i)).weekday() < 5]
+    tage = [heute - timedelta(days=i) for i in range(400, -1, -1) if (heute - timedelta(days=i)).weekday() < 5]
 
     def serie(sym, vol):
         v = BEISPIEL_KURSE.get(sym, rnd.uniform(40, 400))
@@ -823,11 +859,11 @@ def beispiel_kurse(cfg: dict) -> dict[str, list[dict]]:
         return punkte
 
     vol = {"index": 0.009, "aktie_ch": 0.016, "aktie_us": 0.022, "rohstoff": 0.015,
-           "devisen": 0.004, "weitere": 0.05, "krypto": 0.03}
+           "devisen": 0.004, "weitere": 0.05, "krypto": 0.03, "sektor": 0.011}
     erg = {}
     for gruppe, kat in [("indizes", "index"), ("aktien_ch", "aktie_ch"), ("aktien_us", "aktie_us"),
                         ("rohstoffe", "rohstoff"), ("devisen", "devisen"), ("weitere", "weitere"),
-                        ("krypto", "krypto")]:
+                        ("krypto", "krypto"), ("sektoren_us", "sektor")]:
         erg[gruppe] = [eintrag_aus_serie(i, kat, serie(i["symbol"], vol[kat]), "Beispieldaten")
                        for i in cfg.get(gruppe, [])]
     # Ein paar grosse Bewegungen einbauen, damit "Auffälligkeiten" etwas zeigen
@@ -838,6 +874,7 @@ def beispiel_kurse(cfg: dict) -> dict[str, list[dict]]:
             e["diff"] = runden(e["kurs"] - e["vortag"])
             e["diff_pct"] = round((faktor - 1) * 100, 3)
             e["verlauf"][-1] = e["kurs"]
+            e["perf"] = {k: round(v + (faktor - 1) * 100, 3) for k, v in e["perf"].items()}
     # Eine Position als "Quelle ausgefallen" markieren, um die Anzeige zu testen
     if erg["aktien_ch"]:
         e = erg["aktien_ch"][-1]
@@ -896,7 +933,8 @@ def main() -> int:
         vorher_json = {}   # Beispieldaten nie als "letzten bekannten Wert" verwenden
     # Vorherige Werte nach "kategorie:symbol" ablegen (für die Ersatz-Logik)
     vorher_map = {}
-    for gruppe in ("indizes", "aktien_ch", "aktien_us", "krypto", "rohstoffe", "devisen", "weitere"):
+    for gruppe in ("indizes", "aktien_ch", "aktien_us", "krypto", "rohstoffe", "devisen", "weitere",
+                   "sektoren_us"):
         for e in vorher_json.get(gruppe, []) or []:
             vorher_map[f"{e.get('kategorie')}:{e.get('symbol')}"] = e
 
@@ -963,7 +1001,7 @@ def main() -> int:
     ausgabe.parent.mkdir(parents=True, exist_ok=True)
     tmp = ausgabe.with_suffix(".tmp")
     with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(daten, f, ensure_ascii=False, indent=1)
+        json.dump(daten, f, ensure_ascii=False, separators=(",", ":"))  # kompakt = schneller
     os.replace(tmp, ausgabe)
 
     log.info("Gespeichert: %s", ausgabe)

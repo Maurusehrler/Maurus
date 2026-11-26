@@ -4,10 +4,17 @@ Persönliche Börsen-Übersicht für iPhone und iPad. Sie aktualisiert sich jede
 (ca. 07:00) und jeden Abend (ca. 22:30, Schweizer Zeit) automatisch, ist komplett
 **kostenlos** und braucht **keine API-Schlüssel**.
 
-**Inhalt:** Börsenstatus · Tagesüberblick in Textform · Indizes mit Mini-Charts (SMI, SPI,
-S&P 500, Nasdaq, Dow Jones, DAX, Euro Stoxx 50) · Top-Gewinner/-Verlierer Schweiz und USA ·
-Krypto · Rohstoffe · Devisen · VIX und US-Zinsen · News aus RSS-Feeds · Wirtschaftskalender ·
-Auffälligkeiten bei grossen Bewegungen.
+**Inhalt (4 Bereiche, unten bzw. auf dem iPad oben umschaltbar):**
+- **Übersicht:** Börsenstatus, Tagesüberblick in Textform, Auffälligkeiten, Indizes mit Mini-Charts,
+  Top & Flop Schweiz/USA, Termine heute/morgen, Top-News
+- **Aktien:** Sektoren/Branchen im Vergleich (Balkendiagramm), Gewinner/Verlierer pro Sektor,
+  US-Sektoren (S&P 500), alle Aktien sortiert. Filter: Alle / Schweiz / USA
+- **Märkte:** Indizes, Krypto, Rohstoffe, Devisen, VIX und US-Zinsen
+- **News:** Schlagzeilen aus RSS-Feeds, Wirtschaftskalender, Datenquellen-Status
+
+**Zeitraum-Umschalter** oben: **1T · 1W · 1M · 3M · YTD · 1J** (1 Tag, 1 Woche, 1 Monat, 3 Monate,
+seit Jahresbeginn, 1 Jahr). Er gilt für Kurse, Mini-Charts, Top & Flop und Sektoren.
+Die App merkt sich Tab, Zeitraum und Region.
 
 > Keine Anlageberatung. Daten ohne Gewähr, teilweise verzögert.
 
@@ -116,11 +123,16 @@ Alles läuft über die Datei **`config.yaml`**. Du kannst sie direkt im Browser 
 ⚠️ Wichtig bei YAML: nur **Leerzeichen** zum Einrücken verwenden (keine Tabs) und das Format
 `- { symbol: "...", name: "..." }` genau beibehalten.
 
+**Sektor/Branche festlegen:** Jede Aktie hat ein Feld `sektor`, z.B.
+`- { symbol: "NESN.SW", name: "Nestlé", sektor: "Konsum (Basis)" }`.
+Aktien mit genau gleichem Sektor-Namen werden in der App zusammengefasst. Du kannst eigene Namen erfinden.
+
 In `config.yaml` kannst du ausserdem:
 - **Schwellen** für Auffälligkeiten ändern (`schwellen:`)
 - **News-Feeds** hinzufügen oder entfernen (`news: feeds:`)
 - **Stichwörter** für die News-Gewichtung anpassen (`stichwoerter:`)
 - **Eigene Termine** eintragen, z.B. Notenbank-Sitzungen (`eigene_termine:`)
+- **US-Sektoren** ändern (`sektoren_us:`, Sektor-ETFs von SPDR)
 - **Börsen-Feiertage** pflegen (`boersen:`). Bitte einmal pro Jahr ergänzen.
 
 **Uhrzeiten ändern:** in `scripts/check_time.py` die `ZIELZEITEN` anpassen und in

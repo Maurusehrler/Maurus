@@ -5,7 +5,7 @@
   <!-- viewport-fit=cover: nutzt den ganzen Bildschirm (auch um die "Notch" beim iPhone) -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Börsen-Übersicht</title>
-  <meta name="description" content="Persönliche Börsen-Übersicht: Schweiz, USA, Europa, Krypto, Rohstoffe, Devisen und News.">
+  <meta name="description" content="Persönliche Börsen-Übersicht: Schweiz, USA, Europa, Sektoren, Krypto, Rohstoffe, Devisen und News.">
 
   <!-- PWA / iOS: als App auf dem Home-Bildschirm -->
   <link rel="manifest" href="manifest.json">
@@ -25,105 +25,177 @@
   <!-- Anzeige beim Herunterziehen (Pull-to-refresh) -->
   <div id="ptr" class="ptr" aria-hidden="true"><span class="ptr-pfeil">↓</span> <span id="ptr-text">Zum Aktualisieren ziehen</span></div>
 
+  <!-- ===================== KOPFBEREICH ===================== -->
   <header class="kopf">
     <div class="kopf-zeile">
-      <div>
+      <div class="kopf-text">
         <h1>Börse</h1>
-        <div id="datum" class="leise"></div>
+        <div class="leise klein"><span id="datum"></span> · <span id="aktualisiert"></span></div>
       </div>
       <button id="neu-laden" class="knopf" type="button" aria-label="Neu laden">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 4a8 8 0 0 1 7.75 6h-2.1A6 6 0 1 0 18 14h2.07A8 8 0 1 1 12 4Zm5.6 1.4L20 3v6h-6l2.2-2.2 1.4-1.4Z"/></svg>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 4a8 8 0 0 1 7.75 6h-2.1A6 6 0 1 0 18 14h2.07A8 8 0 1 1 12 4Zm5.6 1.4L20 3v6h-6l2.2-2.2 1.4-1.4Z"/></svg>
         <span>Neu laden</span>
       </button>
     </div>
-    <div id="aktualisiert" class="leise klein"></div>
     <div id="boersen-status" class="chips"></div>
   </header>
+
+  <!-- ===================== NAVIGATION (Tabs) =====================
+       iPhone: unten am Bildschirmrand · iPad: oben unter dem Kopf -->
+  <nav class="tabs" id="tabs" aria-label="Bereiche">
+    <button type="button" data-tab="uebersicht">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z"/></svg>
+      <span>Übersicht</span>
+    </button>
+    <button type="button" data-tab="aktien">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10h3v10H4Zm6.5 0V4h3v16h-3ZM17 20v-7h3v7h-3Z"/></svg>
+      <span>Aktien</span>
+    </button>
+    <button type="button" data-tab="maerkte">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 17.9V18h-2v1.9A8 8 0 0 1 4.1 13H6v-2H4.1A8 8 0 0 1 11 4.1V6h2V4.1a8 8 0 0 1 6.9 6.9H18v2h1.9a8 8 0 0 1-6.9 6.9ZM9 15l6-6-2 6-4 0Z"/></svg>
+      <span>Märkte</span>
+    </button>
+    <button type="button" data-tab="news">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h13v14H5a1 1 0 0 1-1-1V5Zm15 3h2v10a2 2 0 0 1-2 2V8ZM7 8v3h7V8H7Zm0 5v1.5h7V13H7Zm0 3v1.5h7V16H7Z"/></svg>
+      <span>News</span>
+    </button>
+  </nav>
+
+  <!-- ===================== ZEITRAUM-UMSCHALTER (bleibt oben stehen) ===================== -->
+  <div class="zeitleiste" id="zeitleiste">
+    <div class="umschalter breit-umschalter" id="zeitraum-wahl" role="group" aria-label="Zeitraum">
+      <button type="button" data-zeitraum="1T" title="1 Tag">1T</button>
+      <button type="button" data-zeitraum="1W" title="1 Woche">1W</button>
+      <button type="button" data-zeitraum="1M" title="1 Monat">1M</button>
+      <button type="button" data-zeitraum="3M" title="3 Monate">3M</button>
+      <button type="button" data-zeitraum="YTD" title="Seit Jahresbeginn">YTD</button>
+      <button type="button" data-zeitraum="1J" title="1 Jahr">1J</button>
+    </div>
+  </div>
 
   <main id="inhalt">
     <div id="hinweise"></div>
 
-    <section class="karte breit" id="sek-ueberblick">
-      <h2>Tagesüberblick</h2>
-      <div id="ueberblick"><p class="leise">Daten werden geladen …</p></div>
-    </section>
+    <!-- ===================== TAB: ÜBERSICHT ===================== -->
+    <div class="seite" data-seite="uebersicht">
+      <section class="karte">
+        <h2>Tagesüberblick <span class="etikett">heute</span></h2>
+        <div id="ueberblick"><p class="leise">Daten werden geladen …</p></div>
+        <ul id="auffaellig" class="liste-auffaellig"></ul>
+      </section>
 
-    <section class="karte breit versteckt" id="sek-auffaellig">
-      <h2>Auffälligkeiten</h2>
-      <ul id="auffaellig" class="liste-auffaellig"></ul>
-    </section>
+      <section>
+        <h2 class="abschnitt">Indizes <span class="etikett zeitraum-text"></span></h2>
+        <div id="indizes" class="kacheln"></div>
+      </section>
 
-    <section class="breit" id="sek-indizes">
+      <div class="raster">
+        <section class="karte">
+          <h2>Top &amp; Flop Schweiz <span class="etikett zeitraum-text"></span></h2>
+          <div id="mover-ch"></div>
+        </section>
+        <section class="karte">
+          <h2>Top &amp; Flop USA <span class="etikett zeitraum-text"></span></h2>
+          <div id="mover-us"></div>
+        </section>
+        <section class="karte">
+          <h2>Termine</h2>
+          <div id="kalender-kurz"></div>
+        </section>
+      </div>
+
+      <section class="karte">
+        <div class="titel-zeile">
+          <h2>Top-News</h2>
+          <button type="button" class="link-knopf" data-gehe="news">Alle News →</button>
+        </div>
+        <ol id="news-kurz" class="news"></ol>
+      </section>
+    </div>
+
+    <!-- ===================== TAB: AKTIEN & SEKTOREN ===================== -->
+    <div class="seite" data-seite="aktien">
       <div class="titel-zeile">
-        <h2>Indizes</h2>
-        <div class="umschalter" role="group" aria-label="Zeitraum Mini-Chart">
-          <button type="button" data-zeitraum="5">5 Tage</button>
-          <button type="button" data-zeitraum="23">1 Monat</button>
+        <h2 class="abschnitt">Sektoren <span class="etikett zeitraum-text"></span></h2>
+        <div class="umschalter" id="region-wahl" role="group" aria-label="Region">
+          <button type="button" data-region="alle">Alle</button>
+          <button type="button" data-region="ch">Schweiz</button>
+          <button type="button" data-region="us">USA</button>
         </div>
       </div>
-      <div id="indizes" class="kacheln"></div>
-    </section>
 
-    <div class="raster">
-      <section class="karte" id="sek-mover-ch">
-        <h2>Gewinner &amp; Verlierer Schweiz</h2>
-        <div id="mover-ch"></div>
+      <section class="karte">
+        <h2>Deine Sektoren im Vergleich</h2>
+        <p class="leise klein hinweis-text">Durchschnitt deiner Titel pro Branche (gleich gewichtet). Tippe auf eine Branche für Details.</p>
+        <div id="sektor-balken" class="balken-liste"></div>
       </section>
-      <section class="karte" id="sek-mover-us">
-        <h2>Gewinner &amp; Verlierer USA</h2>
-        <div id="mover-us"></div>
-      </section>
-      <section class="karte" id="sek-krypto">
-        <h2>Krypto</h2>
-        <div id="krypto"></div>
-      </section>
-      <section class="karte" id="sek-rohstoffe">
-        <h2>Rohstoffe</h2>
-        <div id="rohstoffe"></div>
-      </section>
-      <section class="karte" id="sek-devisen">
-        <h2>Devisen</h2>
-        <div id="devisen"></div>
-      </section>
-      <section class="karte" id="sek-weitere">
-        <h2>Stimmung &amp; Zinsen</h2>
-        <div id="weitere"></div>
+
+      <div id="sektor-karten" class="raster"></div>
+
+      <div class="raster zwei">
+        <section class="karte">
+          <h2>US-Sektoren (S&amp;P 500) <span class="etikett zeitraum-text"></span></h2>
+          <p class="leise klein hinweis-text">Gemessen an den Sektor-ETFs – zeigt die ganze US-Branche, nicht nur deine Titel.</p>
+          <div id="us-sektoren" class="balken-liste"></div>
+        </section>
+        <section class="karte">
+          <h2>Alle Aktien <span class="etikett zeitraum-text"></span></h2>
+          <div id="alle-aktien"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ===================== TAB: MÄRKTE ===================== -->
+    <div class="seite" data-seite="maerkte">
+      <div class="raster">
+        <section class="karte">
+          <h2>Indizes <span class="etikett zeitraum-text"></span></h2>
+          <div id="indizes-liste"></div>
+        </section>
+        <section class="karte">
+          <h2>Krypto <span class="etikett zeitraum-text"></span></h2>
+          <div id="krypto"></div>
+        </section>
+        <section class="karte">
+          <h2>Rohstoffe <span class="etikett zeitraum-text"></span></h2>
+          <div id="rohstoffe"></div>
+        </section>
+        <section class="karte">
+          <h2>Devisen <span class="etikett zeitraum-text"></span></h2>
+          <div id="devisen"></div>
+        </section>
+        <section class="karte">
+          <h2>Stimmung &amp; Zinsen <span class="etikett zeitraum-text"></span></h2>
+          <div id="weitere"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ===================== TAB: NEWS & KALENDER ===================== -->
+    <div class="seite" data-seite="news">
+      <div class="raster zwei">
+        <section class="karte">
+          <h2>Wichtigste News</h2>
+          <ol id="news" class="news"></ol>
+        </section>
+        <section class="karte">
+          <h2>Wirtschaftskalender</h2>
+          <div id="kalender"></div>
+        </section>
+      </div>
+      <section class="karte">
+        <details>
+          <summary><h2>Datenquellen &amp; Status</h2></summary>
+          <div id="quellen" class="klein"></div>
+        </details>
       </section>
     </div>
 
-    <div class="raster zwei">
-      <section class="karte" id="sek-news">
-        <h2>Wichtigste News</h2>
-        <ol id="news" class="news"></ol>
-      </section>
-      <section class="karte" id="sek-kalender">
-        <h2>Wirtschaftskalender</h2>
-        <div id="kalender"></div>
-      </section>
-    </div>
-
-    <section class="karte breit">
-      <details>
-        <summary><h2>Alle Aktien</h2></summary>
-        <div class="raster zwei innen">
-          <div><h3>Schweiz</h3><div id="alle-ch"></div></div>
-          <div><h3>USA</h3><div id="alle-us"></div></div>
-        </div>
-      </details>
-    </section>
-
-    <section class="karte breit">
-      <details>
-        <summary><h2>Datenquellen &amp; Status</h2></summary>
-        <div id="quellen" class="klein"></div>
-      </details>
-    </section>
+    <footer class="fuss">
+      <p><strong>Keine Anlageberatung. Daten ohne Gewähr, teilweise verzögert.</strong></p>
+      <p class="leise">Quellen: Yahoo Finance, CoinGecko, EZB, stooq, ForexFactory und RSS-Feeds der genannten Medien.</p>
+    </footer>
   </main>
-
-  <footer class="fuss">
-    <p><strong>Keine Anlageberatung. Daten ohne Gewähr, teilweise verzögert.</strong></p>
-    <p class="leise">Quellen: Yahoo Finance, CoinGecko, EZB, stooq, ForexFactory und RSS-Feeds der genannten Medien.</p>
-  </footer>
 
   <script src="app.js"></script>
 </body>
