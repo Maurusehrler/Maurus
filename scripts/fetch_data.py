@@ -70,7 +70,7 @@ logging.getLogger("yfinance").setLevel(logging.CRITICAL)
 
 # Kategorie-Namen für Texte
 KATEGORIE_TEXT = {
-    "index": "Index", "aktie_ch": "CH-Aktie", "aktie_us": "US-Aktie",
+    "index": "Index", "aktie": "Aktie", "etf": "ETF",
     "krypto": "Krypto", "rohstoff": "Rohstoff", "devisen": "Devisen", "weitere": "Indikator",
 }
 
@@ -316,9 +316,61 @@ def eintrag_aus_serie(item: dict, kategorie: str, punkte: list[tuple[str, float]
     }
 
 
+# Land anhand der Symbol-Endung erkennen (ohne Endung = USA)
+LAND_ENDUNG = {".SW": "CH", ".DE": "DE", ".F": "DE", ".T": "JP", ".L": "UK", ".PA": "FR",
+               ".AS": "NL", ".MI": "IT", ".HK": "HK", ".TO": "CA"}
+
+
+def land_von(symbol: str) -> str:
+    for endung, land in LAND_ENDUNG.items():
+        if symbol.upper().endswith(endung):
+            return land
+    return "US"
+
+
+def aktien_liste(cfg: dict) -> list[dict]:
+    """Macht aus der Sektor-Liste in config.yaml eine flache Liste (mit Sektor und Land)."""
+    liste = []
+    for sektor, titel in (cfg.get("aktien") or {}).items():
+        for item in titel or []:
+            liste.append({**item, "sektor": sektor, "land": land_von(item["symbol"])})
+    return liste
+
+
+def eindeutig(liste: list[dict]) -> list[dict]:
+    """Jedes Symbol nur einmal (eine Aktie kann in mehreren Sektoren stehen)."""
+    gesehen, ergebnis = set(), []
+    for e in liste:
+        if e["symbol"] not in gesehen:
+            gesehen.add(e["symbol"])
+            ergebnis.append(e)
+    return ergebnis
+
+
+def loese_isin(item: dict) -> dict:
+    """Sucht zu einer ISIN das Yahoo-Symbol (bevorzugt an den Börsen aus config.yaml)."""
+    if item.get("symbol"):
+        return item
+    isin = item.get("isin", "")
+    try:
+        import yfinance as yf
+        treffer = [q.get("symbol") for q in (yf.Search(isin, max_results=15).quotes or []) if q.get("symbol")]
+        log.info("  ISIN %s -> gefunden: %s", isin, ", ".join(treffer) or "nichts")
+        for endung in item.get("boerse", []):
+            for sym in treffer:
+                if sym.upper().endswith(endung.upper()):
+                    print(f"::notice::ISIN {isin} = Symbol {sym} (kann in config.yaml als symbol eingetragen werden)")
+                    return {**item, "symbol": sym}
+        if treffer:
+            return {**item, "symbol": treffer[0]}
+    except Exception as e:  # noqa: BLE001
+        log.warning("  ISIN-Suche für %s fehlgeschlagen: %s", isin, e)
+    return {**item, "symbol": isin}      # nicht gefunden -> erscheint als "keine Daten"
+
+
 def basis_eintrag(item: dict, kategorie: str) -> dict:
     e = {"symbol": item["symbol"], "name": item["name"], "kategorie": kategorie}
-    for feld in ("region", "einheit", "sektor"):
+    for feld in ("region", "einheit", "sektor", "land", "isin"):
         if feld in item:
             e[feld] = item[feld]
     return e
@@ -329,6 +381,7 @@ def ersatz_aus_vorherigem(item: dict, kategorie: str, vorher: dict) -> dict:
     alt = vorher.get(f"{kategorie}:{item['symbol']}")
     if alt and alt.get("kurs") is not None and alt.get("quelle") != "Beispieldaten":
         e = dict(alt)
+        e.update(basis_eintrag(item, kategorie))   # Sektor/Land aus der aktuellen config
         e["veraltet"] = True
         e["hinweis"] = "Quelle nicht erreichbar – letzter bekannter Wert"
         return e
@@ -346,8 +399,8 @@ def lade_kurse(cfg: dict, vorher: dict, statistik: dict) -> dict[str, list[dict]
     """Holt alle Kurse mit Ersatzquellen. Gibt pro Gruppe eine Liste zurück."""
     gruppen = [
         ("indizes", "index", cfg.get("indizes", [])),
-        ("aktien_ch", "aktie_ch", cfg.get("aktien_ch", [])),
-        ("aktien_us", "aktie_us", cfg.get("aktien_us", [])),
+        ("aktien", "aktie", aktien_liste(cfg)),
+        ("etfs", "etf", [loese_isin(i) for i in cfg.get("etfs", []) or []]),
         ("rohstoffe", "rohstoff", cfg.get("rohstoffe", [])),
         ("devisen", "devisen", cfg.get("devisen", [])),
         ("weitere", "weitere", cfg.get("weitere", [])),
@@ -472,7 +525,7 @@ def lade_news(cfg: dict, vorher: dict) -> tuple[list[dict], list[dict]]:
     max_alter = timedelta(hours=ncfg.get("max_alter_stunden", 36))
     stichwoerter = {str(k): float(v) for k, v in (ncfg.get("stichwoerter") or {}).items()}
     # Die Namen der eigenen Aktien zählen automatisch als Stichwort
-    aktien_namen = {item["name"] for item in cfg.get("aktien_ch", []) + cfg.get("aktien_us", [])}
+    aktien_namen = {item["name"] for item in aktien_liste(cfg)}
     for name in aktien_namen:
         stichwoerter.setdefault(name, 2.5)
 
@@ -496,7 +549,8 @@ def lade_news(cfg: dict, vorher: dict) -> tuple[list[dict], list[dict]]:
                         zeit = datetime(*x[feld][:6], tzinfo=timezone.utc)
                         break
                 artikel.append({"titel": titel, "link": link, "quelle": feed["name"],
-                                "zeit": zeit, "bonus": float(feed.get("bonus", 0))})
+                                "zeit": zeit, "bonus": float(feed.get("bonus", 0)),
+                                "region": feed.get("region", "INT")})
             if not artikel:
                 return feed, [], "Feed leer oder kein RSS"
             return feed, artikel, None
@@ -546,7 +600,7 @@ def lade_news(cfg: dict, vorher: dict) -> tuple[list[dict], list[dict]]:
         if len(behalten) >= ncfg.get("max_artikel", 25):
             break
 
-    news = [{"titel": a["titel"], "link": a["link"], "quelle": a["quelle"],
+    news = [{"titel": a["titel"], "link": a["link"], "quelle": a["quelle"], "region": a["region"],
              "zeit": a["zeit"].isoformat(timespec="minutes") if a["zeit"] else None,
              "tags": a["tags"], "score": a["score"]} for a in behalten]
 
@@ -670,7 +724,7 @@ def lade_kalender(cfg: dict, vorher: dict, quellen: dict) -> list[dict]:
 
 
 def lade_quartalszahlen(cfg: dict, vorher: dict, heute: date, tage: int, quellen: dict) -> list[dict]:
-    aktien = cfg.get("aktien_ch", []) + cfg.get("aktien_us", [])
+    aktien = eindeutig(aktien_liste(cfg))
     bis = heute + timedelta(days=tage)
 
     def eine(item):
@@ -685,7 +739,7 @@ def lade_quartalszahlen(cfg: dict, vorher: dict, heute: date, tage: int, quellen
                 if heute <= d <= bis:
                     return {"datum": d.isoformat(), "zeit": None,
                             "titel": f"Quartalszahlen {item['name']}",
-                            "land": "Schweiz" if item["symbol"].endswith(".SW") else "USA",
+                            "land": {"CH": "Schweiz", "US": "USA"}.get(item["land"], item["land"]),
                             "wichtigkeit": "mittel", "typ": "zahlen"}
             return False   # erfolgreich abgefragt, aber kein Termin im Zeitraum
         except Exception:  # noqa: BLE001
@@ -701,6 +755,74 @@ def lade_quartalszahlen(cfg: dict, vorher: dict, heute: date, tage: int, quellen
                 if t.get("typ") == "zahlen" and t.get("datum", "") >= heute.isoformat()]
     quellen["quartalszahlen"] = f"OK ({erfolgreich}/{len(aktien)} Aktien abgefragt)"
     return gefunden
+
+
+# ===========================================================================
+# 3b) STIMMUNG: Fear & Greed Index (Angst & Gier)
+# ===========================================================================
+def stimmung_text(wert: float) -> str:
+    """0–100 in Worte fassen (gleiche Grenzen wie CNN)."""
+    if wert < 25:
+        return "Extreme Angst"
+    if wert < 45:
+        return "Angst"
+    if wert <= 55:
+        return "Neutral"
+    if wert < 75:
+        return "Gier"
+    return "Extreme Gier"
+
+
+def stimmung_eintrag(wert, vortag, woche, monat, jahr, verlauf, quelle) -> dict:
+    return {
+        "wert": round(float(wert), 1), "text": stimmung_text(float(wert)),
+        "vortag": None if vortag is None else round(float(vortag), 1),
+        "woche": None if woche is None else round(float(woche), 1),
+        "monat": None if monat is None else round(float(monat), 1),
+        "jahr": None if jahr is None else round(float(jahr), 1),
+        "verlauf": [round(float(v), 1) for v in verlauf][-365:],
+        "quelle": quelle, "stand": jetzt_utc().isoformat(timespec="seconds"), "veraltet": False,
+    }
+
+
+def fear_greed_aktien() -> dict:
+    """CNN Fear & Greed Index (US-Aktienmarkt). Inoffizielle, aber frei zugängliche Schnittstelle."""
+    start = (date.today() - timedelta(days=370)).isoformat()
+    daten = http_get(
+        f"https://production.dataviz.cnn.io/index/fearandgreed/graphdata/{start}",
+        headers={"Accept": "application/json", "Referer": "https://edition.cnn.com/",
+                 "Origin": "https://edition.cnn.com"}, versuche=2,
+    ).json()
+    fg = daten["fear_and_greed"]
+    verlauf = [p["y"] for p in daten.get("fear_and_greed_historical", {}).get("data", [])]
+    return stimmung_eintrag(fg["score"], fg.get("previous_close"), fg.get("previous_1_week"),
+                            fg.get("previous_1_month"), fg.get("previous_1_year"), verlauf, "CNN")
+
+
+def fear_greed_krypto() -> dict:
+    """Crypto Fear & Greed Index von alternative.me (gratis, ohne Schlüssel)."""
+    daten = http_get("https://api.alternative.me/fng/?limit=400", versuche=2).json()["data"]
+    werte = [float(d["value"]) for d in daten]           # neuester Wert zuerst
+
+    def vor(tage):
+        return werte[tage] if len(werte) > tage else None
+    return stimmung_eintrag(werte[0], vor(1), vor(7), vor(30), vor(365),
+                            list(reversed(werte)), "alternative.me")
+
+
+def lade_stimmung(vorher: dict, quellen: dict) -> dict:
+    ergebnis = {}
+    for schluessel, funktion in (("aktien", fear_greed_aktien), ("krypto", fear_greed_krypto)):
+        try:
+            ergebnis[schluessel] = funktion()
+            quellen[f"fear_greed_{schluessel}"] = f"OK ({ergebnis[schluessel]['quelle']})"
+        except Exception as e:  # noqa: BLE001
+            log.warning("Fear & Greed (%s) nicht erreichbar: %s", schluessel, e)
+            quellen[f"fear_greed_{schluessel}"] = f"Fehler: {str(e)[:80]}"
+            alt = (vorher.get("stimmung") or {}).get(schluessel)
+            if alt:
+                ergebnis[schluessel] = {**alt, "veraltet": True}
+    return ergebnis
 
 
 # ===========================================================================
@@ -737,7 +859,8 @@ def erstelle_zusammenfassung(k: dict, cfg: dict, jetzt: datetime) -> list[str]:
 
     # --- Schweiz ---
     smi = finde(k["indizes"], "^SSMI")
-    ch = sorted([a for a in k["aktien_ch"] if ok(a) and not a.get("veraltet")], key=lambda a: a["diff_pct"])
+    frisch = [a for a in eindeutig(k["aktien"]) if ok(a) and not a.get("veraltet")]
+    ch = sorted([a for a in frisch if a.get("land") == "CH"], key=lambda a: a["diff_pct"])
     if ok(smi):
         s = f"Der SMI {verb('Schweiz')} {richtung(smi['diff_pct'])} bei {zahl_ch(smi['kurs'])} Punkten"
         if ch and abs(smi["diff_pct"]) >= 0.05:
@@ -755,7 +878,7 @@ def erstelle_zusammenfassung(k: dict, cfg: dict, jetzt: datetime) -> list[str]:
             s += (f", der Nasdaq {'gewann' if ndq['diff_pct'] >= 0 else 'verlor'} "
                   f"{prozent_text(ndq['diff_pct'], False)}")
         saetze.append(s + ".")
-    us = sorted([a for a in k["aktien_us"] if ok(a) and not a.get("veraltet")], key=lambda a: a["diff_pct"])
+    us = sorted([a for a in frisch if a.get("land") == "US"], key=lambda a: a["diff_pct"])
     if us:
         top = max(us, key=lambda a: abs(a["diff_pct"]))
         if abs(top["diff_pct"]) >= 2:
@@ -810,19 +933,22 @@ def erstelle_zusammenfassung(k: dict, cfg: dict, jetzt: datetime) -> list[str]:
 def erstelle_auffaelligkeiten(k: dict, cfg: dict) -> list[dict]:
     """Hinweise bei grossen Bewegungen gemäss den Schwellen in config.yaml."""
     s = cfg.get("schwellen", {})
-    regeln = [("indizes", s.get("index", 2)), ("aktien_ch", s.get("aktie", 5)),
-              ("aktien_us", s.get("aktie", 5)), ("krypto", s.get("krypto", 5)),
+    regeln = [("indizes", s.get("index", 2)), ("aktien", s.get("aktie", 5)),
+              ("etfs", s.get("index", 2)), ("krypto", s.get("krypto", 5)),
               ("rohstoffe", s.get("rohstoff", 3)), ("devisen", s.get("devisen", 1)),
               ("weitere", s.get("weitere", 10))]
+    sektor_schwellen = s.get("sektoren") or {}
     hinweise = []
-    for gruppe, schwelle in regeln:
-        for e in k.get(gruppe, []):
+    for gruppe, standard in regeln:
+        for e in eindeutig(k.get(gruppe, [])):
+            # Schwankungsfreudige Sektoren (z.B. Bitcoin, Quanten) haben eigene Schwellen
+            schwelle = sektor_schwellen.get(e.get("sektor"), standard)
             if ok(e) and not e.get("veraltet") and abs(e["diff_pct"]) >= schwelle:
                 hinweise.append({
                     "name": e["name"], "kategorie": KATEGORIE_TEXT.get(e["kategorie"], ""),
                     "diff_pct": e["diff_pct"], "schwelle": schwelle,
-                    "text": f"{e['name']} {prozent_text(e['diff_pct'])} "
-                            f"({KATEGORIE_TEXT.get(e['kategorie'], '')}, Schwelle ±{schwelle:g} %)",
+                    "text": f"{e['name']} {prozent_text(e['diff_pct'])} · "
+                            f"{e.get('sektor') or KATEGORIE_TEXT.get(e['kategorie'], '')}",
                 })
     vix = finde(k.get("weitere", []), "^VIX")
     if ok(vix) and vix["kurs"] >= 25:
@@ -858,16 +984,18 @@ def beispiel_kurse(cfg: dict) -> dict[str, list[dict]]:
             punkte.append((t.isoformat(), v))
         return punkte
 
-    vol = {"index": 0.009, "aktie_ch": 0.016, "aktie_us": 0.022, "rohstoff": 0.015,
+    vol = {"index": 0.009, "aktie": 0.02, "etf": 0.009, "rohstoff": 0.015,
            "devisen": 0.004, "weitere": 0.05, "krypto": 0.03, "sektor": 0.011}
     erg = {}
-    for gruppe, kat in [("indizes", "index"), ("aktien_ch", "aktie_ch"), ("aktien_us", "aktie_us"),
+    listen = {**cfg, "aktien": aktien_liste(cfg),
+              "etfs": [{**i, "symbol": i.get("symbol") or i["isin"]} for i in cfg.get("etfs", []) or []]}
+    for gruppe, kat in [("indizes", "index"), ("aktien", "aktie"), ("etfs", "etf"),
                         ("rohstoffe", "rohstoff"), ("devisen", "devisen"), ("weitere", "weitere"),
                         ("krypto", "krypto"), ("sektoren_us", "sektor")]:
         erg[gruppe] = [eintrag_aus_serie(i, kat, serie(i["symbol"], vol[kat]), "Beispieldaten")
-                       for i in cfg.get(gruppe, [])]
+                       for i in listen.get(gruppe, [])]
     # Ein paar grosse Bewegungen einbauen, damit "Auffälligkeiten" etwas zeigen
-    for gruppe, idx, faktor in [("aktien_us", 2, 1.064), ("aktien_ch", 2, 1.031), ("krypto", 0, 0.946)]:
+    for gruppe, idx, faktor in [("aktien", 2, 1.064), ("aktien", 40, 1.031), ("krypto", 0, 0.946)]:
         if len(erg[gruppe]) > idx:
             e = erg[gruppe][idx]
             e["kurs"] = runden(e["vortag"] * faktor)
@@ -876,8 +1004,8 @@ def beispiel_kurse(cfg: dict) -> dict[str, list[dict]]:
             e["verlauf"][-1] = e["kurs"]
             e["perf"] = {k: round(v + (faktor - 1) * 100, 3) for k, v in e["perf"].items()}
     # Eine Position als "Quelle ausgefallen" markieren, um die Anzeige zu testen
-    if erg["aktien_ch"]:
-        e = erg["aktien_ch"][-1]
+    if erg["aktien"]:
+        e = erg["aktien"][-1]
         e["veraltet"] = True
         e["hinweis"] = "Quelle nicht erreichbar – letzter bekannter Wert"
     return erg
@@ -896,6 +1024,7 @@ def beispiel_news() -> list[dict]:
         ("UBS baut weitere Stellen in der Schweiz ab", "cash.ch", ["UBS"]),
     ]
     return [{"titel": t, "link": "https://example.com/", "quelle": q,
+             "region": "CH" if q in ("NZZ Wirtschaft", "finews.ch", "SRF Wirtschaft", "cash.ch") else "INT",
              "zeit": (jetzt - timedelta(minutes=35 * i + 10)).isoformat(timespec="minutes"),
              "tags": tags, "score": 15 - i} for i, (t, q, tags) in enumerate(titel)]
 
@@ -933,7 +1062,7 @@ def main() -> int:
         vorher_json = {}   # Beispieldaten nie als "letzten bekannten Wert" verwenden
     # Vorherige Werte nach "kategorie:symbol" ablegen (für die Ersatz-Logik)
     vorher_map = {}
-    for gruppe in ("indizes", "aktien_ch", "aktien_us", "krypto", "rohstoffe", "devisen", "weitere",
+    for gruppe in ("indizes", "aktien", "etfs", "krypto", "rohstoffe", "devisen", "weitere",
                    "sektoren_us"):
         for e in vorher_json.get(gruppe, []) or []:
             vorher_map[f"{e.get('kategorie')}:{e.get('symbol')}"] = e
@@ -950,6 +1079,11 @@ def main() -> int:
             {"name": f["name"], "url": f["url"], "ok": True, "anzahl": 0, "fehler": None}
             for f in cfg.get("news", {}).get("feeds", [])]
         kalender = beispiel_kalender()
+        rnd = random.Random(7)
+        stimmung = {
+            "aktien": stimmung_eintrag(38, 41, 52, 61, 70, [rnd.uniform(20, 80) for _ in range(250)], "Beispieldaten"),
+            "krypto": stimmung_eintrag(22, 25, 34, 55, 60, [rnd.uniform(10, 90) for _ in range(365)], "Beispieldaten"),
+        }
         quellen["kalender"] = "Beispieldaten"
         statistik["Beispieldaten"] = sum(len(v) for v in kurse.values())
     else:
@@ -958,6 +1092,8 @@ def main() -> int:
         news, feed_status = lade_news(cfg, vorher_json)
         log.info("Lade Wirtschaftskalender …")
         kalender = lade_kalender(cfg, vorher_json, quellen)
+        log.info("Lade Fear & Greed …")
+        stimmung = lade_stimmung(vorher_json, quellen)
 
     lokal = jetzt.astimezone(tz)
     if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
@@ -985,6 +1121,7 @@ def main() -> int:
         "zeitzone": cfg.get("zeitzone", "Europe/Zurich"),
         "zusammenfassung": zusammenfassung,
         "auffaelligkeiten": erstelle_auffaelligkeiten(kurse, cfg),
+        "stimmung": stimmung,
         **kurse,
         "news": news,
         "kalender": kalender,

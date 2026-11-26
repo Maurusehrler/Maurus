@@ -84,6 +84,11 @@
         <ul id="auffaellig" class="liste-auffaellig"></ul>
       </section>
 
+      <section class="karte">
+        <h2>Fear &amp; Greed <span class="etikett">Stimmung</span></h2>
+        <div id="stimmung" class="stimmung-raster"></div>
+      </section>
+
       <section>
         <h2 class="abschnitt">Indizes <span class="etikett zeitraum-text"></span></h2>
         <div id="indizes" class="kacheln"></div>
@@ -121,6 +126,7 @@
           <button type="button" data-region="alle">Alle</button>
           <button type="button" data-region="ch">Schweiz</button>
           <button type="button" data-region="us">USA</button>
+          <button type="button" data-region="andere">Übrige</button>
         </div>
       </div>
 
@@ -153,6 +159,10 @@
           <div id="indizes-liste"></div>
         </section>
         <section class="karte">
+          <h2>ETFs &amp; Fonds <span class="etikett zeitraum-text"></span></h2>
+          <div id="etfs"></div>
+        </section>
+        <section class="karte">
           <h2>Krypto <span class="etikett zeitraum-text"></span></h2>
           <div id="krypto"></div>
         </section>
@@ -175,7 +185,18 @@
     <div class="seite" data-seite="news">
       <div class="raster zwei">
         <section class="karte">
-          <h2>Wichtigste News</h2>
+          <div class="titel-zeile">
+            <h2>News</h2>
+            <div class="umschalter" id="news-sortierung" role="group" aria-label="Sortierung">
+              <button type="button" data-sortierung="wichtig">Wichtigste</button>
+              <button type="button" data-sortierung="neu">Neueste</button>
+            </div>
+          </div>
+          <div class="umschalter filter-zeile" id="news-filter" role="group" aria-label="Herkunft">
+            <button type="button" data-filter="alle">Alle</button>
+            <button type="button" data-filter="CH">Schweiz</button>
+            <button type="button" data-filter="INT">International</button>
+          </div>
           <ol id="news" class="news"></ol>
         </section>
         <section class="karte">

@@ -5,12 +5,13 @@ Persönliche Börsen-Übersicht für iPhone und iPad. Sie aktualisiert sich jede
 **kostenlos** und braucht **keine API-Schlüssel**.
 
 **Inhalt (4 Bereiche, unten bzw. auf dem iPad oben umschaltbar):**
-- **Übersicht:** Börsenstatus, Tagesüberblick in Textform, Auffälligkeiten, Indizes mit Mini-Charts,
+- **Übersicht:** Börsenstatus, Tagesüberblick in Textform, Auffälligkeiten, Fear & Greed (Aktien: CNN,
+  Krypto: alternative.me), Indizes mit Mini-Charts,
   Top & Flop Schweiz/USA, Termine heute/morgen, Top-News
-- **Aktien:** Sektoren/Branchen im Vergleich (Balkendiagramm), Gewinner/Verlierer pro Sektor,
-  US-Sektoren (S&P 500), alle Aktien sortiert. Filter: Alle / Schweiz / USA
-- **Märkte:** Indizes, Krypto, Rohstoffe, Devisen, VIX und US-Zinsen
-- **News:** Schlagzeilen aus RSS-Feeds, Wirtschaftskalender, Datenquellen-Status
+- **Aktien:** 12 Sektoren mit je 5–10 grossen Titeln (inkl. Bitcoin- und Quanten-Aktien) im Vergleich,
+  Gewinner/Verlierer pro Sektor, US-Sektoren (S&P 500), alle Aktien sortiert. Filter: Alle / Schweiz / USA / Übrige
+- **Märkte:** Indizes, ETFs/Fonds, Krypto, Rohstoffe, Devisen, VIX und US-Zinsen
+- **News:** Schlagzeilen aus RSS-Feeds (sortierbar: Wichtigste/Neueste, Filter: Schweiz/International), Wirtschaftskalender, Datenquellen-Status
 
 **Zeitraum-Umschalter** oben: **1T · 1W · 1M · 3M · YTD · 1J** (1 Tag, 1 Woche, 1 Monat, 3 Monate,
 seit Jahresbeginn, 1 Jahr). Er gilt für Kurse, Mini-Charts, Top & Flop und Sektoren.
@@ -110,25 +111,28 @@ Die Daten selbst werden nur 2x täglich auf GitHub erneuert (oder wenn du den Wo
 Alles läuft über die Datei **`config.yaml`**. Du kannst sie direkt im Browser bearbeiten:
 
 1. Auf GitHub die Datei `config.yaml` öffnen → oben rechts auf das **Stift-Symbol** ✏️ klicken.
-2. **Aktie hinzufügen:** In der passenden Liste (`aktien_ch` oder `aktien_us`) eine Zeile im gleichen Format ergänzen, z.B.:
+2. **Aktie hinzufügen:** Im Abschnitt `aktien:` beim passenden Sektor eine Zeile im gleichen Format ergänzen, z.B.:
    ```yaml
-     - { symbol: "SGSN.SW", name: "SGS" }
+     "Industrie":
+       - { symbol: "SGSN.SW", name: "SGS" }
    ```
-   Das Symbol findest du auf https://finance.yahoo.com. Nach dem Firmennamen suchen und das Kürzel
-   übernehmen. Schweizer Aktien enden auf **`.SW`**, US-Aktien haben kein Anhängsel (z.B. `NFLX`).
+   Das Symbol findest du auf https://finance.yahoo.com. Schweizer Aktien enden auf **`.SW`**,
+   US-Aktien haben kein Anhängsel (z.B. `NFLX`), deutsche enden auf `.DE`, japanische auf `.T`.
+   **Neuer Sektor:** einfach eine neue Überschrift in Anführungszeichen mit Doppelpunkt anlegen
+   (gleich eingerückt wie die anderen Sektoren) und darunter die Aktien auflisten.
 3. **Aktie entfernen:** die Zeile löschen oder ein `#` an den Anfang setzen.
 4. Unten auf **Commit changes…** → **Commit changes** klicken.
 5. Die Aktualisierung startet automatisch. Nach 2–4 Minuten ist die Änderung in der App sichtbar.
 
+**ETF oder Fonds hinzufügen:** im Abschnitt `etfs:` eine Zeile mit der ISIN ergänzen, z.B.
+`- { isin: "IE00B5BMR087", name: "iShares Core S&P 500", boerse: [".SW", ".L", ".DE"] }`.
+Das Skript sucht das passende Yahoo-Symbol selbst (bevorzugt an den Börsen unter `boerse`).
+
 ⚠️ Wichtig bei YAML: nur **Leerzeichen** zum Einrücken verwenden (keine Tabs) und das Format
 `- { symbol: "...", name: "..." }` genau beibehalten.
 
-**Sektor/Branche festlegen:** Jede Aktie hat ein Feld `sektor`, z.B.
-`- { symbol: "NESN.SW", name: "Nestlé", sektor: "Konsum (Basis)" }`.
-Aktien mit genau gleichem Sektor-Namen werden in der App zusammengefasst. Du kannst eigene Namen erfinden.
-
 In `config.yaml` kannst du ausserdem:
-- **Schwellen** für Auffälligkeiten ändern (`schwellen:`)
+- **Schwellen** für Auffälligkeiten ändern (`schwellen:`, auch pro Sektor, z.B. Bitcoin ±10 %)
 - **News-Feeds** hinzufügen oder entfernen (`news: feeds:`)
 - **Stichwörter** für die News-Gewichtung anpassen (`stichwoerter:`)
 - **Eigene Termine** eintragen, z.B. Notenbank-Sitzungen (`eigene_termine:`)

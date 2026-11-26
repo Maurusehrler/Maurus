@@ -30,47 +30,147 @@ indizes:
   - { symbol: "^STOXX50E", name: "Euro Stoxx 50", region: "Europa" }
 
 # ---------------------------------------------------------------------
-# AKTIEN SCHWEIZ  (für Top-Gewinner/-Verlierer und Tagesüberblick)
-#   Zum Hinzufügen einfach eine neue Zeile im gleichen Format einfügen.
-#   Zum Entfernen die Zeile löschen (oder mit "#" auskommentieren).
-#   sektor     = Branche (für die Ansicht "Aktien" → Sektoren). Frei wählbar;
-#                Aktien mit gleichem Sektor-Namen werden zusammengefasst.
-#   alternativ = (optional) Ersatz-Symbole, falls das erste keine Daten liefert
+# AKTIEN – geordnet nach SEKTOR (Branche)
+#   So fügst du eine Aktie hinzu: im passenden Sektor eine Zeile einfügen:
+#       - { symbol: "SGSN.SW", name: "SGS" }
+#   Neuer Sektor: einfach eine neue Überschrift im gleichen Format anlegen:
+#     "Mein Sektor":
+#       - { symbol: "...", name: "..." }
+#   Entfernen: Zeile löschen (oder ein "#" an den Anfang setzen).
+#
+#   Das Land wird am Symbol erkannt:
+#     .SW = Schweiz · ohne Endung = USA · .DE = Deutschland · .T = Japan
+#   Schweizer und US-Titel erscheinen zusätzlich bei "Top & Flop".
+#   Optional pro Aktie:
+#     alternativ = Ersatz-Symbole, falls das erste keine Daten liefert
+#     stooq      = Ersatz-Symbol bei stooq.com
+#   Eine Aktie darf in mehreren Sektoren stehen (z.B. Honeywell).
 # ---------------------------------------------------------------------
-aktien_ch:
-  - { symbol: "NESN.SW", name: "Nestlé", sektor: "Konsum (Basis)" }
-  - { symbol: "NOVN.SW", name: "Novartis", sektor: "Gesundheit" }
-  - { symbol: "ROG.SW",  name: "Roche", sektor: "Gesundheit", alternativ: ["RO.SW"] }
-  - { symbol: "UBSG.SW", name: "UBS", sektor: "Finanzen" }
-  - { symbol: "ABBN.SW", name: "ABB", sektor: "Industrie" }
-  - { symbol: "ZURN.SW", name: "Zurich", sektor: "Versicherungen" }
-  - { symbol: "CFR.SW",  name: "Richemont", sektor: "Konsum (Luxus)" }
-  - { symbol: "HOLN.SW", name: "Holcim", sektor: "Bau & Material" }
-  - { symbol: "SREN.SW", name: "Swiss Re", sektor: "Versicherungen" }
-  - { symbol: "LONN.SW", name: "Lonza", sektor: "Gesundheit" }
-  - { symbol: "SIKA.SW", name: "Sika", sektor: "Bau & Material" }
-  - { symbol: "ALC.SW",  name: "Alcon", sektor: "Gesundheit" }
-  - { symbol: "PGHN.SW", name: "Partners Group", sektor: "Finanzen" }
-  - { symbol: "GIVN.SW", name: "Givaudan", sektor: "Chemie" }
-  - { symbol: "SCMN.SW", name: "Swisscom", sektor: "Telekom" }
-  - { symbol: "SLHN.SW", name: "Swiss Life", sektor: "Versicherungen" }
-  - { symbol: "GEBN.SW", name: "Geberit", sektor: "Bau & Material" }
-  - { symbol: "KNIN.SW", name: "Kühne+Nagel", sektor: "Industrie" }
-  - { symbol: "LOGN.SW", name: "Logitech", sektor: "Technologie" }
-  - { symbol: "GALD.SW", name: "Galderma", sektor: "Gesundheit" }
+aktien:
+  "Technologie":
+    - { symbol: "AAPL",    name: "Apple",          stooq: "aapl.us" }
+    - { symbol: "MSFT",    name: "Microsoft",      stooq: "msft.us" }
+    - { symbol: "NVDA",    name: "Nvidia",         stooq: "nvda.us" }
+    - { symbol: "AVGO",    name: "Broadcom" }
+    - { symbol: "ORCL",    name: "Oracle" }
+    - { symbol: "AMD",     name: "AMD" }
+    - { symbol: "CRM",     name: "Salesforce" }
+    - { symbol: "LOGN.SW", name: "Logitech" }
+    - { symbol: "VACN.SW", name: "VAT Group" }
+    - { symbol: "TEMN.SW", name: "Temenos" }
+
+  "Kommunikation & Telekom":
+    - { symbol: "GOOGL",   name: "Alphabet",       stooq: "googl.us" }
+    - { symbol: "META",    name: "Meta",           stooq: "meta.us" }
+    - { symbol: "NFLX",    name: "Netflix" }
+    - { symbol: "TMUS",    name: "T-Mobile US" }
+    - { symbol: "DIS",     name: "Disney" }
+    - { symbol: "VZ",      name: "Verizon" }
+    - { symbol: "SCMN.SW", name: "Swisscom" }
+
+  "Konsum (zyklisch & Luxus)":
+    - { symbol: "AMZN",    name: "Amazon",         stooq: "amzn.us" }
+    - { symbol: "TSLA",    name: "Tesla",          stooq: "tsla.us" }
+    - { symbol: "HD",      name: "Home Depot" }
+    - { symbol: "MCD",     name: "McDonald's" }
+    - { symbol: "BKNG",    name: "Booking" }
+    - { symbol: "NKE",     name: "Nike" }
+    - { symbol: "CFR.SW",  name: "Richemont" }
+    - { symbol: "UHR.SW",  name: "Swatch" }
+
+  "Konsum (Basis)":
+    - { symbol: "NESN.SW", name: "Nestlé" }
+    - { symbol: "WMT",     name: "Walmart" }
+    - { symbol: "COST",    name: "Costco" }
+    - { symbol: "PG",      name: "Procter & Gamble" }
+    - { symbol: "KO",      name: "Coca-Cola" }
+    - { symbol: "PEP",     name: "PepsiCo" }
+    - { symbol: "LISP.SW", name: "Lindt & Sprüngli" }
+    - { symbol: "BARN.SW", name: "Barry Callebaut" }
+
+  "Gesundheit":
+    - { symbol: "NOVN.SW", name: "Novartis" }
+    - { symbol: "ROG.SW",  name: "Roche",          alternativ: ["RO.SW"] }
+    - { symbol: "LONN.SW", name: "Lonza" }
+    - { symbol: "ALC.SW",  name: "Alcon" }
+    - { symbol: "GALD.SW", name: "Galderma" }
+    - { symbol: "SOON.SW", name: "Sonova" }
+    - { symbol: "LLY",     name: "Eli Lilly" }
+    - { symbol: "JNJ",     name: "Johnson & Johnson" }
+    - { symbol: "UNH",     name: "UnitedHealth" }
+    - { symbol: "ABBV",    name: "AbbVie" }
+
+  "Banken & Finanzen":
+    - { symbol: "UBSG.SW", name: "UBS" }
+    - { symbol: "PGHN.SW", name: "Partners Group" }
+    - { symbol: "BAER.SW", name: "Julius Bär" }
+    - { symbol: "JPM",     name: "JPMorgan" }
+    - { symbol: "BAC",     name: "Bank of America" }
+    - { symbol: "GS",      name: "Goldman Sachs" }
+    - { symbol: "V",       name: "Visa" }
+    - { symbol: "MA",      name: "Mastercard" }
+
+  "Versicherungen":
+    - { symbol: "ZURN.SW", name: "Zurich" }
+    - { symbol: "SREN.SW", name: "Swiss Re" }
+    - { symbol: "SLHN.SW", name: "Swiss Life" }
+    - { symbol: "BRK-B",   name: "Berkshire Hathaway" }
+    - { symbol: "CB",      name: "Chubb" }
+    - { symbol: "PGR",     name: "Progressive" }
+    - { symbol: "AIG",     name: "AIG" }
+    - { symbol: "MET",     name: "MetLife" }
+
+  "Industrie":
+    - { symbol: "ABBN.SW", name: "ABB" }
+    - { symbol: "KNIN.SW", name: "Kühne+Nagel" }
+    - { symbol: "SCHP.SW", name: "Schindler" }
+    - { symbol: "GE",      name: "GE Aerospace" }
+    - { symbol: "CAT",     name: "Caterpillar" }
+    - { symbol: "HON",     name: "Honeywell" }
+    - { symbol: "RTX",     name: "RTX" }
+    - { symbol: "UNP",     name: "Union Pacific" }
+
+  "Bau & Material":
+    - { symbol: "HOLN.SW", name: "Holcim" }
+    - { symbol: "SIKA.SW", name: "Sika" }
+    - { symbol: "GEBN.SW", name: "Geberit" }
+    - { symbol: "SHW",     name: "Sherwin-Williams" }
+    - { symbol: "VMC",     name: "Vulcan Materials" }
+    - { symbol: "MLM",     name: "Martin Marietta" }
+
+  "Chemie":
+    - { symbol: "GIVN.SW", name: "Givaudan" }
+    - { symbol: "EMSN.SW", name: "EMS-Chemie" }
+    - { symbol: "CLN.SW",  name: "Clariant" }
+    - { symbol: "LIN",     name: "Linde" }
+    - { symbol: "APD",     name: "Air Products" }
+
+  "Bitcoin":
+    - { symbol: "MSTR",    name: "Strategy (MicroStrategy)" }
+    - { symbol: "MARA",    name: "MARA Holdings" }
+    - { symbol: "ASST",    name: "Strive (Asset Entities)" }
+    - { symbol: "3350.T",  name: "Metaplanet" }
+    - { symbol: "ADE.DE",  name: "Bitcoin Group" }
+
+  "Quanten":
+    - { symbol: "ARQQ",    name: "Arqit Quantum" }
+    - { symbol: "LAES",    name: "SEALSQ" }
+    - { symbol: "IONQ",    name: "IonQ" }
+    - { symbol: "QUBT",    name: "Quantum Computing Inc." }
+    - { symbol: "QBTS",    name: "D-Wave Quantum" }
+    - { symbol: "RGTI",    name: "Rigetti Computing" }
+    - { symbol: "IBM",     name: "IBM" }
+    - { symbol: "HON",     name: "Honeywell" }
+    - { symbol: "INTC",    name: "Intel" }
 
 # ---------------------------------------------------------------------
-# AKTIEN USA
-#   stooq = optionales Ersatz-Symbol (Format: kleinbuchstaben + ".us")
+# ETFs / FONDS (Bereich "Märkte")
+#   isin   = ISIN des Produkts; das Skript sucht das Yahoo-Symbol selbst
+#   symbol = (optional) Yahoo-Symbol direkt angeben, falls bekannt
+#   boerse = bevorzugte Börse(n) bei der Suche (Endung des Symbols)
 # ---------------------------------------------------------------------
-aktien_us:
-  - { symbol: "AAPL",  name: "Apple", sektor: "Technologie",     stooq: "aapl.us" }
-  - { symbol: "MSFT",  name: "Microsoft", sektor: "Technologie", stooq: "msft.us" }
-  - { symbol: "NVDA",  name: "Nvidia", sektor: "Technologie",    stooq: "nvda.us" }
-  - { symbol: "AMZN",  name: "Amazon", sektor: "Konsum (zyklisch)",    stooq: "amzn.us" }
-  - { symbol: "GOOGL", name: "Alphabet", sektor: "Kommunikation",  stooq: "googl.us" }
-  - { symbol: "META",  name: "Meta", sektor: "Kommunikation",      stooq: "meta.us" }
-  - { symbol: "TSLA",  name: "Tesla", sektor: "Konsum (zyklisch)",     stooq: "tsla.us" }
+etfs:
+  - { isin: "IE00BD4TYL27", name: "Vanguard ESG North America All Cap", boerse: [".SW", ".L", ".DE", ".AS", ".MI"] }
 
 # ---------------------------------------------------------------------
 # US-SEKTOREN (S&P 500) – gemessen an den Sektor-ETFs von SPDR.
@@ -130,6 +230,10 @@ weitere:
 schwellen:
   index: 2.0
   aktie: 5.0
+  # eigene Schwellen für schwankungsfreudige Sektoren (sonst zu viele Hinweise)
+  sektoren:
+    "Bitcoin": 10.0
+    "Quanten": 10.0
   krypto: 5.0
   rohstoff: 3.0
   devisen: 1.0
@@ -147,25 +251,26 @@ news:
   max_pro_quelle: 5          # damit nicht eine Quelle alles dominiert
   #   (Getestet am 26.11.2026. cash.ch, Handelszeitung, FuW, finanzen.ch und
   #    Yahoo bieten derzeit keinen frei nutzbaren RSS-Feed an.)
+  #   region = CH (Schweiz) oder INT (international) – für den Filter in der App
   #   bonus = Zusatzpunkte für die Quelle (höher = weiter oben). So kommen
   #           Schweizer Meldungen vor allgemeinen internationalen News.
   feeds:
     # --- Schweiz ---
-    - { name: "NZZ Wirtschaft",  bonus: 4, url: "https://www.nzz.ch/wirtschaft.rss" }
-    - { name: "NZZ Finanzen",    bonus: 4, url: "https://www.nzz.ch/finanzen.rss" }
-    - { name: "finews.ch",       bonus: 4, url: "https://www.finews.ch/news/finanzplatz?format=feed&type=rss" }
-    - { name: "finews.ch",       bonus: 4, url: "https://www.finews.ch/?format=feed&type=rss" }
-    - { name: "SRF Wirtschaft",  bonus: 4, url: "https://www.srf.ch/news/bnf/rss/1926" }
-    - { name: "SNB",             bonus: 4, url: "https://www.snb.ch/public/de/rss/news" }
+    - { name: "NZZ Wirtschaft",  region: "CH", bonus: 4, url: "https://www.nzz.ch/wirtschaft.rss" }
+    - { name: "NZZ Finanzen",    region: "CH", bonus: 4, url: "https://www.nzz.ch/finanzen.rss" }
+    - { name: "finews.ch",       region: "CH", bonus: 4, url: "https://www.finews.ch/news/finanzplatz?format=feed&type=rss" }
+    - { name: "finews.ch",       region: "CH", bonus: 4, url: "https://www.finews.ch/?format=feed&type=rss" }
+    - { name: "SRF Wirtschaft",  region: "CH", bonus: 4, url: "https://www.srf.ch/news/bnf/rss/1926" }
+    - { name: "SNB",             region: "CH", bonus: 4, url: "https://www.snb.ch/public/de/rss/news" }
     # --- Deutschland / Europa ---
-    - { name: "tagesschau Wirtschaft", bonus: 2, url: "https://www.tagesschau.de/wirtschaft/index~rss2.xml" }
-    - { name: "EZB",             bonus: 1, url: "https://www.ecb.europa.eu/rss/press.html" }
+    - { name: "tagesschau Wirtschaft", region: "INT", bonus: 2, url: "https://www.tagesschau.de/wirtschaft/index~rss2.xml" }
+    - { name: "EZB",             region: "INT", bonus: 1, url: "https://www.ecb.europa.eu/rss/press.html" }
     # --- International ---
-    - { name: "CNBC",            bonus: 0, url: "https://www.cnbc.com/id/100003114/device/rss/rss.html" }
-    - { name: "CNBC Markets",    bonus: 1, url: "https://www.cnbc.com/id/15839069/device/rss/rss.html" }
-    - { name: "MarketWatch",     bonus: 0, url: "https://feeds.content.dowjones.io/public/rss/mw_topstories" }
-    - { name: "BBC Business",    bonus: 0, url: "https://feeds.bbci.co.uk/news/business/rss.xml" }
-    - { name: "Federal Reserve", bonus: 2, url: "https://www.federalreserve.gov/feeds/press_monetary.xml" }
+    - { name: "CNBC",            region: "INT", bonus: 0, url: "https://www.cnbc.com/id/100003114/device/rss/rss.html" }
+    - { name: "CNBC Markets",    region: "INT", bonus: 1, url: "https://www.cnbc.com/id/15839069/device/rss/rss.html" }
+    - { name: "MarketWatch",     region: "INT", bonus: 0, url: "https://feeds.content.dowjones.io/public/rss/mw_topstories" }
+    - { name: "BBC Business",    region: "INT", bonus: 0, url: "https://feeds.bbci.co.uk/news/business/rss.xml" }
+    - { name: "Federal Reserve", region: "INT", bonus: 2, url: "https://www.federalreserve.gov/feeds/press_monetary.xml" }
 
   # Stichwörter, die eine Meldung wichtiger machen (Gewicht = Zusatzpunkte).
   # Die Namen deiner Aktien von oben werden automatisch auch berücksichtigt.

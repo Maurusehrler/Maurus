@@ -275,3 +275,20 @@ details[open] summary { margin-bottom: .6rem; }
   .kacheln { grid-template-columns: repeat(7, minmax(0, 1fr)); }
 }
 #sektor-karten { align-items: start; }
+
+/* ---------- Fear & Greed (Halbkreis-Anzeige) ---------- */
+.stimmung-raster { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stimmung { text-align: center; min-width: 0; }
+.stimmung h3 { margin-bottom: 2px; }
+.stimmung svg { width: 100%; max-width: 210px; height: auto; display: block; margin: 0 auto; }
+.stimmung .zahl { font-size: 1.5rem; font-weight: 700; margin-top: -6px; line-height: 1.1; }
+.stimmung .wort { font-size: .82rem; font-weight: 600; }
+.stimmung .vergleich { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; font-size: .7rem; color: var(--leise); }
+.stimmung .vergleich b { color: var(--text); font-weight: 600; }
+.angst-extrem { color: var(--minus); } .angst { color: var(--minus); opacity: .8; }
+.gier-extrem { color: var(--plus); } .gier { color: var(--plus); opacity: .85; }
+.neutral { color: var(--leise); }
+
+/* News-Filter */
+.filter-zeile { margin-bottom: .7rem; }
+#news-sortierung button, #news-filter button { font-size: .78rem; padding: 5px 9px; }

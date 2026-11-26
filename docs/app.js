@@ -22,7 +22,9 @@ const zustand = {
   daten: null,          // zuletzt geladene Daten
   tab: "uebersicht",
   zeitraum: "1T",
-  region: "alle",       // Sektoren: alle / ch / us
+  region: "alle",       // Sektoren: alle / ch / us / andere
+  newsSortierung: "wichtig",   // wichtig / neu
+  newsFilter: "alle",          // alle / CH / INT
   offline: false,
   geladenUm: 0,
 };
@@ -34,7 +36,12 @@ function erinnern(schluessel, erlaubt, standard) {
 }
 zustand.tab = erinnern("tab", TABS, "uebersicht");
 zustand.zeitraum = erinnern("zeitraum2", Object.keys(ZEITRAEUME), "1T");
-zustand.region = erinnern("region", ["alle", "ch", "us"], "alle");
+zustand.region = erinnern("region", ["alle", "ch", "us", "andere"], "alle");
+zustand.newsSortierung = erinnern("newsSortierung", ["wichtig", "neu"], "wichtig");
+zustand.newsFilter = erinnern("newsFilter", ["alle", "CH", "INT"], "alle");
+
+// Länderkürzel -> Name
+const LAENDER = { CH: "Schweiz", US: "USA", DE: "Deutschland", JP: "Japan", UK: "Grossbritannien", FR: "Frankreich", NL: "Niederlande", IT: "Italien", HK: "Hongkong", CA: "Kanada" };
 
 /* ---------------------------------------------------------------------
    Hilfsfunktionen: Zahlen und Zeiten im Schweizer Format
@@ -125,6 +132,27 @@ function diffPunkte(e) {
 /** Aktien mit gültigem Wert, sortiert (bester zuerst) */
 function sortiertNachPerf(liste) {
   return (liste || []).filter((a) => perf(a) !== null && !a.fehler).sort((a, b) => perf(b) - perf(a));
+}
+
+/** Alle Aktien (neues Format "aktien"; ältere Dateien hatten aktien_ch/aktien_us) */
+function alleAktien() {
+  const d = zustand.daten || {};
+  if (d.aktien) return d.aktien;
+  return [...(d.aktien_ch || []).map((a) => ({ ...a, land: "CH" })), ...(d.aktien_us || []).map((a) => ({ ...a, land: "US" }))];
+}
+
+/** Jedes Symbol nur einmal (eine Aktie kann in mehreren Sektoren stehen) */
+function eindeutig(liste) {
+  const gesehen = new Set();
+  return liste.filter((a) => (gesehen.has(a.symbol) ? false : gesehen.add(a.symbol)));
+}
+
+/** Passt die Aktie zum gewählten Regionen-Filter? */
+function passtZuRegion(a) {
+  if (zustand.region === "ch") return a.land === "CH";
+  if (zustand.region === "us") return a.land === "US";
+  if (zustand.region === "andere") return a.land !== "CH" && a.land !== "US";
+  return true;
 }
 
 /* ---------------------------------------------------------------------
@@ -242,11 +270,7 @@ function balkenDiagramm(eintraege, { klickbar = false } = {}) {
    Sektoren: eigene Aktien nach Branche gruppieren
    --------------------------------------------------------------------- */
 function sektorGruppen() {
-  const d = zustand.daten;
-  const aktien = [
-    ...(zustand.region !== "us" ? (d.aktien_ch || []).map((a) => ({ ...a, land: "CH" })) : []),
-    ...(zustand.region !== "ch" ? (d.aktien_us || []).map((a) => ({ ...a, land: "US" })) : []),
-  ];
+  const aktien = alleAktien().filter(passtZuRegion);
   const gruppen = new Map();
   for (const a of aktien) {
     const s = a.sektor || "Ohne Sektor";
@@ -269,7 +293,7 @@ function zeigeSektoren() {
     const ohneWert = g.titel.filter((a) => perf(a) === null);
     const zeilen = [...s, ...ohneWert].map((a, i) => {
       const rang = s.length > 1 && i === 0 ? "▲" : s.length > 1 && i === s.length - 1 ? "▼" : "";
-      return zeile(a, { unter: zustand.region === "alle" ? (a.land === "CH" ? "Schweiz" : "USA") : "", rang });
+      return zeile(a, { unter: LAENDER[a.land] || a.land || "", rang });
     }).join("");
     return `<section class="karte" id="sektor-${encodeURIComponent(g.name)}">
       <div class="sektor-kopf"><h2>${esc(g.name)}</h2><span class="pill ${farbe(g.wert)}" title="Durchschnitt">Ø ${prozent(g.wert)}</span></div>
@@ -282,14 +306,57 @@ function zeigeSektoren() {
     .sort((a, b) => (b.wert ?? -1e9) - (a.wert ?? -1e9));
   $("us-sektoren").innerHTML = us.length ? balkenDiagramm(us) : '<p class="leise">Noch keine Daten (erscheinen nach dem nächsten Update).</p>';
 
-  // Alle Aktien sortiert
-  const d = zustand.daten;
-  const alle = [
-    ...(zustand.region !== "us" ? (d.aktien_ch || []) : []),
-    ...(zustand.region !== "ch" ? (d.aktien_us || []) : []),
-  ];
+  // Alle Aktien sortiert (jede nur einmal)
+  const alle = eindeutig(alleAktien().filter(passtZuRegion));
   const s = sortiertNachPerf(alle);
-  $("alle-aktien").innerHTML = liste([...s, ...alle.filter((a) => !s.includes(a))], { unter: "" });
+  $("alle-aktien").innerHTML = liste([...s, ...alle.filter((a) => !s.includes(a))].map((a) => ({ ...a, einheit: a.sektor })));
+}
+
+/* ---------------------------------------------------------------------
+   Fear & Greed: Halbkreis-Anzeige (0 = extreme Angst, 100 = extreme Gier)
+   --------------------------------------------------------------------- */
+function stimmungKlasse(w) {
+  if (w < 25) return "angst-extrem";
+  if (w < 45) return "angst";
+  if (w <= 55) return "neutral";
+  if (w < 75) return "gier";
+  return "gier-extrem";
+}
+
+function tacho(wert) {
+  // Punkt auf dem Halbkreis für einen Wert 0–100
+  const pt = (v, r) => {
+    const t = Math.PI * (1 - v / 100);
+    return [(100 + r * Math.cos(t)).toFixed(2), (100 - r * Math.sin(t)).toFixed(2)];
+  };
+  const bogen = (von, bis, klasse) => {
+    const [x1, y1] = pt(von + 0.8, 80), [x2, y2] = pt(bis - 0.8, 80);   // kleine Lücke zwischen den Feldern
+    return `<path d="M${x1} ${y1} A80 80 0 0 1 ${x2} ${y2}" class="${klasse}" stroke="currentColor" stroke-width="14" fill="none"/>`;
+  };
+  const [nx, ny] = pt(Math.max(0, Math.min(100, wert)), 66);
+  return `<svg viewBox="0 0 200 112" aria-hidden="true">
+    ${bogen(0, 25, "angst-extrem")}${bogen(25, 45, "angst")}${bogen(45, 55, "neutral")}${bogen(55, 75, "gier")}${bogen(75, 100, "gier-extrem")}
+    <line x1="100" y1="100" x2="${nx}" y2="${ny}" stroke="var(--text)" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="100" cy="100" r="6" fill="var(--text)"/>
+  </svg>`;
+}
+
+function stimmungHtml(st) {
+  if (!st || (!st.aktien && !st.krypto)) return '<p class="leise">Noch keine Daten (erscheinen nach dem nächsten Update).</p>';
+  const block = (titel, x) => {
+    if (!x) return `<div class="stimmung"><h3>${titel}</h3><p class="leise klein">Keine Daten</p></div>`;
+    const vgl = [["Vortag", x.vortag], ["1 Woche", x.woche], ["1 Monat", x.monat], ["1 Jahr", x.jahr]]
+      .filter(([, v]) => v !== null && v !== undefined)
+      .map(([t, v]) => `<span>${t} <b class="${stimmungKlasse(v)}">${Math.round(v)}</b></span>`).join("");
+    return `<div class="stimmung" title="Quelle: ${esc(x.quelle)}">
+      <h3>${titel}</h3>
+      ${tacho(x.wert)}
+      <div class="zahl">${Math.round(x.wert)}</div>
+      <div class="wort ${stimmungKlasse(x.wert)}">${esc(x.text)}${x.veraltet ? ' <span class="badge">älter</span>' : ""}</div>
+      <div class="vergleich">${vgl}</div>
+    </div>`;
+  };
+  return block("Aktien (USA)", st.aktien) + block("Krypto", st.krypto);
 }
 
 /* ---------------------------------------------------------------------
@@ -344,7 +411,8 @@ function quellenHtml(q) {
   const kurse = Object.entries(q.kurse || {}).map(([k, v]) => `${esc(k)}: ${v}`).join(" · ");
   return `
     <p><b>Kurse frisch geladen:</b> ${esc(q.kurse_frisch || "–")}<br><span class="leise">${kurse}</span></p>
-    <p><b>Wirtschaftskalender:</b> ${esc(q.kalender || "–")}<br><b>Quartalszahlen:</b> ${esc(q.quartalszahlen || "–")}</p>
+    <p><b>Wirtschaftskalender:</b> ${esc(q.kalender || "–")}<br><b>Quartalszahlen:</b> ${esc(q.quartalszahlen || "–")}<br>
+       <b>Fear &amp; Greed:</b> Aktien ${esc(q.fear_greed_aktien || "–")} · Krypto ${esc(q.fear_greed_krypto || "–")}</p>
     <p><b>News-Feeds beim letzten Update:</b></p>
     <table class="quellen-tab">${feeds}</table>`;
 }
@@ -375,8 +443,9 @@ function zeigeAlles() {
       $("auffaellig").innerHTML = (d.auffaelligkeiten || []).map((a) =>
         `<li class="${farbe(a.diff_pct)}">${a.diff_pct >= 0 ? "▲" : "▼"} ${esc(a.text)}</li>`).join("");
       $("indizes").innerHTML = (d.indizes || []).map(kachel).join("");
-      $("mover-ch").innerHTML = topFlop(d.aktien_ch);
-      $("mover-us").innerHTML = topFlop(d.aktien_us);
+      $("stimmung").innerHTML = stimmungHtml(d.stimmung);
+      $("mover-ch").innerHTML = topFlop(eindeutig(alleAktien()).filter((a) => a.land === "CH"));
+      $("mover-us").innerHTML = topFlop(eindeutig(alleAktien()).filter((a) => a.land === "US"));
       $("kalender-kurz").innerHTML = kalenderHtml(d.kalender, { maxTage: 2 });
       $("news-kurz").innerHTML = newsHtml((d.news || []).slice(0, 5));
       break;
@@ -386,16 +455,20 @@ function zeigeAlles() {
       break;
     case "maerkte":
       $("indizes-liste").innerHTML = liste(d.indizes, { unter: "" });
+      $("etfs").innerHTML = liste((d.etfs || []).map((e) => ({ ...e, einheit: e.isin || "" })));
       $("krypto").innerHTML = liste(d.krypto);
       $("rohstoffe").innerHTML = liste(d.rohstoffe);
       $("devisen").innerHTML = liste(d.devisen);
       $("weitere").innerHTML = liste(d.weitere);
       break;
-    case "news":
-      $("news").innerHTML = newsHtml(d.news);
+    case "news": {
+      let news = (d.news || []).filter((n) => zustand.newsFilter === "alle" || (n.region || "INT") === zustand.newsFilter);
+      if (zustand.newsSortierung === "neu") news = [...news].sort((a, b) => (b.zeit || "").localeCompare(a.zeit || ""));
+      $("news").innerHTML = newsHtml(news);
       $("kalender").innerHTML = kalenderHtml(d.kalender);
       $("quellen").innerHTML = quellenHtml(d.quellen);
       break;
+    }
   }
 }
 
@@ -405,6 +478,8 @@ function zeigeSteuerung() {
   document.querySelectorAll(".seite").forEach((s) => s.classList.toggle("aktiv", s.dataset.seite === zustand.tab));
   document.querySelectorAll("#zeitraum-wahl button").forEach((b) => b.classList.toggle("aktiv", b.dataset.zeitraum === zustand.zeitraum));
   document.querySelectorAll("#region-wahl button").forEach((b) => b.classList.toggle("aktiv", b.dataset.region === zustand.region));
+  document.querySelectorAll("#news-sortierung button").forEach((b) => b.classList.toggle("aktiv", b.dataset.sortierung === zustand.newsSortierung));
+  document.querySelectorAll("#news-filter button").forEach((b) => b.classList.toggle("aktiv", b.dataset.filter === zustand.newsFilter));
   // Auf der News-Seite braucht es keinen Zeitraum
   $("zeitleiste").classList.toggle("versteckt", zustand.tab === "news");
 }
@@ -497,6 +572,17 @@ document.querySelectorAll("#zeitraum-wahl button").forEach((b) => b.addEventList
 document.querySelectorAll("#region-wahl button").forEach((b) => b.addEventListener("click", () => {
   zustand.region = b.dataset.region;
   merken("region", zustand.region);
+  zeigeAlles();
+}));
+
+document.querySelectorAll("#news-sortierung button").forEach((b) => b.addEventListener("click", () => {
+  zustand.newsSortierung = b.dataset.sortierung;
+  merken("newsSortierung", zustand.newsSortierung);
+  zeigeAlles();
+}));
+document.querySelectorAll("#news-filter button").forEach((b) => b.addEventListener("click", () => {
+  zustand.newsFilter = b.dataset.filter;
+  merken("newsFilter", zustand.newsFilter);
   zeigeAlles();
 }));
 
