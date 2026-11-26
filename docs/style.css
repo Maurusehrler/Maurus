@@ -1,0 +1,223 @@
+/* =====================================================================
+   Börsen-Übersicht – Gestaltung
+   - Mobile-first: zuerst für das iPhone, grössere Bildschirme ab "@media"
+   - Farben als Variablen: Hell/Dunkel wechselt automatisch nach iOS-Einstellung
+   ===================================================================== */
+
+:root {
+  --hg: #f2f3f7;            /* Hintergrund */
+  --karte: #ffffff;         /* Kartenfarbe */
+  --text: #111827;
+  --leise: #6b7280;         /* dezenter Text */
+  --linie: #e5e7eb;
+  --plus: #15803d;          /* grün */
+  --plus-hg: #dcfce7;
+  --minus: #dc2626;         /* rot */
+  --minus-hg: #fee2e2;
+  --neutral-hg: #eef0f4;
+  --akzent: #2563eb;
+  --warn: #b45309;
+  --warn-hg: #fef3c7;
+  --schatten: 0 1px 2px rgba(0,0,0,.05), 0 4px 14px rgba(0,0,0,.05);
+  --radius: 16px;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --hg: #0b0f1a;
+    --karte: #151b2b;
+    --text: #e8ebf2;
+    --leise: #94a0b8;
+    --linie: #263049;
+    --plus: #34d399;
+    --plus-hg: rgba(52,211,153,.14);
+    --minus: #f87171;
+    --minus-hg: rgba(248,113,113,.14);
+    --neutral-hg: #1f2740;
+    --akzent: #60a5fa;
+    --warn: #fbbf24;
+    --warn-hg: rgba(251,191,36,.12);
+    --schatten: none;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--hg);
+  color: var(--text);
+  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  /* Zahlen gleich breit -> Spalten stehen sauber untereinander */
+  font-variant-numeric: tabular-nums;
+  /* Abstand zu Notch / Home-Balken auf iPhone */
+  padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right))
+           env(safe-area-inset-bottom) max(16px, env(safe-area-inset-left));
+  overscroll-behavior-y: contain;
+}
+
+h1 { font-size: 1.9rem; margin: 0; letter-spacing: -.02em; }
+h2 { font-size: 1.05rem; margin: 0 0 .7rem; letter-spacing: -.01em; }
+h3 { font-size: .9rem; margin: .4rem 0 .4rem; color: var(--leise); font-weight: 600; }
+a { color: inherit; }
+.leise { color: var(--leise); }
+.klein { font-size: .82rem; }
+.versteckt { display: none !important; }
+
+/* ---------- Kopfbereich ---------- */
+.kopf { padding: 14px 0 6px; max-width: 1400px; margin: 0 auto; }
+.kopf-zeile { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.knopf {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 0; border-radius: 999px; padding: 9px 14px;
+  background: var(--karte); color: var(--akzent); font: inherit; font-weight: 600; font-size: .9rem;
+  box-shadow: var(--schatten); cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+}
+.knopf:active { transform: scale(.97); }
+.knopf.dreht svg { animation: drehen 0.9s linear infinite; }
+@keyframes drehen { to { transform: rotate(360deg); } }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .78rem; padding: 4px 10px; border-radius: 999px;
+  background: var(--karte); box-shadow: var(--schatten);
+}
+.punkt { width: 8px; height: 8px; border-radius: 50%; background: var(--leise); }
+.chip.offen .punkt { background: var(--plus); box-shadow: 0 0 0 3px var(--plus-hg); }
+
+/* ---------- Pull-to-refresh ---------- */
+.ptr {
+  position: fixed; left: 0; right: 0; top: env(safe-area-inset-top);
+  text-align: center; font-size: .85rem; color: var(--leise);
+  transform: translateY(-60px); transition: transform .2s; z-index: 10; pointer-events: none;
+  padding: 10px;
+}
+.ptr.ziehen { transition: none; }
+.ptr .ptr-pfeil { display: inline-block; transition: transform .2s; }
+.ptr.bereit .ptr-pfeil { transform: rotate(180deg); }
+
+/* ---------- Layout ---------- */
+main { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }
+.raster { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.karte {
+  background: var(--karte); border-radius: var(--radius); padding: 14px 16px;
+  box-shadow: var(--schatten); min-width: 0;
+}
+.titel-zeile { display: flex; justify-content: space-between; align-items: center; margin-bottom: .6rem; gap: 8px; }
+.titel-zeile h2 { margin: 0; }
+
+/* Hinweise / Banner */
+.banner {
+  border-radius: 12px; padding: 10px 14px; font-size: .88rem;
+  background: var(--warn-hg); color: var(--warn); margin-bottom: 6px;
+}
+
+/* Tagesüberblick */
+#ueberblick p { margin: 0 0 .45rem; }
+#ueberblick p:last-child { margin-bottom: 0; }
+
+/* Auffälligkeiten */
+.liste-auffaellig { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.liste-auffaellig li { padding: 6px 10px; border-radius: 10px; font-size: .88rem; }
+
+/* Umschalter 5 Tage / 1 Monat */
+.umschalter { display: inline-flex; background: var(--neutral-hg); border-radius: 10px; padding: 2px; }
+.umschalter button {
+  border: 0; background: transparent; color: var(--leise); font: inherit; font-size: .8rem;
+  padding: 5px 10px; border-radius: 8px; cursor: pointer;
+}
+.umschalter button.aktiv { background: var(--karte); color: var(--text); font-weight: 600; box-shadow: var(--schatten); }
+
+/* Index-Kacheln */
+.kacheln { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.kachel {
+  background: var(--karte); border-radius: var(--radius); padding: 12px 12px 8px;
+  box-shadow: var(--schatten); min-width: 0; display: flex; flex-direction: column; gap: 2px;
+}
+.kachel .name { font-weight: 600; font-size: .92rem; display: flex; justify-content: space-between; gap: 4px; }
+.kachel .region { font-weight: 400; color: var(--leise); font-size: .75rem; }
+.kachel .kurs { font-size: 1.25rem; font-weight: 650; letter-spacing: -.01em; }
+.kachel .veraenderung { font-size: .82rem; font-weight: 600; }
+.kachel svg { width: 100%; height: 42px; margin-top: 4px; display: block; }
+
+.plus { color: var(--plus); }
+.minus { color: var(--minus); }
+.pill {
+  display: inline-block; min-width: 4.6em; text-align: right;
+  padding: 2px 7px; border-radius: 7px; font-size: .82rem; font-weight: 600;
+  background: var(--neutral-hg);
+}
+.pill.plus { background: var(--plus-hg); }
+.pill.minus { background: var(--minus-hg); }
+
+/* Kompakte Listen (Krypto, Rohstoffe, Devisen, Aktien) */
+.zeilen { display: flex; flex-direction: column; }
+.zeile {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center;
+  padding: 8px 0; border-top: 1px solid var(--linie);
+}
+.zeile:first-child { border-top: 0; }
+.zeile .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zeile .einheit { font-size: .72rem; color: var(--leise); display: block; }
+.zeile .k { text-align: right; font-weight: 500; }
+.badge {
+  font-size: .68rem; color: var(--warn); background: var(--warn-hg);
+  border-radius: 6px; padding: 1px 5px; margin-left: 4px; white-space: nowrap; vertical-align: middle;
+}
+
+/* Gewinner/Verlierer */
+.mover { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.mover h3 { margin-top: 0; }
+
+/* News */
+.news { list-style: none; margin: 0; padding: 0; }
+.news li { padding: 9px 0; border-top: 1px solid var(--linie); }
+.news li:first-child { border-top: 0; padding-top: 0; }
+.news a { text-decoration: none; font-weight: 550; display: block; }
+.news a:active { opacity: .6; }
+.news .meta { font-size: .76rem; color: var(--leise); margin-top: 2px; }
+.tag { display: inline-block; font-size: .68rem; padding: 0 6px; border-radius: 6px; background: var(--neutral-hg); margin-left: 4px; }
+
+/* Kalender */
+.tag-titel { font-size: .8rem; font-weight: 700; color: var(--leise); text-transform: uppercase; letter-spacing: .04em; margin: 10px 0 4px; }
+.tag-titel:first-child { margin-top: 0; }
+.termin { display: grid; grid-template-columns: 3.2em minmax(0, 1fr); gap: 8px; padding: 6px 0; font-size: .9rem; }
+.termin .zeit { color: var(--leise); }
+.termin .detail { font-size: .75rem; color: var(--leise); }
+.wichtig-hoch::before { content: "●"; color: var(--minus); margin-right: 5px; font-size: .7em; vertical-align: middle; }
+.wichtig-mittel::before { content: "●"; color: var(--warn); margin-right: 5px; font-size: .7em; vertical-align: middle; }
+
+/* Auf-/Zuklappen */
+details summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+details summary::-webkit-details-marker { display: none; }
+details summary::after { content: "▾"; color: var(--leise); transition: transform .2s; }
+details[open] summary::after { transform: rotate(180deg); }
+details summary h2 { margin: 0; }
+details[open] summary { margin-bottom: .6rem; }
+.quellen-tab { width: 100%; border-collapse: collapse; }
+.quellen-tab td { padding: 4px 6px 4px 0; border-top: 1px solid var(--linie); vertical-align: top; }
+
+.fuss { max-width: 1400px; margin: 22px auto 30px; text-align: center; font-size: .82rem; }
+.fuss p { margin: .3rem 0; }
+
+/* ---------- Grössere Bildschirme ---------- */
+/* Grosses iPhone quer / iPad hoch */
+@media (min-width: 700px) {
+  .kacheln { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .raster { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* iPad quer / Computer */
+@media (min-width: 1050px) {
+  .kacheln { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .raster { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .raster.zwei { grid-template-columns: 3fr 2fr; }
+}
+@media (min-width: 1300px) {
+  .kacheln { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+}
+.raster.zwei.innen { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }

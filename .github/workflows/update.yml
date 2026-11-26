@@ -1,0 +1,105 @@
+# =====================================================================
+#  Automatische Aktualisierung der Börsen-Übersicht
+# ---------------------------------------------------------------------
+#  Läuft: täglich ca. 07:00 und 22:30 Schweizer Zeit, bei jeder Code-Änderung
+#  auf "main" und auf Knopfdruck (Actions -> "Börsendaten aktualisieren" -> "Run workflow").
+#  1. Job "daten":           Python-Skript holt Kurse/News -> docs/data/markets.json -> Commit
+#  2. Job "veroeffentlichen": Ordner docs/ wird auf GitHub Pages veröffentlicht
+# =====================================================================
+name: Börsendaten aktualisieren
+
+on:
+  schedule:
+    # GitHub rechnet in UTC. Jede Zeit ist doppelt eingetragen (Sommer/Winter);
+    # scripts/check_time.py lässt nur den jeweils passenden Lauf weiterlaufen.
+    - cron: "0 5 * * *"     # 07:00 Schweizer SOMMERzeit
+    - cron: "0 6 * * *"     # 07:00 Schweizer WINTERzeit
+    - cron: "30 20 * * *"   # 22:30 Schweizer SOMMERzeit
+    - cron: "30 21 * * *"   # 22:30 Schweizer WINTERzeit
+  workflow_dispatch:        # manueller Start per Knopf
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/data/**"      # eigene Daten-Commits lösen keinen neuen Lauf aus
+      - "README.md"
+
+permissions:
+  contents: write           # um die neue JSON-Datei zu speichern
+  pages: write              # um GitHub Pages zu veröffentlichen
+  id-token: write
+
+# Nie zwei Läufe gleichzeitig
+concurrency:
+  group: boersen-update
+  cancel-in-progress: false
+
+jobs:
+  daten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      ausfuehren: ${{ steps.zeit.outputs.ausfuehren }}
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v5
+
+      - name: Python einrichten
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Zeitprüfung (Sommer-/Winterzeit)
+        id: zeit
+        run: python scripts/check_time.py "${{ github.event_name }}" "${{ github.event.schedule }}"
+
+      - name: Bibliotheken installieren
+        if: steps.zeit.outputs.ausfuehren == 'true'
+        run: pip install -r requirements.txt
+
+      - name: Daten holen
+        if: steps.zeit.outputs.ausfuehren == 'true'
+        run: python scripts/fetch_data.py
+
+      - name: Daten speichern (Commit)
+        if: steps.zeit.outputs.ausfuehren == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/data/markets.json
+          if git diff --staged --quiet; then
+            echo "Keine Änderungen."
+            exit 0
+          fi
+          git commit -m "Daten aktualisiert: $(TZ=Europe/Zurich date '+%d.%m.%Y %H:%M')"
+          # Bis zu 4 Versuche, falls gleichzeitig etwas anderes gespeichert wurde
+          for i in 1 2 3 4; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push && exit 0
+            sleep $((i * 5))
+          done
+          exit 1
+
+  veroeffentlichen:
+    needs: daten
+    if: needs.daten.outputs.ausfuehren == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Neuesten Stand holen (inkl. neuer Daten)
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Pages einrichten
+        uses: actions/configure-pages@v5
+
+      - name: Webseite verpacken
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs
+
+      - name: Auf GitHub Pages veröffentlichen
+        id: deploy
+        uses: actions/deploy-pages@v4

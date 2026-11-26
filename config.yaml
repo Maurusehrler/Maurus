@@ -1,0 +1,244 @@
+# =====================================================================
+#  KONFIGURATION DER BÖRSEN-ÜBERSICHT
+# ---------------------------------------------------------------------
+#  Diese Datei kannst du direkt auf github.com bearbeiten (Stift-Symbol).
+#  Regeln für YAML-Dateien:
+#    - Einrückung immer mit LEERZEICHEN (keine Tabs!)
+#    - Zeilen, die mit "#" beginnen, sind Kommentare und werden ignoriert
+#    - Jeder Eintrag in einer Liste beginnt mit "- "
+#  Symbole (Ticker) findest du auf https://finance.yahoo.com
+#  (z.B. Suche "Nestle" -> Symbol "NESN.SW"; Schweizer Titel enden auf .SW)
+# =====================================================================
+
+# Zeitzone, in der alle Zeiten angezeigt werden
+zeitzone: "Europe/Zurich"
+
+# ---------------------------------------------------------------------
+# INDIZES  (Kachel mit Mini-Chart)
+#   symbol  = Yahoo-Finance-Symbol
+#   name    = Anzeigename
+#   region  = Schweiz / USA / Europa  (für Gruppierung und Börsenstatus)
+#   stooq   = (optional) Ersatz-Symbol bei stooq.com, falls Yahoo ausfällt
+# ---------------------------------------------------------------------
+indizes:
+  - { symbol: "^SSMI",     name: "SMI",           region: "Schweiz", stooq: "^smi" }
+  - { symbol: "^SSHI",     name: "SPI",           region: "Schweiz" }
+  - { symbol: "^GSPC",     name: "S&P 500",       region: "USA",     stooq: "^spx" }
+  - { symbol: "^IXIC",     name: "Nasdaq",        region: "USA",     stooq: "^ndq" }
+  - { symbol: "^DJI",      name: "Dow Jones",     region: "USA",     stooq: "^dji" }
+  - { symbol: "^GDAXI",    name: "DAX",           region: "Europa",  stooq: "^dax" }
+  - { symbol: "^STOXX50E", name: "Euro Stoxx 50", region: "Europa" }
+
+# ---------------------------------------------------------------------
+# AKTIEN SCHWEIZ  (für Top-Gewinner/-Verlierer und Tagesüberblick)
+#   Zum Hinzufügen einfach eine neue Zeile im gleichen Format einfügen.
+#   Zum Entfernen die Zeile löschen (oder mit "#" auskommentieren).
+# ---------------------------------------------------------------------
+aktien_ch:
+  - { symbol: "NESN.SW", name: "Nestlé" }
+  - { symbol: "NOVN.SW", name: "Novartis" }
+  - { symbol: "ROG.SW",  name: "Roche" }
+  - { symbol: "UBSG.SW", name: "UBS" }
+  - { symbol: "ABBN.SW", name: "ABB" }
+  - { symbol: "ZURN.SW", name: "Zurich" }
+  - { symbol: "CFR.SW",  name: "Richemont" }
+  - { symbol: "HOLN.SW", name: "Holcim" }
+  - { symbol: "SREN.SW", name: "Swiss Re" }
+  - { symbol: "LONN.SW", name: "Lonza" }
+  - { symbol: "SIKA.SW", name: "Sika" }
+  - { symbol: "ALC.SW",  name: "Alcon" }
+  - { symbol: "PGHN.SW", name: "Partners Group" }
+  - { symbol: "GIVN.SW", name: "Givaudan" }
+  - { symbol: "SCMN.SW", name: "Swisscom" }
+  - { symbol: "SLHN.SW", name: "Swiss Life" }
+  - { symbol: "GEBN.SW", name: "Geberit" }
+  - { symbol: "KNIN.SW", name: "Kühne+Nagel" }
+  - { symbol: "LOGN.SW", name: "Logitech" }
+  - { symbol: "GALD.SW", name: "Galderma" }
+
+# ---------------------------------------------------------------------
+# AKTIEN USA
+#   stooq = optionales Ersatz-Symbol (Format: kleinbuchstaben + ".us")
+# ---------------------------------------------------------------------
+aktien_us:
+  - { symbol: "AAPL",  name: "Apple",     stooq: "aapl.us" }
+  - { symbol: "MSFT",  name: "Microsoft", stooq: "msft.us" }
+  - { symbol: "NVDA",  name: "Nvidia",    stooq: "nvda.us" }
+  - { symbol: "AMZN",  name: "Amazon",    stooq: "amzn.us" }
+  - { symbol: "GOOGL", name: "Alphabet",  stooq: "googl.us" }
+  - { symbol: "META",  name: "Meta",      stooq: "meta.us" }
+  - { symbol: "TSLA",  name: "Tesla",     stooq: "tsla.us" }
+
+# ---------------------------------------------------------------------
+# KRYPTO
+#   coingecko = ID bei CoinGecko (steht in der Adresse, z.B.
+#               coingecko.com/de/munze/bitcoin -> "bitcoin")
+#   symbol    = Yahoo-Symbol als Ersatzquelle
+# ---------------------------------------------------------------------
+krypto:
+  - { coingecko: "bitcoin",  symbol: "BTC-USD", name: "Bitcoin" }
+  - { coingecko: "ethereum", symbol: "ETH-USD", name: "Ethereum" }
+
+# ---------------------------------------------------------------------
+# ROHSTOFFE (Futures-Kontrakte bei Yahoo)
+# ---------------------------------------------------------------------
+rohstoffe:
+  - { symbol: "GC=F", name: "Gold",       einheit: "USD/oz" }
+  - { symbol: "SI=F", name: "Silber",     einheit: "USD/oz" }
+  - { symbol: "BZ=F", name: "Öl (Brent)", einheit: "USD/Fass" }
+  - { symbol: "CL=F", name: "Öl (WTI)",   einheit: "USD/Fass" }
+
+# ---------------------------------------------------------------------
+# DEVISEN
+#   basis/ziel = Währungscodes für die Ersatzquelle (EZB-Kurse via frankfurter.app)
+# ---------------------------------------------------------------------
+devisen:
+  - { symbol: "USDCHF=X", name: "USD/CHF", basis: "USD", ziel: "CHF" }
+  - { symbol: "EURCHF=X", name: "EUR/CHF", basis: "EUR", ziel: "CHF" }
+  - { symbol: "EURUSD=X", name: "EUR/USD", basis: "EUR", ziel: "USD" }
+
+# ---------------------------------------------------------------------
+# WEITERE INDIKATOREN
+# ---------------------------------------------------------------------
+weitere:
+  - { symbol: "^VIX", name: "VIX (Volatilität)",     einheit: "Punkte" }
+  - { symbol: "^TNX", name: "US-Rendite 10 Jahre",   einheit: "%" }
+
+# ---------------------------------------------------------------------
+# AUFFÄLLIGKEITEN: ab welcher Tagesbewegung (in %) ein Hinweis erscheint
+# ---------------------------------------------------------------------
+schwellen:
+  index: 2.0
+  aktie: 5.0
+  krypto: 5.0
+  rohstoff: 3.0
+  devisen: 1.0
+  weitere: 10.0
+
+# ---------------------------------------------------------------------
+# NEWS (RSS-Feeds)
+#   Feeds, die nicht funktionieren, werden einfach übersprungen.
+#   In der App siehst du ganz unten unter "Datenquellen", welche Feeds
+#   beim letzten Lauf funktioniert haben.
+# ---------------------------------------------------------------------
+news:
+  max_artikel: 25            # so viele Schlagzeilen werden angezeigt
+  max_alter_stunden: 36      # ältere Meldungen werden weggelassen
+  max_pro_quelle: 6          # damit nicht eine Quelle alles dominiert
+  feeds:
+    # --- Schweiz ---
+    - { name: "NZZ Wirtschaft",  url: "https://www.nzz.ch/wirtschaft.rss" }
+    - { name: "NZZ Finanzen",    url: "https://www.nzz.ch/finanzen.rss" }
+    - { name: "finews.ch",       url: "https://www.finews.ch/news/finanzplatz?format=feed&type=rss" }
+    - { name: "finews.ch",       url: "https://www.finews.ch/?format=feed&type=rss" }
+    - { name: "cash.ch",         url: "https://www.cash.ch/rss/news" }
+    - { name: "Handelszeitung",  url: "https://www.handelszeitung.ch/rss.xml" }
+    - { name: "SRF Wirtschaft",  url: "https://www.srf.ch/news/bnf/rss/1926" }
+    - { name: "swissinfo",       url: "https://www.swissinfo.ch/ger/wirtschaft/rss" }
+    # --- Deutschland / Europa ---
+    - { name: "tagesschau Wirtschaft", url: "https://www.tagesschau.de/wirtschaft/index~rss2.xml" }
+    - { name: "EZB",             url: "https://www.ecb.europa.eu/rss/press.html" }
+    # --- International ---
+    - { name: "CNBC",            url: "https://www.cnbc.com/id/100003114/device/rss/rss.html" }
+    - { name: "CNBC Markets",    url: "https://www.cnbc.com/id/15839069/device/rss/rss.html" }
+    - { name: "MarketWatch",     url: "https://feeds.content.dowjones.io/public/rss/mw_topstories" }
+    - { name: "Yahoo Finance",   url: "https://finance.yahoo.com/news/rssindex" }
+    - { name: "BBC Business",    url: "https://feeds.bbci.co.uk/news/business/rss.xml" }
+    - { name: "Federal Reserve", url: "https://www.federalreserve.gov/feeds/press_monetary.xml" }
+
+  # Stichwörter, die eine Meldung wichtiger machen (Gewicht = Zusatzpunkte).
+  # Die Namen deiner Aktien von oben werden automatisch auch berücksichtigt.
+  stichwoerter:
+    SNB: 5
+    Nationalbank: 5
+    Notenbank: 4
+    Fed: 4
+    EZB: 4
+    ECB: 4
+    Zins: 3
+    Leitzins: 5
+    "rate cut": 4
+    "interest rate": 3
+    Inflation: 4
+    Teuerung: 4
+    Powell: 3
+    Lagarde: 3
+    Schlegel: 3
+    Franken: 3
+    SMI: 3
+    Börse: 2
+    Rezession: 3
+    recession: 3
+    Zölle: 2
+    tariff: 2
+    Quartalszahlen: 2
+    earnings: 2
+    Wall Street: 2
+    Bitcoin: 2
+    Gold: 1
+    Öl: 1
+    Ölpreis: 1
+
+# ---------------------------------------------------------------------
+# WIRTSCHAFTSKALENDER
+# ---------------------------------------------------------------------
+kalender:
+  # Währungsräume aus dem automatischen Kalender (Quelle: ForexFactory-Wochenkalender)
+  waehrungen: ["CHF", "USD", "EUR"]
+  # Welche Wichtigkeit wird gezeigt? (High = hoch, Medium = mittel)
+  wichtigkeit: ["High"]
+  # Für Schweizer Termine zusätzlich auch "Medium" zeigen?
+  chf_auch_mittel: true
+  # Quartalszahlen der eigenen Aktien in den nächsten X Tagen anzeigen
+  quartalszahlen_tage: 14
+
+  # Fixe Termine, die du selbst pflegst (Format: Datum JJJJ-MM-TT).
+  # Bitte einmal pro Jahr auf snb.ch / federalreserve.gov / ecb.europa.eu prüfen.
+  eigene_termine:
+    - { datum: "2026-12-09", titel: "Fed-Zinsentscheid (USA)" }
+    - { datum: "2026-12-10", titel: "SNB geldpolitische Lagebeurteilung" }
+    - { datum: "2026-12-17", titel: "EZB-Zinsentscheid" }
+    - { datum: "2027-01-27", titel: "Fed-Zinsentscheid (USA)" }
+    - { datum: "2027-02-04", titel: "EZB-Zinsentscheid" }
+    - { datum: "2027-03-18", titel: "SNB geldpolitische Lagebeurteilung" }
+    - { datum: "2027-03-18", titel: "EZB-Zinsentscheid" }
+    - { datum: "2027-04-29", titel: "EZB-Zinsentscheid" }
+    - { datum: "2027-06-10", titel: "EZB-Zinsentscheid" }
+    - { datum: "2027-06-24", titel: "SNB geldpolitische Lagebeurteilung" }
+    - { datum: "2027-07-22", titel: "EZB-Zinsentscheid" }
+    - { datum: "2027-09-23", titel: "SNB geldpolitische Lagebeurteilung" }
+    - { datum: "2027-12-16", titel: "SNB geldpolitische Lagebeurteilung" }
+    - { datum: "2027-12-16", titel: "EZB-Zinsentscheid" }
+
+# ---------------------------------------------------------------------
+# BÖRSEN: Handelszeiten (lokale Zeit der Börse) und Feiertage
+#   Wird für die Anzeige "offen/geschlossen" verwendet.
+#   Feiertage bitte einmal pro Jahr ergänzen (ohne Gewähr).
+# ---------------------------------------------------------------------
+boersen:
+  - name: "SIX Schweiz"
+    region: "Schweiz"
+    zeitzone: "Europe/Zurich"
+    oeffnung: "09:00"
+    schluss: "17:30"
+    feiertage: ["2026-01-01", "2026-01-02", "2026-04-03", "2026-04-06", "2026-05-01",
+                "2026-05-14", "2026-05-25", "2026-12-24", "2026-12-25", "2026-12-31",
+                "2027-01-01", "2027-03-26", "2027-03-29", "2027-05-06", "2027-05-17",
+                "2027-12-24", "2027-12-31"]
+  - name: "Xetra Frankfurt"
+    region: "Europa"
+    zeitzone: "Europe/Berlin"
+    oeffnung: "09:00"
+    schluss: "17:30"
+    feiertage: ["2026-01-01", "2026-04-03", "2026-04-06", "2026-05-01", "2026-12-24",
+                "2026-12-25", "2026-12-31", "2027-01-01", "2027-03-26", "2027-03-29",
+                "2027-12-24", "2027-12-31"]
+  - name: "NYSE / Nasdaq"
+    region: "USA"
+    zeitzone: "America/New_York"
+    oeffnung: "09:30"
+    schluss: "16:00"
+    feiertage: ["2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-05-25",
+                "2026-06-19", "2026-07-03", "2026-09-07", "2026-11-26", "2026-12-25",
+                "2027-01-01", "2027-01-18", "2027-02-15", "2027-03-26", "2027-05-31",
+                "2027-06-18", "2027-07-05", "2027-09-06", "2027-11-25", "2027-12-24"]

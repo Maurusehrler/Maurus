@@ -1,0 +1,6 @@
+# Python-Bibliotheken für scripts/fetch_data.py (alle kostenlos)
+yfinance>=0.2.54
+feedparser>=6.0
+requests>=2.31
+PyYAML>=6.0
+pandas>=2.0

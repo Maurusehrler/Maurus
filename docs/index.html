@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+  <meta charset="utf-8">
+  <!-- viewport-fit=cover: nutzt den ganzen Bildschirm (auch um die "Notch" beim iPhone) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Börsen-Übersicht</title>
+  <meta name="description" content="Persönliche Börsen-Übersicht: Schweiz, USA, Europa, Krypto, Rohstoffe, Devisen und News.">
+
+  <!-- PWA / iOS: als App auf dem Home-Bildschirm -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Börse">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+  <meta name="theme-color" content="#f2f3f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b0f1a" media="(prefers-color-scheme: dark)">
+  <meta name="format-detection" content="telephone=no">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Anzeige beim Herunterziehen (Pull-to-refresh) -->
+  <div id="ptr" class="ptr" aria-hidden="true"><span class="ptr-pfeil">↓</span> <span id="ptr-text">Zum Aktualisieren ziehen</span></div>
+
+  <header class="kopf">
+    <div class="kopf-zeile">
+      <div>
+        <h1>Börse</h1>
+        <div id="datum" class="leise"></div>
+      </div>
+      <button id="neu-laden" class="knopf" type="button" aria-label="Neu laden">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 4a8 8 0 0 1 7.75 6h-2.1A6 6 0 1 0 18 14h2.07A8 8 0 1 1 12 4Zm5.6 1.4L20 3v6h-6l2.2-2.2 1.4-1.4Z"/></svg>
+        <span>Neu laden</span>
+      </button>
+    </div>
+    <div id="aktualisiert" class="leise klein"></div>
+    <div id="boersen-status" class="chips"></div>
+  </header>
+
+  <main id="inhalt">
+    <div id="hinweise"></div>
+
+    <section class="karte breit" id="sek-ueberblick">
+      <h2>Tagesüberblick</h2>
+      <div id="ueberblick"><p class="leise">Daten werden geladen …</p></div>
+    </section>
+
+    <section class="karte breit versteckt" id="sek-auffaellig">
+      <h2>Auffälligkeiten</h2>
+      <ul id="auffaellig" class="liste-auffaellig"></ul>
+    </section>
+
+    <section class="breit" id="sek-indizes">
+      <div class="titel-zeile">
+        <h2>Indizes</h2>
+        <div class="umschalter" role="group" aria-label="Zeitraum Mini-Chart">
+          <button type="button" data-zeitraum="5">5 Tage</button>
+          <button type="button" data-zeitraum="23">1 Monat</button>
+        </div>
+      </div>
+      <div id="indizes" class="kacheln"></div>
+    </section>
+
+    <div class="raster">
+      <section class="karte" id="sek-mover-ch">
+        <h2>Gewinner &amp; Verlierer Schweiz</h2>
+        <div id="mover-ch"></div>
+      </section>
+      <section class="karte" id="sek-mover-us">
+        <h2>Gewinner &amp; Verlierer USA</h2>
+        <div id="mover-us"></div>
+      </section>
+      <section class="karte" id="sek-krypto">
+        <h2>Krypto</h2>
+        <div id="krypto"></div>
+      </section>
+      <section class="karte" id="sek-rohstoffe">
+        <h2>Rohstoffe</h2>
+        <div id="rohstoffe"></div>
+      </section>
+      <section class="karte" id="sek-devisen">
+        <h2>Devisen</h2>
+        <div id="devisen"></div>
+      </section>
+      <section class="karte" id="sek-weitere">
+        <h2>Stimmung &amp; Zinsen</h2>
+        <div id="weitere"></div>
+      </section>
+    </div>
+
+    <div class="raster zwei">
+      <section class="karte" id="sek-news">
+        <h2>Wichtigste News</h2>
+        <ol id="news" class="news"></ol>
+      </section>
+      <section class="karte" id="sek-kalender">
+        <h2>Wirtschaftskalender</h2>
+        <div id="kalender"></div>
+      </section>
+    </div>
+
+    <section class="karte breit">
+      <details>
+        <summary><h2>Alle Aktien</h2></summary>
+        <div class="raster zwei innen">
+          <div><h3>Schweiz</h3><div id="alle-ch"></div></div>
+          <div><h3>USA</h3><div id="alle-us"></div></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="karte breit">
+      <details>
+        <summary><h2>Datenquellen &amp; Status</h2></summary>
+        <div id="quellen" class="klein"></div>
+      </details>
+    </section>
+  </main>
+
+  <footer class="fuss">
+    <p><strong>Keine Anlageberatung. Daten ohne Gewähr, teilweise verzögert.</strong></p>
+    <p class="leise">Quellen: Yahoo Finance, CoinGecko, EZB, stooq, ForexFactory und RSS-Feeds der genannten Medien.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
