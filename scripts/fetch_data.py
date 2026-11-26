@@ -996,7 +996,8 @@ def lade_fundamentaldaten(cfg: dict, pfad: Path, erzwingen: bool = False) -> dic
             alter_std = (jetzt_utc() - datetime.fromisoformat(alt["erstellt"])).total_seconds() / 3600
         except Exception:  # noqa: BLE001
             pass
-    fehlend = [a for a in aktien if a["symbol"] not in (alt.get("aktien") or {})]
+    # "fehlend" = neue Aktien oder solche ohne Kennzahlen (letzter Abruf fehlgeschlagen)
+    fehlend = [a for a in aktien if "kurs" not in ((alt.get("aktien") or {}).get(a["symbol"]) or {})]
     if not erzwingen and alter_std < FUNDAMENTAL_MAX_ALTER_STD and not fehlend:
         log.info("Fundamentaldaten sind aktuell (%.1f Std. alt) – kein Neuladen nötig", alter_std)
         daten = alt
@@ -1008,12 +1009,18 @@ def lade_fundamentaldaten(cfg: dict, pfad: Path, erzwingen: bool = False) -> dic
         log.info("Hole Fundamentaldaten für %d Aktien …", len(zu_holen))
 
     def eine(item):
-        for versuch in range(2):
-            try:
-                return item, fundamental_eine_aktie(item["symbol"]), None
-            except Exception as e:  # noqa: BLE001
-                fehler = str(e)[:100]
-                time.sleep(3 * (versuch + 1))
+        fehler = ""
+        # Zuerst das Hauptsymbol, danach die Ersatz-Symbole aus config.yaml (z.B. Roche RO.SW)
+        for symbol in [item["symbol"]] + list(item.get("alternativ", [])):
+            for versuch in range(2):
+                try:
+                    k = fundamental_eine_aktie(symbol)
+                    if symbol != item["symbol"]:
+                        k["quelle_symbol"] = symbol
+                    return item, k, None
+                except Exception as e:  # noqa: BLE001
+                    fehler = f"{symbol}: {str(e)[:100]}"
+                    time.sleep(2 * (versuch + 1))
         return item, None, fehler
 
     ok_anzahl = 0
