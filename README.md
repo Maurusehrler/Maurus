@@ -5,16 +5,20 @@ Persönliche Börsen-Übersicht für iPhone und iPad. Sie aktualisiert sich jede
 **kostenlos** und braucht **keine API-Schlüssel**.
 
 **Inhalt (4 Bereiche, unten bzw. auf dem iPad oben umschaltbar):**
-- **Übersicht:** Börsenstatus, Tagesüberblick in Textform, Auffälligkeiten, Fear & Greed (Aktien: CNN,
+- **Übersicht:** Aktie des Tages (Steckbrief + Kennzahlen-Check), Finanzbegriff des Tages (mit Lexikon), Börsenstatus, Tagesüberblick in Textform, Auffälligkeiten, Fear & Greed (Aktien: CNN,
   Krypto: alternative.me), Indizes mit Mini-Charts,
   Top & Flop Schweiz/USA, Termine heute/morgen, Top-News
 - **Aktien:** 12 Sektoren mit je 5–10 grossen Titeln (inkl. Bitcoin- und Quanten-Aktien) im Vergleich,
   Gewinner/Verlierer pro Sektor, US-Sektoren (S&P 500), alle Aktien sortiert. Filter: Alle / Schweiz / USA / Übrige
 - **Märkte:** Indizes, ETFs/Fonds, Krypto, Rohstoffe, Devisen, VIX und US-Zinsen
+- **Kalender:** Monatsansicht mit allen Terminen: Quartalszahlen (mit Analysten-Schätzungen),
+  Dividenden, Notenbanken, Konjunkturdaten, eigene Events/Präsentationen, Optionsverfall, Börsenfeiertage
+- **Detailansicht:** Jede Aktie antippen → Kursverlauf, Steckbrief, Gewinn der letzten Jahre,
+  KGV, PEG, KBV, Margen, Eigenkapitalrendite, Dividende, Verschuldung, Analysten-Kursziele (mit Ampel und Erklärung)
 - **News:** Schlagzeilen aus RSS-Feeds (sortierbar: Wichtigste/Neueste, Filter: Schweiz/International), Wirtschaftskalender, Datenquellen-Status
 
-**Zeitraum-Umschalter** oben: **1T · 1W · 1M · 3M · YTD · 1J** (1 Tag, 1 Woche, 1 Monat, 3 Monate,
-seit Jahresbeginn, 1 Jahr). Er gilt für Kurse, Mini-Charts, Top & Flop und Sektoren.
+**Zeitraum-Umschalter** oben: **1T · 1W · 1M · 3M · YTD · 1J · 3J · 5J** (1 Tag, 1 Woche, 1 Monat, 3 Monate,
+seit Jahresbeginn, 1, 3 und 5 Jahre). Er gilt für Kurse, Mini-Charts, Top & Flop und Sektoren.
 Die App merkt sich Tab, Zeitraum und Region.
 
 > Keine Anlageberatung. Daten ohne Gewähr, teilweise verzögert.
@@ -25,6 +29,7 @@ Die App merkt sich Tab, Zeitraum und Region.
 
 ```
 config.yaml                  ← HIER änderst du Aktien, Feeds, Schwellen, Termine
+steckbriefe.yaml             ← deutsche Kurzporträts der Aktien (Aktie des Tages)
 requirements.txt             ← benötigte Python-Bibliotheken
 scripts/
   fetch_data.py              ← holt alle Daten und schreibt docs/data/markets.json
@@ -34,10 +39,13 @@ docs/                        ← die Webseite (wird auf GitHub Pages veröffentl
   index.html                 ← Grundgerüst der Seite
   style.css                  ← Aussehen (hell/dunkel, iPhone/iPad)
   app.js                     ← liest markets.json und baut die Seite auf
+  kennzahlen.js              ← Aktie des Tages, Detailansicht, Finanz-Lexikon
+  kalender.js                ← Kalender-Ansicht
   sw.js                      ← Service Worker (Offline-Betrieb)
   manifest.json              ← App-Einstellungen für den Home-Bildschirm
   icons/                     ← App-Icons
-  data/markets.json          ← die aktuellen Daten (automatisch erzeugt)
+  data/markets.json          ← Kurse, News, Termine (automatisch erzeugt)
+  data/fundamentals.json     ← Kennzahlen aller Aktien (1x täglich automatisch erneuert)
 .github/workflows/update.yml ← Zeitplan der automatischen Aktualisierung
 ```
 
@@ -123,6 +131,14 @@ Alles läuft über die Datei **`config.yaml`**. Du kannst sie direkt im Browser 
 3. **Aktie entfernen:** die Zeile löschen oder ein `#` an den Anfang setzen.
 4. Unten auf **Commit changes…** → **Commit changes** klicken.
 5. Die Aktualisierung startet automatisch. Nach 2–4 Minuten ist die Änderung in der App sichtbar.
+
+**Steckbrief ergänzen:** In `steckbriefe.yaml` unter dem Symbol der Aktie `was`, `chancen`, `risiken`
+und optional `fakt` eintragen (gleiches Format wie die anderen). Ohne Steckbrief zeigt die App die
+englische Firmenbeschreibung von Yahoo.
+
+**Eigene Termine/Präsentationen** (z.B. Apple-Keynote, Investorentag, Generalversammlung): in `config.yaml`
+unter `kalender:` → `eigene_termine:` eine Zeile ergänzen, z.B.
+`- { datum: "2027-04-15", titel: "Generalversammlung Nestlé", typ: "event", land: "Schweiz" }`.
 
 **ETF oder Fonds hinzufügen:** im Abschnitt `etfs:` eine Zeile mit der ISIN ergänzen, z.B.
 `- { isin: "IE00B5BMR087", name: "iShares Core S&P 500", boerse: [".SW", ".L", ".DE"] }`.

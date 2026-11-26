@@ -292,3 +292,152 @@ details[open] summary { margin-bottom: .6rem; }
 /* News-Filter */
 .filter-zeile { margin-bottom: .7rem; }
 #news-sortierung button, #news-filter button { font-size: .78rem; padding: 5px 9px; }
+
+/* =====================================================================
+   Erweiterungen: Aktie des Tages, Detailansicht, Kalender
+   ===================================================================== */
+:root {
+  /* Farben der Termin-Arten (geprüfte Palette, immer zusammen mit Namen/Symbol) */
+  --typ-zahlen: #257de0; --typ-dividende: #f47230; --typ-notenbank: #00b894;
+  --typ-konjunktur: #f2a600; --typ-event: #ee7fac; --typ-verfall: #6a4ce2; --typ-feiertag: #8a8f98;
+  --gut: #15803d; --mittel: #b45309; --schlecht: #dc2626;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --typ-zahlen: #338ced; --typ-dividende: #e76624; --typ-notenbank: #00a888;
+    --typ-konjunktur: #d28e05; --typ-event: #e24d8b; --typ-verfall: #9887ef; --typ-feiertag: #7c8496;
+    --gut: #34d399; --mittel: #fbbf24; --schlecht: #f87171;
+  }
+}
+
+/* 8 Zeitraum-Knöpfe passen auch aufs iPhone */
+#zeitraum-wahl button { padding: 6px 2px; font-size: .78rem; }
+@media (min-width: 700px) { #zeitraum-wahl button { padding: 6px 14px; font-size: .82rem; } }
+.tabs button span { white-space: nowrap; }
+@media (max-width: 699px) { .tabs button { font-size: .62rem; } }
+
+/* Antippbare Zeilen */
+.klickbar { cursor: pointer; border-radius: 8px; -webkit-tap-highlight-color: transparent; }
+.klickbar:active { background: var(--neutral-hg); }
+@media (hover: hover) { .klickbar:hover { background: var(--neutral-hg); } }
+.zeile.klickbar .n::after { content: " ›"; color: var(--leise); }
+
+/* Ampel */
+.ampel { display: inline-flex; align-items: center; gap: 4px; font-size: .7rem; font-weight: 600; white-space: nowrap; }
+.ampel-punkt { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.ampel-gut { color: var(--gut); } .ampel-mittel { color: var(--mittel); }
+.ampel-schlecht { color: var(--schlecht); } .ampel-neutral { color: var(--leise); }
+
+/* Aktie des Tages */
+.adt-kopf { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.adt-name { font-size: 1.15rem; font-weight: 700; }
+.adt-kurs { text-align: right; white-space: nowrap; }
+.adt-text { margin: .6rem 0; }
+.kz-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: .5rem 0 .7rem; }
+.kz-chip { background: var(--neutral-hg); border-radius: 10px; padding: 6px 9px; display: flex; flex-direction: column; gap: 1px; font-size: .78rem; }
+.kz-chip b { font-size: .95rem; }
+.fakt { background: var(--neutral-hg); border-radius: 10px; padding: 7px 10px; }
+.breit-knopf { width: 100%; justify-content: center; margin-top: .4rem; }
+.wissen-begriff { color: var(--text); font-size: 1rem; margin-bottom: .3rem; }
+.beispiel { color: var(--leise); border-left: 3px solid var(--linie); padding-left: 8px; }
+
+/* Detailansicht: Fenster von unten (iPhone) bzw. zentriert (iPad) */
+.blatt-hintergrund { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 40; }
+.blatt {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; max-height: 92vh; overflow-y: auto;
+  background: var(--hg); border-radius: 18px 18px 0 0;
+  padding: 10px max(16px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  -webkit-overflow-scrolling: touch; overscroll-behavior: contain; animation: hoch .22s ease-out;
+}
+@keyframes hoch { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
+@media (min-width: 700px) {
+  .blatt { left: 50%; right: auto; bottom: 4vh; width: min(760px, 94vw); transform: translateX(-50%); border-radius: 18px; max-height: 90vh; animation: none; }
+}
+body.blatt-offen { overflow: hidden; }
+.blatt-griff { width: 40px; height: 5px; border-radius: 3px; background: var(--linie); margin: 0 auto 8px; }
+.blatt-zu { position: sticky; top: 0; float: right; border: 0; background: var(--karte); color: var(--text); width: 32px; height: 32px; border-radius: 50%; font-size: 1rem; cursor: pointer; box-shadow: var(--schatten); z-index: 2; }
+.blatt-kopf h2 { font-size: 1.3rem; margin-bottom: .1rem; }
+.blatt-kurs { font-size: 1.4rem; margin: .4rem 0 .6rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.blatt-zeitraum { margin-bottom: 8px; }
+.blatt-zeitraum button { padding: 5px 2px; font-size: .76rem; }
+.blatt-abschnitt { background: var(--karte); border-radius: var(--radius); padding: 12px 14px; margin-top: 12px; box-shadow: var(--schatten); }
+.blatt-abschnitt h3 { color: var(--text); font-size: .95rem; margin-bottom: .5rem; }
+.blatt-abschnitt p { margin: .35rem 0; }
+.gross-chart { position: relative; background: var(--karte); border-radius: var(--radius); padding: 10px 8px; box-shadow: var(--schatten); }
+.gross-chart svg { width: 100%; height: 150px; display: block; }
+.gross-chart .gitter { stroke: var(--linie); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-dasharray: 3 3; }
+.gross-chart .achse { position: absolute; right: 12px; font-size: .68rem; color: var(--leise); background: var(--karte); padding: 0 3px; }
+.gross-chart .achse.oben { top: 6px; } .gross-chart .achse.unten { bottom: 6px; }
+
+/* Kennzahlen-Liste */
+.kz-gruppe { margin: .9rem 0 .2rem; color: var(--leise) !important; font-size: .78rem !important; text-transform: uppercase; letter-spacing: .03em; }
+.kz-zeile { border-top: 1px solid var(--linie); }
+.kz-zeile summary { display: grid; grid-template-columns: minmax(0, 1fr) auto 5.6em; gap: 8px; align-items: center; padding: 7px 0; cursor: pointer; list-style: none; }
+.kz-zeile summary::-webkit-details-marker { display: none; }
+.kz-zeile summary::after { content: none; }
+.kz-zeile .kz-name { font-size: .86rem; }
+.kz-zeile .kz-wert { font-weight: 650; text-align: right; white-space: nowrap; }
+.kz-zeile p { margin: 0 0 8px; }
+
+/* Gewinn-Balken pro Jahr */
+.gewinn-chart { display: flex; gap: 8px; height: 140px; align-items: stretch; margin: .3rem 0 .6rem; }
+.gc-spalte { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.gc-wert { font-size: .64rem; color: var(--leise); white-space: nowrap; height: 16px; }
+.gc-flaeche { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; position: relative; }
+.gc-balken { width: 70%; max-width: 46px; border-radius: 4px 4px 0 0; min-height: 2px; }
+.gc-balken.plus { background: var(--plus); } .gc-balken.minus { background: var(--minus); }
+.mit-minus .gc-flaeche { align-items: center; }
+.mit-minus .gc-balken.plus { align-self: flex-end; margin-bottom: 50%; }
+.mit-minus .gc-balken.minus { align-self: flex-start; margin-top: 50%; border-radius: 0 0 4px 4px; }
+.mit-minus .gc-flaeche::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--linie); }
+.gc-jahr { font-size: .72rem; color: var(--leise); margin-top: 3px; }
+.tabelle-wrap { overflow-x: auto; }
+.jahre-tab { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.jahre-tab th { text-align: right; font-weight: 600; color: var(--leise); padding: 4px 6px; font-size: .72rem; }
+.jahre-tab td { text-align: right; padding: 5px 6px; border-top: 1px solid var(--linie); vertical-align: top; white-space: nowrap; }
+.jahre-tab th:first-child, .jahre-tab td:first-child { text-align: left; }
+
+/* Spannen (Kursziele, 52 Wochen) */
+.spanne { margin: .7rem 0; }
+.spanne-titel { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+.spanne-spur { position: relative; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--minus-hg), var(--neutral-hg), var(--plus-hg)); }
+.spanne-punkt { position: absolute; top: -4px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--text); border: 2px solid var(--karte); }
+
+/* Lexikon */
+.lexikon-eintrag { background: var(--karte); border-radius: 12px; padding: 10px 14px; margin-top: 8px; box-shadow: var(--schatten); }
+.lexikon-eintrag summary { font-weight: 600; }
+.lexikon-eintrag p { margin: .4rem 0 0; }
+
+/* Kalender: Monatsansicht */
+.monat-knopf { font-size: 1.5rem; padding: 0 10px; line-height: 1; }
+#monat-titel { margin: 0; text-transform: capitalize; }
+.monat { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; margin-top: 10px; }
+.monat-wt { text-align: center; font-size: .68rem; color: var(--leise); font-weight: 600; padding-bottom: 3px; }
+.monat-tag {
+  border: 0; background: none; color: var(--text); font: inherit; border-radius: 10px; min-height: 44px;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 5px 0 3px; gap: 3px;
+}
+.monat-tag.leer { visibility: hidden; }
+.monat-tag.hat-termine { cursor: pointer; }
+.monat-tag:disabled { color: var(--leise); }
+.monat-tag.vorbei { opacity: .45; }
+.monat-tag.heute .monat-zahl { background: var(--akzent); color: #fff; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; }
+.monat-tag.gewaehlt { background: var(--neutral-hg); box-shadow: inset 0 0 0 2px var(--akzent); }
+.monat-zahl { font-size: .85rem; font-weight: 600; line-height: 24px; }
+.monat-punkte { display: flex; gap: 2px; }
+.monat-punkte i { width: 6px; height: 6px; border-radius: 50%; display: block; }
+
+.filter-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.chip-knopf { border: 0; background: var(--neutral-hg); color: var(--text); font: inherit; font-size: .78rem; padding: 5px 10px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+.chip-knopf.aktiv { background: var(--akzent); color: #fff; }
+.chip-knopf.aktiv .leise { color: rgba(255,255,255,.8); }
+
+.typ-punkt { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; flex-shrink: 0; }
+.typ-zahlen { background: var(--typ-zahlen); } .typ-dividende { background: var(--typ-dividende); }
+.typ-notenbank { background: var(--typ-notenbank); } .typ-konjunktur { background: var(--typ-konjunktur); }
+.typ-event { background: var(--typ-event); } .typ-verfall { background: var(--typ-verfall); }
+.typ-feiertag { background: var(--typ-feiertag); }
+.termin.klickbar .termin-titel::after { content: " ›"; color: var(--leise); }
+.termin-tief .termin-titel { color: var(--leise); }
+.kz-zeile .kz-name { overflow-wrap: anywhere; }
+@media (max-width: 499px) { .jahre-tab .eps { display: none; } }

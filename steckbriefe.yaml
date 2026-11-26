@@ -1,0 +1,410 @@
+# =====================================================================
+#  STECKBRIEFE – kurze Porträts für "Aktie des Tages" und die Detailansicht
+# ---------------------------------------------------------------------
+#  Pro Aktie (Symbol wie in config.yaml):
+#    was      = Was macht das Unternehmen? (1–2 Sätze)
+#    chancen  = Was spricht dafür?
+#    risiken  = Worauf muss man achten?
+#    fakt     = (optional) "Wusstest du?"
+#  Fehlt ein Steckbrief, zeigt die App die englische Beschreibung von Yahoo.
+#  Allgemeine Einschätzungen ohne Gewähr – keine Anlageberatung.
+# =====================================================================
+
+# ---------------------------- Technologie ----------------------------
+AAPL:
+  was: "Apple entwickelt iPhone, Mac, iPad, Apple Watch und verdient zunehmend mit Diensten wie App Store, iCloud, Apple Music und Apple Pay."
+  chancen: "Sehr treue Kundschaft, starkes Ökosystem, hohe Margen im Service-Geschäft und grosse Aktienrückkäufe."
+  risiken: "Abhängigkeit vom iPhone, Produktion stark in Asien, Regulierung des App Stores."
+  fakt: "Apple kauft seit Jahren für Dutzende Milliarden Dollar pro Jahr eigene Aktien zurück."
+MSFT:
+  was: "Microsoft verkauft Software (Windows, Office 365), betreibt die Cloud-Plattform Azure und besitzt LinkedIn sowie die Xbox-Sparte."
+  chancen: "Azure und KI-Dienste wachsen stark, Abo-Modelle bringen planbare Einnahmen."
+  risiken: "Sehr hohe Investitionen in Rechenzentren, Wettbewerb mit Amazon und Google in der Cloud, Kartellbehörden."
+NVDA:
+  was: "Nvidia entwickelt Grafikchips (GPUs), die heute vor allem in Rechenzentren für künstliche Intelligenz eingesetzt werden."
+  chancen: "Marktführer bei KI-Chips mit eigener Software-Plattform (CUDA), enorme Nachfrage der Cloud-Anbieter."
+  risiken: "Hohe Bewertung, Abhängigkeit von wenigen Grosskunden, Exportbeschränkungen nach China, zyklische Chipbranche."
+  fakt: "Nvidia stellt seine Chips nicht selbst her – gefertigt wird beim taiwanischen Auftragsfertiger TSMC."
+AVGO:
+  was: "Broadcom stellt Netzwerk- und Spezialchips her (auch massgeschneiderte KI-Chips) und verkauft Infrastruktur-Software wie VMware."
+  chancen: "Profitiert vom Ausbau der KI-Rechenzentren, hohe Margen, wachsende Dividende."
+  risiken: "Hohe Schulden nach Übernahmen, Abhängigkeit von Grosskunden wie Apple und Google."
+ORCL:
+  was: "Oracle ist bekannt für Datenbank-Software und baut stark seine Cloud-Infrastruktur für KI-Anwendungen aus."
+  chancen: "Grosse Cloud-Aufträge, viele treue Firmenkunden mit Oracle-Datenbanken."
+  risiken: "Sehr hohe Investitionen und steigende Verschuldung, Konkurrenz durch die grossen Cloud-Anbieter."
+AMD:
+  was: "AMD entwickelt Prozessoren (CPUs) und Grafikchips für PCs, Spielkonsolen und Rechenzentren."
+  chancen: "Gewinnt Marktanteile bei Server-Prozessoren, wächst mit KI-Beschleunigern."
+  risiken: "Starke Konkurrenz durch Nvidia und Intel, zyklische Nachfrage nach PCs."
+CRM:
+  was: "Salesforce ist Weltmarktführer für Kundenmanagement-Software (CRM) aus der Cloud."
+  chancen: "Abo-Einnahmen, hohe Kundenbindung, neue KI-Funktionen (Agenten)."
+  risiken: "Wachstum verlangsamt sich, Konkurrenz durch Microsoft, teure Übernahmen."
+LOGN.SW:
+  was: "Logitech stellt Computerzubehör her: Mäuse, Tastaturen, Webcams, Gaming-Zubehör und Videokonferenz-Systeme."
+  chancen: "Starke Marke, solide Bilanz ohne Schulden, Gaming- und Büro-Markt."
+  risiken: "Nachfrage schwankt stark mit PC-Verkäufen, Preisdruck, Zölle auf Produkte aus Asien."
+  fakt: "Logitech wurde 1981 in Apples (Kanton Waadt) gegründet."
+VACN.SW:
+  was: "VAT Group ist Weltmarktführer für Vakuumventile, die vor allem in der Chipherstellung benötigt werden."
+  chancen: "Sehr hoher Marktanteil, profitiert von neuen Chipfabriken weltweit."
+  risiken: "Stark abhängig vom Investitionszyklus der Halbleiterindustrie, hohe Bewertung."
+TEMN.SW:
+  was: "Temenos liefert Kernbanken-Software, mit der Banken ihre Konten, Zahlungen und Kredite verwalten."
+  chancen: "Viele Banken modernisieren ihre IT und wechseln in die Cloud."
+  risiken: "Lange Verkaufszyklen, Wettbewerb, Unsicherheit nach Management-Wechseln in der Vergangenheit."
+
+# ---------------------- Kommunikation & Telekom ----------------------
+GOOGL:
+  was: "Alphabet ist die Muttergesellschaft von Google: Suchmaschine, YouTube, Android, Google Cloud und das KI-Labor DeepMind."
+  chancen: "Dominanz bei Suche und Online-Werbung, wachsende Cloud, starke KI-Forschung."
+  risiken: "KI-Chatbots könnten die Google-Suche verändern, Kartellverfahren in den USA und der EU."
+META:
+  was: "Meta betreibt Facebook, Instagram und WhatsApp und verdient fast alles mit Online-Werbung."
+  chancen: "Über 3 Milliarden Nutzer täglich, sehr profitables Werbegeschäft, KI verbessert die Werbung."
+  risiken: "Hohe Ausgaben für KI und Metaverse, Regulierung, Abhängigkeit von Werbebudgets."
+NFLX:
+  was: "Netflix ist der grösste Streamingdienst der Welt für Serien und Filme."
+  chancen: "Über 300 Millionen Abonnenten, Werbe-Abo und Preiserhöhungen steigern den Umsatz."
+  risiken: "Hohe Kosten für Inhalte, starke Konkurrenz (Disney+, Amazon, YouTube)."
+TMUS:
+  was: "T-Mobile US ist einer der drei grossen Mobilfunkanbieter der USA (Mehrheitsaktionärin ist die Deutsche Telekom)."
+  chancen: "Bestes 5G-Netz in den USA, wächst schneller als die Konkurrenz."
+  risiken: "Gesättigter Markt, Preiskampf, hohe Schulden für Netz und Frequenzen."
+DIS:
+  was: "Disney betreibt Freizeitparks, Kreuzfahrten, Filmstudios (Marvel, Pixar, Star Wars), TV-Sender und Disney+."
+  chancen: "Einzigartige Marken und Figuren, Freizeitparks sehr profitabel, Streaming wird profitabel."
+  risiken: "Klassisches Fernsehen schrumpft, Parks hängen von der Konjunktur ab."
+VZ:
+  was: "Verizon ist ein grosser US-Telekomkonzern für Mobilfunk und Glasfaser-Internet."
+  chancen: "Stabile Einnahmen und hohe Dividende."
+  risiken: "Kaum Wachstum, hohe Schulden, starke Konkurrenz."
+SCMN.SW:
+  was: "Swisscom ist die grösste Telekomfirma der Schweiz (Mobilfunk, Internet, TV) und besitzt die italienische Fastweb."
+  chancen: "Sehr stabiles Geschäft, verlässliche Dividende, Mehrheitsaktionär ist der Bund."
+  risiken: "Kaum Wachstum in der Schweiz, Preisdruck, Risiken im Italien-Geschäft."
+
+# -------------------- Konsum (zyklisch & Luxus) ----------------------
+AMZN:
+  was: "Amazon ist der grösste Online-Händler im Westen und mit AWS der grösste Cloud-Anbieter der Welt."
+  chancen: "AWS sehr profitabel, Werbegeschäft wächst stark, Prime bindet Kunden."
+  risiken: "Hohe Investitionen, dünne Margen im Handel, Kartellbehörden."
+TSLA:
+  was: "Tesla baut Elektroautos und Batteriespeicher und arbeitet an selbstfahrenden Autos und Robotern."
+  chancen: "Starke Marke, Software und Energiespeicher, mögliches Robotaxi-Geschäft."
+  risiken: "Sehr hohe Bewertung, sinkende Preise bei E-Autos, starke chinesische Konkurrenz, Abhängigkeit von Elon Musk."
+HD:
+  was: "Home Depot ist die grösste Baumarktkette der Welt (USA, Kanada, Mexiko)."
+  chancen: "Profitiert von Renovationen und alternden Häusern in den USA, starke Marktstellung."
+  risiken: "Abhängig vom Immobilienmarkt und von Zinsen."
+MCD:
+  was: "McDonald's ist die grösste Fast-Food-Kette der Welt; die meisten Restaurants werden von Franchisenehmern betrieben."
+  chancen: "Verdient an Mieten und Lizenzgebühren, sehr stabil, wachsende Dividende seit Jahrzehnten."
+  risiken: "Preisempfindliche Kundschaft, Trend zu gesünderer Ernährung."
+  fakt: "Ein grosser Teil des Gewinns stammt aus Mieten – McDonald's besitzt viele Grundstücke seiner Restaurants."
+BKNG:
+  was: "Booking Holdings betreibt Reiseplattformen wie Booking.com, Priceline, Kayak und OpenTable."
+  chancen: "Reisen wächst weltweit, sehr hohe Margen, grosse Aktienrückkäufe."
+  risiken: "Abhängig von Reiselust und Konjunktur, Konkurrenz durch Google und KI-Assistenten."
+NKE:
+  was: "Nike ist der weltgrösste Sportartikelhersteller (Schuhe, Bekleidung, Ausrüstung)."
+  chancen: "Weltbekannte Marke, Erholungspotenzial nach schwierigen Jahren."
+  risiken: "Konkurrenz durch neue Marken (On, Hoka), Zölle, schwächere Nachfrage in China."
+CFR.SW:
+  was: "Richemont besitzt Schmuck- und Uhrenmarken wie Cartier, Van Cleef & Arpels, IWC und Jaeger-LeCoultre."
+  chancen: "Schmuck wächst stabil, sehr starke Marken, Preissetzungsmacht."
+  risiken: "Abhängig von reicher Kundschaft und China, Uhrengeschäft schwankt."
+UHR.SW:
+  was: "Swatch Group ist der grösste Uhrenkonzern der Welt (Omega, Longines, Tissot, Swatch) und stellt auch Uhrwerke her."
+  chancen: "Starke Marken in allen Preisklassen, Erholungspotenzial."
+  risiken: "Schwache Nachfrage in China, hohe Fixkosten, Smartwatch-Konkurrenz."
+
+# --------------------------- Konsum (Basis) ---------------------------
+NESN.SW:
+  was: "Nestlé ist der grösste Nahrungsmittelkonzern der Welt (Nespresso, Maggi, KitKat, Purina-Tierfutter, Babynahrung)."
+  chancen: "Sehr breit aufgestellt, Produkte werden auch in Krisen gekauft, Dividende steigt seit Jahrzehnten."
+  risiken: "Schwaches Wachstum zuletzt, starker Franken drückt die Zahlen, Rohstoffpreise (Kaffee, Kakao)."
+  fakt: "Nestlé erhöht die Dividende seit über 25 Jahren jedes Jahr."
+WMT:
+  was: "Walmart ist der grösste Detailhändler der Welt mit Supermärkten, Sam's Club und wachsendem Onlinehandel."
+  chancen: "Tiefe Preise ziehen Kunden in jeder Konjunkturlage an, Werbe- und Online-Geschäft wachsen."
+  risiken: "Sehr dünne Margen, hohe Bewertung für einen Händler."
+COST:
+  was: "Costco betreibt grosse Mitglieder-Lagerhäuser: Kunden zahlen eine Jahresgebühr und kaufen dafür günstig in grossen Mengen."
+  chancen: "Sehr treue Mitglieder (über 90 % verlängern), stabile Einnahmen aus Mitgliedergebühren."
+  risiken: "Sehr hohe Bewertung, dünne Margen."
+PG:
+  was: "Procter & Gamble stellt Alltagsprodukte her: Pampers, Gillette, Ariel, Head & Shoulders, Oral-B."
+  chancen: "Starke Marken, stabile Nachfrage, über 60 Jahre steigende Dividende."
+  risiken: "Langsames Wachstum, Konkurrenz durch günstige Eigenmarken."
+KO:
+  was: "Coca-Cola verkauft Getränke-Konzentrate und Marken (Coca-Cola, Fanta, Sprite) an Abfüller in über 200 Ländern."
+  chancen: "Eine der bekanntesten Marken der Welt, hohe Margen, steigende Dividende seit über 60 Jahren."
+  risiken: "Trend zu weniger Zucker, Währungsschwankungen."
+  fakt: "Warren Buffetts Berkshire Hathaway hält seit 1988 Coca-Cola-Aktien."
+PEP:
+  was: "PepsiCo verkauft Getränke (Pepsi, Gatorade) und Snacks (Lay's, Doritos, Quaker)."
+  chancen: "Snacks sind sehr profitabel, breite Markenpalette, stabile Dividende."
+  risiken: "Schwächeres Volumen, Abnehmspritzen könnten den Snack-Konsum senken."
+LISP.SW:
+  was: "Lindt & Sprüngli ist ein Schweizer Hersteller von Premium-Schokolade (Lindor, Excellence, Goldhase; auch Ghirardelli und Russell Stover)."
+  chancen: "Starke Premium-Marke, wächst zuverlässig, eigene Läden weltweit."
+  risiken: "Stark gestiegene Kakaopreise, sehr hoher Aktienkurs pro Stück."
+BARN.SW:
+  was: "Barry Callebaut ist der weltgrösste Hersteller von Schokolade und Kakaoprodukten für die Lebensmittelindustrie."
+  chancen: "Weltmarktführer, langfristige Verträge mit Grosskunden."
+  risiken: "Extrem schwankende Kakaopreise, hohe Schulden, Umbau des Konzerns."
+
+# ----------------------------- Gesundheit -----------------------------
+NOVN.SW:
+  was: "Novartis ist ein Schweizer Pharmakonzern mit innovativen Medikamenten, u.a. gegen Herzschwäche (Entresto), Krebs und Autoimmunkrankheiten."
+  chancen: "Fokus auf patentgeschützte Medikamente, volle Pipeline, hohe Dividende."
+  risiken: "Patentabläufe wichtiger Medikamente, Preisdruck in den USA."
+ROG.SW:
+  was: "Roche ist ein Schweizer Pharma- und Diagnostikkonzern: Krebsmedikamente, Augenheilkunde und Labortests."
+  chancen: "Weltmarktführer in der Diagnostik, starke Forschung, Dividende steigt seit über 35 Jahren."
+  risiken: "Konkurrenz durch Nachahmer (Biosimilars), Rückschläge in der Forschung."
+  fakt: "Die Gründerfamilien Hoffmann und Oeri kontrollieren noch immer die Mehrheit der Stimmrechte."
+LONN.SW:
+  was: "Lonza stellt im Auftrag anderer Firmen Medikamente her – besonders biotechnologische Wirkstoffe."
+  chancen: "Biotech-Medikamente boomen, langfristige Verträge, Ausbau der Kapazitäten in den USA."
+  risiken: "Hohe Investitionen, Abhängigkeit von wenigen Grosskunden."
+ALC.SW:
+  was: "Alcon ist Weltmarktführer für Augenheilkunde: Kontaktlinsen, Augentropfen und Geräte für Augenoperationen."
+  chancen: "Alternde Bevölkerung braucht mehr Grauer-Star-Operationen."
+  risiken: "Starke Konkurrenz bei Kontaktlinsen, Preisdruck."
+GALD.SW:
+  was: "Galderma ist ein Dermatologie-Spezialist: Hautpflege (Cetaphil), Ästhetik (Restylane, Dysport) und Medikamente für die Haut."
+  chancen: "Schnell wachsender Markt für ästhetische Behandlungen, neues Medikament gegen Hautkrankheiten (Nemluvio)."
+  risiken: "Relativ hohe Schulden und Bewertung, Konkurrenz im Ästhetik-Markt."
+SOON.SW:
+  was: "Sonova ist Weltmarktführer für Hörgeräte (Phonak) und Cochlea-Implantate."
+  chancen: "Alternde Bevölkerung, viele Menschen mit Hörverlust sind noch unversorgt."
+  risiken: "Konkurrenz durch günstige rezeptfreie Hörgeräte, Konsumflaute."
+LLY:
+  was: "Eli Lilly ist ein US-Pharmakonzern und mit den Abnehm- und Diabetes-Medikamenten Mounjaro und Zepbound führend."
+  chancen: "Riesiger Markt für Abnehmspritzen, starkes Umsatzwachstum, Pillen-Version in Entwicklung."
+  risiken: "Sehr hohe Bewertung, Preisdruck und Konkurrenz (Novo Nordisk)."
+JNJ:
+  was: "Johnson & Johnson ist ein breit aufgestellter Gesundheitskonzern mit Medikamenten und Medizintechnik."
+  chancen: "Sehr solide Bilanz, Dividende steigt seit über 60 Jahren."
+  risiken: "Rechtsstreitigkeiten (Talkum), Patentabläufe."
+UNH:
+  was: "UnitedHealth ist der grösste Krankenversicherer der USA und betreibt mit Optum auch Arztpraxen und Gesundheitsdienste."
+  chancen: "Riesige Grösse, wachsender Gesundheitsmarkt."
+  risiken: "Stark gestiegene Behandlungskosten, Untersuchungen durch Behörden, politische Risiken."
+ABBV:
+  was: "AbbVie ist ein US-Biopharma-Konzern mit Medikamenten gegen Autoimmunkrankheiten (Skyrizi, Rinvoq) und Botox."
+  chancen: "Nachfolger für das alte Erfolgsmedikament Humira wachsen stark, hohe Dividende."
+  risiken: "Hohe Schulden, Patentabläufe."
+
+# ------------------------- Banken & Finanzen -------------------------
+UBSG.SW:
+  was: "UBS ist die grösste Bank der Schweiz und der grösste Vermögensverwalter für Reiche weltweit (seit der Übernahme der Credit Suisse 2023)."
+  chancen: "Starke globale Vermögensverwaltung, Kostensenkungen durch die CS-Integration, Aktienrückkäufe."
+  risiken: "Strengere Kapitalvorschriften in der Schweiz, Rechtsfälle aus der CS-Zeit."
+PGHN.SW:
+  was: "Partners Group verwaltet Geld von Pensionskassen und Investoren in Privatmarkt-Anlagen (Firmenbeteiligungen, Immobilien, Infrastruktur)."
+  chancen: "Wachsendes Interesse an Privatmarkt-Anlagen, hohe Dividende."
+  risiken: "Abhängig von Bewertungen und Verkaufserlösen, Zinsumfeld."
+BAER.SW:
+  was: "Julius Bär ist eine Zürcher Privatbank, die ausschliesslich vermögende Kunden betreut."
+  chancen: "Reine Vermögensverwaltung, wachsender Reichtum in Asien."
+  risiken: "Kreditverluste in der Vergangenheit (Signa), Wettbewerb um Kundenberater."
+JPM:
+  was: "JPMorgan Chase ist die grösste Bank der USA: Privatkunden, Investmentbanking und Vermögensverwaltung."
+  chancen: "Sehr gut geführt, profitiert von hohen Zinsen und lebhaften Märkten."
+  risiken: "Kreditausfälle in einer Rezession, Regulierung."
+BAC:
+  was: "Bank of America ist eine der grössten US-Banken mit vielen Privatkunden und der Vermögensverwaltung Merrill."
+  chancen: "Profitiert von höheren Zinsen, grosse Kundenbasis."
+  risiken: "Zinsänderungen, Kreditausfälle."
+  fakt: "Berkshire Hathaway (Warren Buffett) gehört zu den grössten Aktionären."
+GS:
+  was: "Goldman Sachs ist eine führende Investmentbank: Börsengänge, Übernahmeberatung, Handel und Vermögensverwaltung."
+  chancen: "Profitiert stark von lebhaften Finanzmärkten und Firmenübernahmen."
+  risiken: "Gewinne schwanken stark mit den Märkten."
+V:
+  was: "Visa betreibt das grösste Kartenzahlungsnetz der Welt und verdient an jeder Transaktion mit."
+  chancen: "Weltweiter Trend weg vom Bargeld, sehr hohe Margen, kaum Kreditrisiko."
+  risiken: "Regulierung der Gebühren, Konkurrenz durch neue Zahlsysteme."
+MA:
+  was: "Mastercard ist das zweitgrösste Kartenzahlungsnetz der Welt."
+  chancen: "Wie Visa: wachsende Kartenzahlungen, sehr hohe Margen."
+  risiken: "Gebühren-Regulierung, Klagen von Händlern."
+
+# --------------------------- Versicherungen ---------------------------
+ZURN.SW:
+  was: "Zurich Insurance ist einer der grössten Versicherer der Welt (Sach-, Lebens- und Firmenversicherungen)."
+  chancen: "Sehr hohe, verlässliche Dividende, starke Kapitalbasis."
+  risiken: "Naturkatastrophen, Schwankungen an den Finanzmärkten."
+SREN.SW:
+  was: "Swiss Re ist einer der grössten Rückversicherer der Welt – sie versichert andere Versicherungen."
+  chancen: "Steigende Preise für Rückversicherung, hohe Dividende."
+  risiken: "Grosse Naturkatastrophen (Hurrikane, Erdbeben) können Verluste verursachen."
+SLHN.SW:
+  was: "Swiss Life ist der grösste Lebensversicherer der Schweiz und ein grosser Immobilienbesitzer und Vermögensverwalter."
+  chancen: "Stabile Erträge, hohe Dividende, Gebührengeschäft wächst."
+  risiken: "Abhängig von Zinsen und Immobilienpreisen."
+BRK-B:
+  was: "Berkshire Hathaway ist die Beteiligungsgesellschaft von Warren Buffett: Versicherungen (GEICO), Eisenbahn, Energie und grosse Aktienpakete (z.B. Apple)."
+  chancen: "Sehr breit aufgestellt, riesige Cash-Reserven für Gelegenheiten."
+  risiken: "Führungswechsel nach Warren Buffett, Grösse bremst das Wachstum."
+  fakt: "Berkshire zahlt keine Dividende – Buffett investiert die Gewinne lieber selbst."
+CB:
+  was: "Chubb ist ein weltweiter Sach- und Haftpflichtversicherer mit Sitz in Zürich und Hauptgeschäft in den USA."
+  chancen: "Sehr diszipliniertes Versicherungsgeschäft, Berkshire Hathaway ist Aktionär."
+  risiken: "Naturkatastrophen, Haftpflichtklagen in den USA."
+PGR:
+  was: "Progressive ist einer der grössten Autoversicherer der USA und setzt stark auf Daten und Online-Abschlüsse."
+  chancen: "Gewinnt Marktanteile, sehr datengetriebene Preisgestaltung."
+  risiken: "Steigende Reparatur- und Unfallkosten."
+AIG:
+  was: "AIG ist ein grosser US-Versicherer für Firmen- und Sachversicherungen."
+  chancen: "Umbau abgeschlossen, Aktienrückkäufe."
+  risiken: "Katastrophenschäden, Erinnerung an die Rettung in der Finanzkrise 2008."
+MET:
+  was: "MetLife ist einer der grössten Lebensversicherer der USA."
+  chancen: "Profitiert von höheren Zinsen, stabile Dividende."
+  risiken: "Zins- und Finanzmarktrisiken."
+
+# ------------------------------ Industrie ------------------------------
+ABBN.SW:
+  was: "ABB ist ein Schweizer Technologiekonzern für Elektrifizierung (Stromverteilung, Ladestationen) und Automation."
+  chancen: "Profitiert vom Ausbau der Stromnetze und Rechenzentren, gute Margen."
+  risiken: "Konjunkturabhängig, Konkurrenz durch Siemens und Schneider Electric."
+KNIN.SW:
+  was: "Kühne+Nagel ist einer der grössten Logistikkonzerne der Welt (Seefracht, Luftfracht, Lagerlogistik)."
+  chancen: "Weltmarktführer in der Seefracht-Spedition, kaum eigene Schiffe (wenig Kapital gebunden)."
+  risiken: "Stark schwankende Frachtraten, Welthandel und Zölle."
+SCHP.SW:
+  was: "Schindler ist ein Schweizer Hersteller von Liften und Rolltreppen und verdient viel mit deren Wartung."
+  chancen: "Stabiles Wartungsgeschäft, Modernisierung alter Anlagen."
+  risiken: "Schwacher Neubau in China, Preisdruck."
+GE:
+  was: "GE Aerospace baut Flugzeugtriebwerke, die in vielen Verkehrsflugzeugen stecken, und verdient viel mit Wartung und Ersatzteilen."
+  chancen: "Steigender Flugverkehr, Wartungsgeschäft über Jahrzehnte."
+  risiken: "Lieferkettenprobleme, Abhängigkeit von Boeing und Airbus."
+CAT:
+  was: "Caterpillar ist der weltgrösste Hersteller von Bau- und Bergbaumaschinen und Motoren."
+  chancen: "Infrastruktur-Investitionen, Stromgeneratoren für Rechenzentren."
+  risiken: "Sehr konjunkturabhängig, Rohstoffpreise."
+HON:
+  was: "Honeywell ist ein US-Industriekonzern (Luftfahrt, Gebäudeautomation, Industrietechnik) und Mehrheitsaktionär der Quantenfirma Quantinuum."
+  chancen: "Aufspaltung in fokussierte Firmen, Quantinuum als Zukunftswette."
+  risiken: "Umbau kann Unruhe bringen, Konjunkturabhängigkeit."
+RTX:
+  was: "RTX (früher Raytheon) baut Triebwerke (Pratt & Whitney), Flugzeugsysteme und Raketen-Abwehrsysteme."
+  chancen: "Hohe Rüstungsausgaben, Wartungsgeschäft."
+  risiken: "Probleme mit bestimmten Triebwerken, politische Risiken."
+UNP:
+  was: "Union Pacific betreibt eines der grössten Güterbahnnetze im Westen der USA."
+  chancen: "Kaum Konkurrenz (Schienennetz lässt sich nicht kopieren), stabile Dividende."
+  risiken: "Abhängig vom Güterverkehr, Regulierung."
+
+# --------------------------- Bau & Material ---------------------------
+HOLN.SW:
+  was: "Holcim ist einer der grössten Baustoffkonzerne der Welt (Zement, Beton, Dachsysteme) mit Sitz in Zug."
+  chancen: "Fokus auf profitable Märkte, nachhaltige Baustoffe, Aktienrückkäufe."
+  risiken: "Konjunkturabhängig, hoher CO2-Ausstoss bei Zement."
+SIKA.SW:
+  was: "Sika stellt Spezialchemie für den Bau her: Klebstoffe, Dichtstoffe, Betonzusätze und Bodenbeläge."
+  chancen: "Weltmarktführer in vielen Nischen, wächst seit Jahrzehnten."
+  risiken: "Schwacher Bau in China und Europa, Rohstoffkosten."
+GEBN.SW:
+  was: "Geberit ist europäischer Marktführer für Sanitärtechnik: Spülkästen, Rohre, Badkeramik."
+  chancen: "Sehr hohe Margen, starke Stellung bei Installateuren, Renovationsgeschäft."
+  risiken: "Schwacher Wohnungsbau in Europa."
+SHW:
+  was: "Sherwin-Williams ist der grösste Farbenhersteller der USA mit eigenen Fachgeschäften."
+  chancen: "Starke Marke, Renovationsbedarf."
+  risiken: "Abhängig vom Immobilienmarkt und Rohstoffpreisen."
+VMC:
+  was: "Vulcan Materials ist der grösste Lieferant von Kies, Sand und Schotter in den USA."
+  chancen: "Lokale Monopole (Transport schwerer Baustoffe ist teuer), Infrastruktur-Programme."
+  risiken: "Bautätigkeit und Wetter."
+MLM:
+  was: "Martin Marietta liefert Zuschlagstoffe (Kies, Schotter) und Baustoffe in den USA."
+  chancen: "Wie Vulcan: regionale Marktmacht, Preiserhöhungen."
+  risiken: "Konjunktur und Bauaktivität."
+
+# ------------------------------- Chemie -------------------------------
+GIVN.SW:
+  was: "Givaudan ist Weltmarktführer für Aromen und Duftstoffe (für Lebensmittel, Getränke, Parfums und Waschmittel)."
+  chancen: "Sehr stabile Nachfrage, hohe Kundenbindung, verlässliche Dividende."
+  risiken: "Hohe Bewertung, Rohstoffkosten."
+EMSN.SW:
+  was: "EMS-Chemie stellt Hochleistungskunststoffe her, die Metall z.B. in Autos ersetzen."
+  chancen: "Sehr hohe Margen, praktisch schuldenfrei, hohe Ausschüttungen."
+  risiken: "Stark abhängig von der Autoindustrie."
+  fakt: "Die Familie Blocher hält die Mehrheit an EMS-Chemie."
+CLN.SW:
+  was: "Clariant ist ein Schweizer Spezialchemie-Konzern (Katalysatoren, Additive, Pflegechemikalien)."
+  chancen: "Umbau zu profitableren Spezialitäten."
+  risiken: "Schwache Industrienachfrage, hohe Energiekosten in Europa."
+LIN:
+  was: "Linde ist der grösste Industriegase-Konzern der Welt (Sauerstoff, Stickstoff, Wasserstoff)."
+  chancen: "Langfristige Lieferverträge, sehr stabile Gewinne, Wasserstoff-Projekte."
+  risiken: "Hohe Bewertung, Industrie-Konjunktur."
+APD:
+  was: "Air Products ist ein grosser US-Hersteller von Industriegasen und Wasserstoff."
+  chancen: "Langfristige Verträge, Wasserstoff als Zukunftsmarkt."
+  risiken: "Teure Grossprojekte mit unsicherer Rendite."
+
+# ------------------------------- Bitcoin -------------------------------
+MSTR:
+  was: "Strategy (früher MicroStrategy) kauft mit Geld aus Aktien- und Anleiheverkäufen Bitcoin und hält den grössten Bitcoin-Bestand aller Firmen."
+  chancen: "Hebel auf den Bitcoin-Preis."
+  risiken: "Schwankt noch stärker als Bitcoin, hohe Verschuldung, Bewertung über/unter dem Bitcoin-Bestand."
+  fakt: "Das ursprüngliche Software-Geschäft spielt für den Aktienkurs kaum noch eine Rolle."
+MARA:
+  was: "MARA Holdings betreibt grosse Rechenzentren zum Schürfen (Minen) von Bitcoin und hält selbst Bitcoin."
+  chancen: "Profitiert direkt von steigenden Bitcoin-Preisen."
+  risiken: "Stromkosten, Halving halbiert regelmässig die Belohnung, sehr volatil."
+ASST:
+  was: "Strive (früher Asset Entities) ist eine US-Firma, die – ähnlich wie Strategy – Bitcoin als Hauptanlage hält."
+  chancen: "Hebel auf Bitcoin."
+  risiken: "Kleine, junge Firma, extrem schwankender Kurs, Verwässerung durch neue Aktien."
+3350.T:
+  was: "Metaplanet ist eine japanische Firma (früher Hotels), die heute vor allem Bitcoin als Reserve kauft – das 'Strategy Japans'."
+  chancen: "Hebel auf Bitcoin, Interesse japanischer Anleger."
+  risiken: "Extrem volatil, abhängig von Bitcoin und Kapitalmarkt-Finanzierung, Kurs in Yen."
+ADE.DE:
+  was: "Bitcoin Group SE ist eine deutsche Holding und Mehrheitsaktionärin der Kryptobörse Bitcoin.de; sie hält auch Bitcoin."
+  chancen: "Profitiert von höherem Krypto-Handelsvolumen."
+  risiken: "Kleine Firma, stark von Bitcoin abhängig, Regulierung."
+
+# ------------------------------- Quanten -------------------------------
+ARQQ:
+  was: "Arqit Quantum (Grossbritannien) bietet Verschlüsselungs-Software an, die auch gegen künftige Quantencomputer sicher sein soll."
+  chancen: "Bedarf an quantensicherer Verschlüsselung wächst."
+  risiken: "Sehr kleiner Umsatz, Verluste, extrem schwankender Kurs."
+LAES:
+  was: "SEALSQ (Tochter der Genfer WISeKey) entwickelt Sicherheitschips und Post-Quanten-Verschlüsselung."
+  chancen: "Quantensichere Chips könnten Pflicht werden."
+  risiken: "Kleine Firma mit Verlusten, sehr spekulativ."
+IONQ:
+  was: "IonQ baut Quantencomputer mit gefangenen Ionen und bietet sie auch über die Cloud an."
+  chancen: "Einer der bekanntesten reinen Quantencomputer-Anbieter, Übernahmen zum Ausbau."
+  risiken: "Hohe Verluste, Technologie noch nicht wirtschaftlich, sehr hohe Bewertung."
+QUBT:
+  was: "Quantum Computing Inc. entwickelt photonische (lichtbasierte) Quantentechnologie und Chips."
+  chancen: "Spekulative Wette auf Photonik und Quanten."
+  risiken: "Sehr kleiner Umsatz, hohe Verluste, extrem volatil."
+QBTS:
+  was: "D-Wave Quantum baut sogenannte Quanten-Annealer, die Optimierungsprobleme lösen."
+  chancen: "Hat bereits erste zahlende Kunden für Optimierungsaufgaben."
+  risiken: "Verluste, Verwässerung durch neue Aktien, extrem schwankend."
+RGTI:
+  was: "Rigetti Computing entwickelt supraleitende Quantenchips und Quantencomputer."
+  chancen: "Technologie-Partnerschaften, staatliche Forschungsaufträge."
+  risiken: "Sehr kleiner Umsatz, Verluste, extrem hohe Bewertung im Verhältnis zum Umsatz."
+IBM:
+  was: "IBM verkauft Software (Red Hat), IT-Beratung und Grossrechner und ist einer der führenden Entwickler von Quantencomputern."
+  chancen: "Stabile Software-Einnahmen, starke Quanten-Forschung, solide Dividende."
+  risiken: "Beratungsgeschäft wächst kaum, Konkurrenz in der Cloud."
+INTC:
+  was: "Intel entwickelt und fertigt Prozessoren für PCs und Server und baut ein Auftragsfertigungsgeschäft für Chips auf."
+  chancen: "Umbau unter neuer Führung, staatliche Unterstützung in den USA, forscht auch an Quanten-Chips."
+  risiken: "Marktanteile an AMD und Arm-Chips verloren, sehr teure neue Fabriken."

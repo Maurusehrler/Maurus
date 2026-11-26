@@ -6,7 +6,7 @@
    WICHTIG: Wenn du HTML/CSS/JS änderst, erhöhe die VERSION unten um 1,
    damit iPhone/iPad die neue Version laden.
    ===================================================================== */
-const VERSION = "v3";
+const VERSION = "v4";
 const APP_SPEICHER = `boerse-app-${VERSION}`;
 const DATEN_SPEICHER = "boerse-daten";
 const APP_DATEIEN = [
@@ -14,6 +14,8 @@ const APP_DATEIEN = [
   "index.html",
   "style.css",
   "app.js",
+  "kennzahlen.js",
+  "kalender.js",
   "manifest.json",
   "icons/icon-180.png",
   "icons/icon-192.png",
@@ -40,15 +42,15 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET" || url.origin !== self.location.origin) return;
 
   // 1) Daten: zuerst Netzwerk, sonst Speicher
-  if (url.pathname.endsWith("/data/markets.json")) {
+  if (url.pathname.includes("/data/") && url.pathname.endsWith(".json")) {
     event.respondWith((async () => {
       const speicher = await caches.open(DATEN_SPEICHER);
       try {
         const antwort = await fetch(event.request, { cache: "no-store" });
-        if (antwort.ok) await speicher.put("markets.json", antwort.clone());
+        if (antwort.ok) await speicher.put(url.pathname, antwort.clone());
         return antwort;
       } catch (e) {
-        const alt = await speicher.match("markets.json");
+        const alt = await speicher.match(url.pathname);
         if (!alt) throw e;
         // Markierung, damit die Seite "Offline" anzeigen kann
         return new Response(await alt.blob(), { headers: { "Content-Type": "application/json", "X-Aus-Speicher": "1" } });

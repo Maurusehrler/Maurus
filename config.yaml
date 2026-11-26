@@ -325,10 +325,14 @@ kalender:
   wichtigkeit: ["High"]
   # Für Schweizer Termine zusätzlich auch "Medium" zeigen?
   chf_auch_mittel: true
-  # Quartalszahlen der eigenen Aktien in den nächsten X Tagen anzeigen
-  quartalszahlen_tage: 14
+  # So viele Tage im Voraus zeigt der Kalender Termine an
+  # (Quartalszahlen, Dividenden, Optionsverfall, Feiertage, eigene Termine)
+  horizont_tage: 90
 
   # Fixe Termine, die du selbst pflegst (Format: Datum JJJJ-MM-TT).
+  # Optional: typ (notenbank / event / konjunktur), zeit ("14:30"), land, wichtigkeit (hoch/mittel/tief)
+  # Beispiel für eine Präsentation:
+  #   - { datum: "2027-06-07", titel: "Apple WWDC (Keynote)", typ: "event", zeit: "19:00", land: "USA" }
   # Bitte einmal pro Jahr auf snb.ch / federalreserve.gov / ecb.europa.eu prüfen.
   eigene_termine:
     - { datum: "2026-12-09", titel: "Fed-Zinsentscheid (USA)" }

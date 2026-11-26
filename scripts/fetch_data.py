@@ -53,6 +53,9 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent          # Hauptordner des Projekts
 CONFIG_DATEI = ROOT / "config.yaml"
 AUSGABE_DATEI = ROOT / "docs" / "data" / "markets.json"
+FUNDAMENTAL_DATEI = ROOT / "docs" / "data" / "fundamentals.json"
+STECKBRIEF_DATEI = ROOT / "steckbriefe.yaml"
+FUNDAMENTAL_MAX_ALTER_STD = 20    # Fundamentaldaten höchstens 1x pro Tag neu holen
 
 # Viele Webseiten blockieren Anfragen ohne "Browser-Kennung".
 USER_AGENT = (
@@ -61,7 +64,9 @@ USER_AGENT = (
 )
 VERLAUF_PUNKTE = 270       # ca. 1 Jahr Handelstage (für Charts und Zeiträume 1W…1J)
 # Zeiträume für den Umschalter in der App (Kürzel -> Kalendertage zurück)
-ZEITRAEUME = {"1W": 7, "1M": 30, "3M": 91, "1J": 365}
+ZEITRAEUME = {"1W": 7, "1M": 30, "3M": 91, "1J": 365, "3J": 1096, "5J": 1827}
+LANGE_ZEITRAEUME = ("3J", "5J")   # Mini-Charts dafür aus Wochenwerten (spart Platz)
+WOCHEN_PUNKTE = 270              # gut 5 Jahre Wochenschlusskurse
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)-7s %(message)s")
 log = logging.getLogger("boerse")
@@ -152,7 +157,7 @@ def yahoo_mehrere(symbole: list[str]) -> dict[str, list[tuple[str, float]]]:
         return ergebnis
     try:
         import yfinance as yf
-        df = yf.download(symbole, period="2y", interval="1d", group_by="ticker",
+        df = yf.download(symbole, period="6y", interval="1d", group_by="ticker",
                          auto_adjust=False, progress=False, threads=True)
     except Exception as e:  # noqa: BLE001
         log.warning("Yahoo (Sammelabfrage) fehlgeschlagen: %s", e)
@@ -179,9 +184,9 @@ def yahoo_einzeln(symbol: str) -> list[tuple[str, float]] | None:
     for versuch in ("history", "download"):
         try:
             if versuch == "history":
-                df = yf.Ticker(symbol).history(period="2y", interval="1d", auto_adjust=False)
+                df = yf.Ticker(symbol).history(period="6y", interval="1d", auto_adjust=False)
             else:
-                df = yf.download(symbol, period="2y", interval="1d", auto_adjust=False,
+                df = yf.download(symbol, period="6y", interval="1d", auto_adjust=False,
                                  progress=False, multi_level_index=False)
             serie = df["Close"].dropna()
             punkte = [(idx.strftime("%Y-%m-%d"), float(v)) for idx, v in serie.items()]
@@ -202,7 +207,7 @@ def stooq(symbol: str) -> list[tuple[str, float]] | None:
         if not zeilen or not zeilen[0].lower().startswith("date"):
             return None
         punkte = []
-        for z in zeilen[1:][-400:]:
+        for z in zeilen[1:][-1900:]:
             teile = z.split(",")
             punkte.append((teile[0], float(teile[4])))   # Datum, Schlusskurs
         return punkte if len(punkte) >= 2 else None
@@ -268,29 +273,47 @@ def coingecko(eintraege: list[dict]) -> dict[str, dict]:
     return ergebnis
 
 
-def zeitraeume(punkte: list[tuple[str, float]]) -> tuple[dict, dict]:
-    """Berechnet die Veränderung in % für 1W, 1M, 3M, YTD, 1J.
+def wochenwerte(punkte: list[tuple[str, float]]) -> list[tuple[str, float]]:
+    """Reduziert Tageskurse auf einen Wert pro Woche (letzter Kurs der Woche)."""
+    wochen: dict[tuple[int, int], tuple[str, float]] = {}
+    for tag, wert in punkte:
+        jahr, woche, _ = date.fromisoformat(tag).isocalendar()
+        wochen[(jahr, woche)] = (tag, wert)
+    return [wochen[k] for k in sorted(wochen)]
+
+
+def zeitraeume(punkte: list[tuple[str, float]], wochen: list[tuple[str, float]]) -> tuple[dict, dict, dict]:
+    """Berechnet die Veränderung in % für 1W, 1M, 3M, YTD, 1J, 3J, 5J.
 
     Rückgabe:
-      perf = {"1W": 1.2, "1M": -3.4, ...}   Veränderung in Prozent
-      tage = {"1W": 6, "1M": 22, ...}       wie viele der letzten Punkte zum
-                                            Zeitraum gehören (für die Mini-Charts)
+      perf   = {"1W": 1.2, "1M": -3.4, ...}  Veränderung in Prozent
+      tage   = {"1W": 6, "1M": 22, ...}      wie viele der letzten Tageswerte zum
+                                             Zeitraum gehören (für die Mini-Charts)
+      tage_w = {"3J": 157, "5J": 261}        dasselbe für die Wochenwerte
     Ist die Kursreihe zu kurz, fehlt der Zeitraum einfach.
     """
     letzter_tag = date.fromisoformat(punkte[-1][0])
     stichtage = {k: letzter_tag - timedelta(days=v) for k, v in ZEITRAEUME.items()}
     stichtage["YTD"] = date(letzter_tag.year - 1, 12, 31)     # Jahresschluss Vorjahr
-    perf, tage = {}, {}
-    n = min(len(punkte), VERLAUF_PUNKTE)
+    perf, tage, tage_w = {}, {}, {}
+
+    def index_vor(reihe, stichtag):
+        """Position des letzten Kurses am oder vor dem Stichtag."""
+        return next((i for i in range(len(reihe) - 1, -1, -1)
+                     if date.fromisoformat(reihe[i][0]) <= stichtag), None)
+
     for kuerzel, stichtag in stichtage.items():
-        # letzter Kurs am oder vor dem Stichtag
-        idx = next((i for i in range(len(punkte) - 1, -1, -1)
-                    if date.fromisoformat(punkte[i][0]) <= stichtag), None)
+        idx = index_vor(punkte, stichtag)
         if idx is None or punkte[idx][1] == 0:
             continue
         perf[kuerzel] = round((punkte[-1][1] / punkte[idx][1] - 1) * 100, 3)
-        tage[kuerzel] = min(len(punkte) - idx, n)
-    return perf, tage
+        if kuerzel in LANGE_ZEITRAEUME:
+            iw = index_vor(wochen, stichtag)
+            if iw is not None:
+                tage_w[kuerzel] = min(len(wochen) - iw, WOCHEN_PUNKTE)
+        else:
+            tage[kuerzel] = min(len(punkte) - idx, VERLAUF_PUNKTE)
+    return perf, tage, tage_w
 
 
 def eintrag_aus_serie(item: dict, kategorie: str, punkte: list[tuple[str, float]],
@@ -299,7 +322,8 @@ def eintrag_aus_serie(item: dict, kategorie: str, punkte: list[tuple[str, float]
     werte = [v for _, v in punkte]
     kurs, vortag = werte[-1], werte[-2]
     diff = kurs - vortag
-    perf, tage = zeitraeume(punkte)
+    wochen = wochenwerte(punkte)
+    perf, tage, tage_w = zeitraeume(punkte, wochen)
     return {
         **basis_eintrag(item, kategorie),
         "kurs": runden(kurs),
@@ -308,8 +332,10 @@ def eintrag_aus_serie(item: dict, kategorie: str, punkte: list[tuple[str, float]
         "diff_pct": round(diff / vortag * 100, 3) if vortag else 0.0,
         "datum": punkte[-1][0],
         "verlauf": [runden(v) for v in werte[-VERLAUF_PUNKTE:]],
+        "verlauf_w": [runden(v) for _, v in wochen[-WOCHEN_PUNKTE:]],
         "perf": perf,
         "tage": tage,
+        "tage_w": tage_w,
         "quelle": quelle,
         "stand": jetzt_utc().isoformat(timespec="seconds"),
         "veraltet": False,
@@ -479,7 +505,8 @@ def lade_kurse(cfg: dict, vorher: dict, statistik: dict) -> dict[str, list[dict]
         reihe_yahoo = reihen.get(item["symbol"])
         if d and (d["verlauf"] or reihe_yahoo):
             # Verlauf von CoinGecko (sonst Yahoo), aktueller Kurs + 24h-Veränderung von CoinGecko
-            reihe = d["verlauf"] if d["verlauf"] and len(d["verlauf"]) >= 2 else reihe_yahoo
+            # Yahoo hat die längere Historie (bis 5 Jahre); CoinGecko nur als Ersatz
+            reihe = reihe_yahoo if reihe_yahoo and len(reihe_yahoo) > 400 else (d["verlauf"] or reihe_yahoo)
             e = eintrag_aus_serie(item, "krypto", reihe, "CoinGecko")
             e.update({"kurs": runden(d["kurs"]), "diff": runden(d["diff"]),
                       "diff_pct": round(d["diff_pct"], 3), "zeitraum": "24 Std."})
@@ -680,97 +707,341 @@ UEBERSETZUNG = {
 }
 
 
-def lade_kalender(cfg: dict, vorher: dict, quellen: dict) -> list[dict]:
+def ff_termine(url: str, kcfg: dict, tz, heute: date) -> list[dict]:
+    """Konjunkturtermine aus dem ForexFactory-Wochenkalender (gratis JSON)."""
+    daten = http_get(url, timeout=20, versuche=2).json()
+    waehrungen = set(kcfg.get("waehrungen", ["CHF", "USD", "EUR"]))
+    wichtig = set(kcfg.get("wichtigkeit", ["High"]))
+    termine = []
+    for ev in daten:
+        land = ev.get("country")
+        impact = ev.get("impact")
+        if land not in waehrungen:
+            continue
+        if impact not in wichtig and not (land == "CHF" and kcfg.get("chf_auch_mittel") and impact == "Medium"):
+            continue
+        zeitpunkt = datetime.fromisoformat(ev["date"]).astimezone(tz)
+        if zeitpunkt.date() < heute - timedelta(days=1):
+            continue      # Vergangenes weglassen (gestern behalten wir noch)
+        titel_en = ev.get("title", "")
+        termine.append({
+            "datum": zeitpunkt.strftime("%Y-%m-%d"),
+            "zeit": zeitpunkt.strftime("%H:%M") if zeitpunkt.strftime("%H:%M") != "00:00" else None,
+            "titel": UEBERSETZUNG.get(titel_en, titel_en),
+            "land": LAENDER.get(land, land),
+            "wichtigkeit": "hoch" if impact == "High" else "mittel",
+            "prognose": ev.get("forecast") or None,
+            "vorher": ev.get("previous") or None,
+            "typ": "konjunktur",
+        })
+    return termine
+
+
+def verfallstage(heute: date, bis: date) -> list[dict]:
+    """Optionsverfall: jeder 3. Freitag im Monat; März/Juni/Sept./Dez. = grosser Verfall."""
+    termine = []
+    jahr, monat = heute.year, heute.month
+    while date(jahr, monat, 1) <= bis:
+        erster = date(jahr, monat, 1)
+        freitag = erster + timedelta(days=(4 - erster.weekday()) % 7 + 14)   # 3. Freitag
+        if heute <= freitag <= bis:
+            gross = monat in (3, 6, 9, 12)
+            termine.append({"datum": freitag.isoformat(), "zeit": None,
+                            "titel": "Grosser Verfall (Hexensabbat)" if gross else "Optionsverfall",
+                            "land": "", "wichtigkeit": "mittel" if gross else "tief", "typ": "verfall"})
+        monat += 1
+        if monat > 12:
+            jahr, monat = jahr + 1, 1
+    return termine
+
+
+def termine_aus_fundamentaldaten(fundamental: dict, heute: date, bis: date) -> list[dict]:
+    """Quartalszahlen (mit Schätzungen) und Dividendentermine aller Aktien."""
+    termine = []
+    laender = {"CH": "Schweiz", "US": "USA"}
+    for symbol, f in (fundamental.get("aktien") or {}).items():
+        t = f.get("termine") or {}
+        name, land = f.get("name", symbol), laender.get(f.get("land"), f.get("land", ""))
+        if t.get("zahlen") and heute.isoformat() <= t["zahlen"] <= bis.isoformat():
+            details = []
+            if t.get("eps_schaetzung") is not None:
+                details.append(f"Erwarteter Gewinn/Aktie {zahl_ch(t['eps_schaetzung'])} {f.get('bilanz_waehrung') or ''}".strip())
+            if t.get("umsatz_schaetzung"):
+                details.append(f"Umsatz ca. {zahl_ch(t['umsatz_schaetzung'] / 1e9, 1)} Mrd.")
+            termine.append({"datum": t["zahlen"], "zeit": None, "titel": f"Quartalszahlen {name}",
+                            "land": land, "wichtigkeit": "mittel", "typ": "zahlen", "symbol": symbol,
+                            "prognose": " · ".join(details) or None})
+        if t.get("ex_div") and heute.isoformat() <= t["ex_div"] <= bis.isoformat():
+            betrag = f" ({zahl_ch(f['div_satz'])} {f.get('waehrung') or ''} pro Jahr)" if f.get("div_satz") else ""
+            termine.append({"datum": t["ex_div"], "zeit": None, "titel": f"Ex-Dividende {name}{betrag}",
+                            "land": land, "wichtigkeit": "tief", "typ": "dividende", "symbol": symbol})
+        if t.get("div_zahltag") and heute.isoformat() <= t["div_zahltag"] <= bis.isoformat():
+            termine.append({"datum": t["div_zahltag"], "zeit": None, "titel": f"Dividenden-Zahltag {name}",
+                            "land": land, "wichtigkeit": "tief", "typ": "dividende", "symbol": symbol})
+    return termine
+
+
+def lade_kalender(cfg: dict, vorher: dict, quellen: dict, fundamental: dict) -> list[dict]:
+    """Alle wichtigen Termine: Konjunktur, Notenbanken, Zahlen, Dividenden, Verfall, Feiertage."""
     kcfg = cfg.get("kalender", {})
     tz = ZoneInfo(cfg.get("zeitzone", "Europe/Zurich"))
     heute = datetime.now(tz).date()
+    bis = heute + timedelta(days=kcfg.get("horizont_tage", 90))
     termine: list[dict] = []
 
-    # --- a) automatischer Wochenkalender (ForexFactory) ----------------------
-    try:
-        daten = http_get("https://nfs.faireconomy.media/ff_calendar_thisweek.json",
-                         timeout=20, versuche=2).json()
-        waehrungen = set(kcfg.get("waehrungen", ["CHF", "USD", "EUR"]))
-        wichtig = set(kcfg.get("wichtigkeit", ["High"]))
-        for ev in daten:
-            land = ev.get("country")
-            impact = ev.get("impact")
-            if land not in waehrungen:
-                continue
-            if impact not in wichtig and not (land == "CHF" and kcfg.get("chf_auch_mittel") and impact == "Medium"):
-                continue
-            zeitpunkt = datetime.fromisoformat(ev["date"]).astimezone(tz)
-            if zeitpunkt.date() < heute - timedelta(days=1):
-                continue      # Vergangenes weglassen (gestern behalten wir noch)
-            titel_en = ev.get("title", "")
-            termine.append({
-                "datum": zeitpunkt.strftime("%Y-%m-%d"),
-                "zeit": zeitpunkt.strftime("%H:%M") if zeitpunkt.strftime("%H:%M") != "00:00" else None,
-                "titel": UEBERSETZUNG.get(titel_en, titel_en),
-                "land": LAENDER.get(land, land),
-                "wichtigkeit": "hoch" if impact == "High" else "mittel",
-                "prognose": ev.get("forecast") or None,
-                "vorher": ev.get("previous") or None,
-                "typ": "konjunktur",
-            })
-        quellen["kalender"] = "OK (ForexFactory)"
-    except Exception as e:  # noqa: BLE001
-        log.warning("Wirtschaftskalender nicht erreichbar: %s", e)
-        quellen["kalender"] = f"Fehler: {str(e)[:80]} – zeige letzte bekannte Termine"
+    # --- a) Konjunkturdaten (diese + nächste Woche, ForexFactory) -------------
+    ok_wochen = 0
+    for url in ("https://nfs.faireconomy.media/ff_calendar_thisweek.json",
+                "https://nfs.faireconomy.media/ff_calendar_nextweek.json"):
+        try:
+            termine.extend(ff_termine(url, kcfg, tz, heute))
+            ok_wochen += 1
+        except Exception as e:  # noqa: BLE001
+            log.info("Wirtschaftskalender %s: %s", url.rsplit("_", 1)[-1], str(e)[:80])
+    if ok_wochen:
+        quellen["kalender"] = f"OK (ForexFactory, {ok_wochen} Woche(n))"
+    else:
+        quellen["kalender"] = "Fehler – zeige letzte bekannte Termine"
         termine.extend(t for t in vorher.get("kalender", [])
                        if t.get("typ") == "konjunktur" and t.get("datum", "") >= heute.isoformat())
 
-    # --- b) eigene, fixe Termine aus config.yaml -----------------------------
-    bis = heute + timedelta(days=21)
+    # --- b) eigene, fixe Termine aus config.yaml (Notenbanken, Events …) ------
     for t in kcfg.get("eigene_termine", []) or []:
         try:
             d = date.fromisoformat(str(t["datum"]))
         except Exception:  # noqa: BLE001
             continue
         if heute <= d <= bis:
-            # Doppelte vermeiden, falls der automatische Kalender den Termin schon hat
             termine.append({"datum": d.isoformat(), "zeit": t.get("zeit"), "titel": t["titel"],
-                            "land": t.get("land", ""), "wichtigkeit": "hoch", "typ": "notenbank"})
+                            "land": t.get("land", ""), "wichtigkeit": t.get("wichtigkeit", "hoch"),
+                            "typ": t.get("typ", "notenbank")})
 
-    # --- c) Quartalszahlen der eigenen Aktien --------------------------------
-    termine.extend(lade_quartalszahlen(cfg, vorher, heute, kcfg.get("quartalszahlen_tage", 14), quellen))
+    # --- c) Quartalszahlen + Dividenden aus den Fundamentaldaten --------------
+    zahlen = termine_aus_fundamentaldaten(fundamental, heute, bis)
+    termine.extend(zahlen)
+    quellen["quartalszahlen"] = f"OK ({sum(t['typ'] == 'zahlen' for t in zahlen)} Zahlen-Termine, " \
+                                f"{sum(t['typ'] == 'dividende' for t in zahlen)} Dividenden-Termine)"
 
-    termine.sort(key=lambda t: (t["datum"], t.get("zeit") or "99:99"))
+    # --- d) Optionsverfall und Börsenfeiertage --------------------------------
+    termine.extend(verfallstage(heute, bis))
+    for b in cfg.get("boersen", []):
+        for tag in b.get("feiertage", []):
+            if heute.isoformat() <= tag <= bis.isoformat():
+                termine.append({"datum": tag, "zeit": None, "titel": f"Börse geschlossen: {b['name']}",
+                                "land": b.get("region", ""), "wichtigkeit": "tief", "typ": "feiertag"})
+
+    termine.sort(key=lambda t: (t["datum"], t.get("zeit") or "99:99", t["titel"]))
     return termine
 
 
-def lade_quartalszahlen(cfg: dict, vorher: dict, heute: date, tage: int, quellen: dict) -> list[dict]:
+# ===========================================================================
+# 3a) FUNDAMENTALDATEN (KGV, Gewinne, Margen, Dividende, Analysten …)
+# ===========================================================================
+def zahl_oder_none(v, faktor: float = 1.0, stellen: int = 2):
+    """Wandelt Yahoo-Werte sicher in Zahlen um (NaN/Text -> None)."""
+    try:
+        if v is None:
+            return None
+        f = float(v) * faktor
+        if f != f or f in (float("inf"), float("-inf")):   # NaN / unendlich
+            return None
+        return round(f, stellen)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def zeile_aus_tabelle(df, namen: list[str]) -> dict[str, float]:
+    """Holt aus einer Yahoo-Finanztabelle (z.B. Erfolgsrechnung) eine Zeile als {Jahr: Wert}."""
+    if df is None or getattr(df, "empty", True):
+        return {}
+    for name in namen:
+        if name in df.index:
+            werte = {}
+            for spalte, wert in df.loc[name].items():
+                w = zahl_oder_none(wert, stellen=4)
+                if w is not None:
+                    werte[str(getattr(spalte, "year", spalte))] = w
+            if werte:
+                return werte
+    return {}
+
+
+def datum_text(v) -> str | None:
+    """Datum aus Yahoo (Zeitstempel, date oder Text) -> 'JJJJ-MM-TT'."""
+    try:
+        if v is None:
+            return None
+        if isinstance(v, (int, float)):
+            return datetime.fromtimestamp(v, timezone.utc).strftime("%Y-%m-%d")
+        if isinstance(v, (date, datetime)):
+            return v.strftime("%Y-%m-%d")
+        return str(v)[:10]
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def fundamental_eine_aktie(symbol: str) -> dict:
+    """Alle Kennzahlen zu einer Aktie (4 Anfragen bei Yahoo)."""
+    import yfinance as yf
+    t = yf.Ticker(symbol)
+    info = t.info or {}
+    if not info or len(info) < 5:
+        raise ValueError("keine Daten")
+    kurs = info.get("currentPrice") or info.get("regularMarketPrice") or info.get("previousClose")
+    div_satz = info.get("dividendRate") or info.get("trailingAnnualDividendRate")
+    k = {
+        "waehrung": info.get("currency"),
+        "bilanz_waehrung": info.get("financialCurrency"),
+        "kurs": zahl_oder_none(kurs),
+        "marktkap": zahl_oder_none(info.get("marketCap"), stellen=0),
+        "kgv": zahl_oder_none(info.get("trailingPE")),
+        "kgv_fwd": zahl_oder_none(info.get("forwardPE")),
+        "peg": zahl_oder_none(info.get("trailingPegRatio") or info.get("pegRatio")),
+        "kbv": zahl_oder_none(info.get("priceToBook")),
+        "kuv": zahl_oder_none(info.get("priceToSalesTrailing12Months")),
+        "ev_ebitda": zahl_oder_none(info.get("enterpriseToEbitda")),
+        "eps": zahl_oder_none(info.get("trailingEps")),
+        "eps_fwd": zahl_oder_none(info.get("forwardEps")),
+        "div_satz": zahl_oder_none(div_satz),
+        "div_rendite": zahl_oder_none(div_satz / kurs * 100) if div_satz and kurs else None,
+        "ausschuettung": zahl_oder_none(info.get("payoutRatio"), 100, 1),
+        "marge_brutto": zahl_oder_none(info.get("grossMargins"), 100, 1),
+        "marge_op": zahl_oder_none(info.get("operatingMargins"), 100, 1),
+        "marge_netto": zahl_oder_none(info.get("profitMargins"), 100, 1),
+        "roe": zahl_oder_none(info.get("returnOnEquity"), 100, 1),
+        "roa": zahl_oder_none(info.get("returnOnAssets"), 100, 1),
+        "verschuldung": zahl_oder_none(info.get("debtToEquity"), stellen=1),
+        "liquiditaet": zahl_oder_none(info.get("currentRatio")),
+        "umsatz_wachstum": zahl_oder_none(info.get("revenueGrowth"), 100, 1),
+        "gewinn_wachstum": zahl_oder_none(info.get("earningsGrowth"), 100, 1),
+        "beta": zahl_oder_none(info.get("beta")),
+        "hoch52": zahl_oder_none(info.get("fiftyTwoWeekHigh")),
+        "tief52": zahl_oder_none(info.get("fiftyTwoWeekLow")),
+        "kursziel": zahl_oder_none(info.get("targetMeanPrice")),
+        "kursziel_hoch": zahl_oder_none(info.get("targetHighPrice")),
+        "kursziel_tief": zahl_oder_none(info.get("targetLowPrice")),
+        "empfehlung": info.get("recommendationKey"),
+        "analysten": info.get("numberOfAnalystOpinions"),
+        "umsatz": zahl_oder_none(info.get("totalRevenue"), stellen=0),
+        "gewinn": zahl_oder_none(info.get("netIncomeToCommon"), stellen=0),
+        "fcf": zahl_oder_none(info.get("freeCashflow"), stellen=0),
+        "mitarbeiter": info.get("fullTimeEmployees"),
+        "branche": info.get("industry"),
+        "sitz": info.get("country"),
+        "website": info.get("website"),
+        "ex_div": datum_text(info.get("exDividendDate")),
+    }
+    # Erfolgsrechnung + Geldflussrechnung (Jahreswerte, meist 4 Jahre)
+    jahre = {}
+    try:
+        er = t.income_stmt
+        for feld, namen in (("umsatz", ["Total Revenue", "Operating Revenue"]),
+                            ("ebit", ["Operating Income", "EBIT"]),
+                            ("gewinn", ["Net Income Common Stockholders", "Net Income"]),
+                            ("eps", ["Diluted EPS", "Basic EPS"])):
+            for jahr, wert in zeile_aus_tabelle(er, namen).items():
+                jahre.setdefault(jahr, {})[feld] = wert
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        for jahr, wert in zeile_aus_tabelle(t.cashflow, ["Free Cash Flow"]).items():
+            jahre.setdefault(jahr, {})["fcf"] = wert
+    except Exception:  # noqa: BLE001
+        pass
+    k["jahre"] = [{"jahr": j, **jahre[j]} for j in sorted(jahre)][-5:]
+    # Termine (nächste Zahlen inkl. Schätzungen, Dividende)
+    termine = {}
+    try:
+        kal = t.calendar or {}
+        ed = kal.get("Earnings Date") or []
+        ed = ed if isinstance(ed, list) else [ed]
+        termine = {
+            "zahlen": datum_text(ed[0]) if ed else None,
+            "eps_schaetzung": zahl_oder_none(kal.get("Earnings Average")),
+            "umsatz_schaetzung": zahl_oder_none(kal.get("Revenue Average"), stellen=0),
+            "ex_div": datum_text(kal.get("Ex-Dividend Date")) or k["ex_div"],
+            "div_zahltag": datum_text(kal.get("Dividend Date")),
+        }
+    except Exception:  # noqa: BLE001
+        termine = {"ex_div": k["ex_div"]}
+    k["termine"] = termine
+    beschreibung = (info.get("longBusinessSummary") or "").strip()
+    if len(beschreibung) > 700:
+        beschreibung = beschreibung[:700].rsplit(". ", 1)[0] + "."
+    k["beschreibung_en"] = beschreibung or None
+    return k
+
+
+def lade_steckbriefe() -> dict:
+    """Deutsche Kurzporträts aus steckbriefe.yaml (von Hand gepflegt)."""
+    try:
+        with open(STECKBRIEF_DATEI, encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
+    except Exception as e:  # noqa: BLE001
+        log.warning("steckbriefe.yaml nicht lesbar: %s", e)
+        return {}
+
+
+def lade_fundamentaldaten(cfg: dict, pfad: Path, erzwingen: bool = False) -> dict:
+    """Holt die Fundamentaldaten aller Aktien – höchstens einmal pro Tag.
+
+    Fällt eine Aktie aus, bleibt ihr letzter bekannter Stand erhalten.
+    """
+    alt = lade_json(pfad)
+    steckbriefe = lade_steckbriefe()
     aktien = eindeutig(aktien_liste(cfg))
-    bis = heute + timedelta(days=tage)
+    alter_std = 999.0
+    if alt.get("erstellt"):
+        try:
+            alter_std = (jetzt_utc() - datetime.fromisoformat(alt["erstellt"])).total_seconds() / 3600
+        except Exception:  # noqa: BLE001
+            pass
+    fehlend = [a for a in aktien if a["symbol"] not in (alt.get("aktien") or {})]
+    if not erzwingen and alter_std < FUNDAMENTAL_MAX_ALTER_STD and not fehlend:
+        log.info("Fundamentaldaten sind aktuell (%.1f Std. alt) – kein Neuladen nötig", alter_std)
+        daten = alt
+        zu_holen = []
+    else:
+        daten = {"aktien": dict(alt.get("aktien") or {})}
+        # Alles neu holen, wenn veraltet – sonst nur neu hinzugekommene Aktien
+        zu_holen = aktien if (erzwingen or alter_std >= FUNDAMENTAL_MAX_ALTER_STD) else fehlend
+        log.info("Hole Fundamentaldaten für %d Aktien …", len(zu_holen))
 
     def eine(item):
-        try:
-            import yfinance as yf
-            kal = yf.Ticker(item["symbol"]).calendar or {}
-            daten = kal.get("Earnings Date") or []
-            if not isinstance(daten, list):
-                daten = [daten]
-            for d in daten:
-                d = d if isinstance(d, date) else date.fromisoformat(str(d)[:10])
-                if heute <= d <= bis:
-                    return {"datum": d.isoformat(), "zeit": None,
-                            "titel": f"Quartalszahlen {item['name']}",
-                            "land": {"CH": "Schweiz", "US": "USA"}.get(item["land"], item["land"]),
-                            "wichtigkeit": "mittel", "typ": "zahlen"}
-            return False   # erfolgreich abgefragt, aber kein Termin im Zeitraum
-        except Exception:  # noqa: BLE001
-            return None    # Abfrage fehlgeschlagen
+        for versuch in range(2):
+            try:
+                return item, fundamental_eine_aktie(item["symbol"]), None
+            except Exception as e:  # noqa: BLE001
+                fehler = str(e)[:100]
+                time.sleep(3 * (versuch + 1))
+        return item, None, fehler
 
+    ok_anzahl = 0
     with ThreadPoolExecutor(max_workers=4) as pool:
-        resultate = list(pool.map(eine, aktien))
-    erfolgreich = sum(r is not None for r in resultate)
-    gefunden = [r for r in resultate if r]
-    if aktien and erfolgreich == 0:
-        quellen["quartalszahlen"] = "Fehler – zeige letzte bekannte Termine"
-        return [t for t in vorher.get("kalender", [])
-                if t.get("typ") == "zahlen" and t.get("datum", "") >= heute.isoformat()]
-    quellen["quartalszahlen"] = f"OK ({erfolgreich}/{len(aktien)} Aktien abgefragt)"
-    return gefunden
+        for item, k, fehler in pool.map(eine, zu_holen):
+            if k:
+                k["stand"] = jetzt_utc().isoformat(timespec="seconds")
+                daten["aktien"][item["symbol"]] = k
+                ok_anzahl += 1
+            else:
+                log.info("  Fundamentaldaten %s fehlgeschlagen: %s", item["symbol"], fehler)
+                if item["symbol"] in daten["aktien"]:
+                    daten["aktien"][item["symbol"]]["veraltet"] = True
+    if zu_holen:
+        daten["erstellt"] = jetzt_utc().isoformat(timespec="seconds")
+        log.info("  -> %d von %d erhalten", ok_anzahl, len(zu_holen))
+        daten["status"] = f"{ok_anzahl} von {len(zu_holen)} beim letzten Abruf"
+
+    # Name, Sektor, Land und deutsche Steckbriefe immer aus der aktuellen config
+    for item in aktien:
+        eintrag = daten["aktien"].setdefault(item["symbol"], {})
+        eintrag.update({"name": item["name"], "sektor": item["sektor"], "land": item["land"]})
+        if item["symbol"] in steckbriefe:
+            eintrag["steckbrief"] = steckbriefe[item["symbol"]]
+    # Aktien, die nicht mehr in der config stehen, entfernen
+    gueltig = {a["symbol"] for a in aktien}
+    daten["aktien"] = {s: v for s, v in daten["aktien"].items() if s in gueltig}
+    return daten
 
 
 # ===========================================================================
@@ -990,7 +1261,7 @@ BEISPIEL_KURSE = {
 def beispiel_kurse(cfg: dict) -> dict[str, list[dict]]:
     rnd = random.Random(42)
     heute = date.today()
-    tage = [heute - timedelta(days=i) for i in range(400, -1, -1) if (heute - timedelta(days=i)).weekday() < 5]
+    tage = [heute - timedelta(days=i) for i in range(1900, -1, -1) if (heute - timedelta(days=i)).weekday() < 5]
 
     def serie(sym, vol):
         v = BEISPIEL_KURSE.get(sym, rnd.uniform(40, 400))
@@ -1019,12 +1290,55 @@ def beispiel_kurse(cfg: dict) -> dict[str, list[dict]]:
             e["diff_pct"] = round((faktor - 1) * 100, 3)
             e["verlauf"][-1] = e["kurs"]
             e["perf"] = {k: round(v + (faktor - 1) * 100, 3) for k, v in e["perf"].items()}
+            e["verlauf_w"][-1] = e["kurs"]
     # Eine Position als "Quelle ausgefallen" markieren, um die Anzeige zu testen
     if erg["aktien"]:
         e = erg["aktien"][-1]
         e["veraltet"] = True
         e["hinweis"] = "Quelle nicht erreichbar – letzter bekannter Wert"
     return erg
+
+
+def beispiel_fundamentaldaten(cfg: dict) -> dict:
+    """Erfundene, aber plausible Kennzahlen – nur zum Testen der Anzeige."""
+    rnd = random.Random(3)
+    steckbriefe = lade_steckbriefe()
+    aktien = {}
+    for i, item in enumerate(eindeutig(aktien_liste(cfg))):
+        umsatz = rnd.uniform(5e9, 300e9)
+        jahre, gewinn = [], umsatz * rnd.uniform(0.03, 0.25)
+        for j in range(2021, 2026):
+            umsatz *= rnd.uniform(0.95, 1.15)
+            gewinn *= rnd.uniform(0.8, 1.25)
+            jahre.append({"jahr": str(j), "umsatz": umsatz, "gewinn": gewinn if i % 9 else -gewinn / 3,
+                          "ebit": gewinn * 1.3, "eps": gewinn / 1e9, "fcf": gewinn * 0.9})
+        kurs = rnd.uniform(20, 600)
+        aktien[item["symbol"]] = {
+            "name": item["name"], "sektor": item["sektor"], "land": item["land"],
+            "waehrung": "CHF" if item["land"] == "CH" else "USD", "bilanz_waehrung": "USD", "kurs": kurs,
+            "marktkap": rnd.uniform(5e9, 3e12), "kgv": rnd.choice([None, rnd.uniform(8, 60)]),
+            "kgv_fwd": rnd.uniform(8, 40), "peg": rnd.uniform(0.5, 3), "kbv": rnd.uniform(0.8, 12),
+            "kuv": rnd.uniform(0.5, 15), "ev_ebitda": rnd.uniform(6, 35), "eps": rnd.uniform(-2, 20),
+            "eps_fwd": rnd.uniform(1, 22), "div_satz": kurs * 0.025, "div_rendite": rnd.uniform(0, 5),
+            "ausschuettung": rnd.uniform(0, 110), "marge_brutto": rnd.uniform(20, 75),
+            "marge_op": rnd.uniform(-5, 40), "marge_netto": rnd.uniform(-10, 35), "roe": rnd.uniform(-5, 45),
+            "roa": rnd.uniform(1, 20), "verschuldung": rnd.uniform(10, 250), "liquiditaet": rnd.uniform(0.6, 3),
+            "umsatz_wachstum": rnd.uniform(-10, 30), "gewinn_wachstum": rnd.uniform(-40, 60),
+            "beta": rnd.uniform(0.4, 2.5), "hoch52": kurs * 1.25, "tief52": kurs * 0.7,
+            "kursziel": kurs * rnd.uniform(0.85, 1.35), "kursziel_hoch": kurs * 1.6, "kursziel_tief": kurs * 0.7,
+            "empfehlung": rnd.choice(["strong_buy", "buy", "hold", "underperform"]), "analysten": rnd.randint(3, 45),
+            "umsatz": umsatz, "gewinn": gewinn, "fcf": gewinn * 0.9, "mitarbeiter": rnd.randint(500, 300000),
+            "branche": "Beispiel-Branche", "sitz": "Switzerland", "website": "https://example.com",
+            "jahre": jahre,
+            "termine": {"zahlen": (date.today() + timedelta(days=rnd.randint(1, 80))).isoformat(),
+                        "eps_schaetzung": rnd.uniform(0.5, 5), "umsatz_schaetzung": umsatz / 4,
+                        "ex_div": (date.today() + timedelta(days=rnd.randint(1, 90))).isoformat() if i % 3 == 0 else None},
+            "beschreibung_en": "Example company description from Yahoo Finance (English).",
+            "stand": jetzt_utc().isoformat(timespec="seconds"),
+        }
+        if item["symbol"] in steckbriefe:
+            aktien[item["symbol"]]["steckbrief"] = steckbriefe[item["symbol"]]
+    return {"erstellt": jetzt_utc().isoformat(timespec="seconds"), "status": "Beispieldaten", "aktien": aktien}
 
 
 def beispiel_news() -> list[dict]:
@@ -1067,12 +1381,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Börsendaten holen und als JSON speichern")
     parser.add_argument("--beispieldaten", action="store_true", help="Testdaten ohne Internet erzeugen")
     parser.add_argument("--ausgabe", default=str(AUSGABE_DATEI), help="Pfad der JSON-Datei")
+    parser.add_argument("--fundamental", action="store_true", help="Fundamentaldaten sofort neu holen")
     args = parser.parse_args()
 
     with open(CONFIG_DATEI, encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
 
     ausgabe = Path(args.ausgabe)
+    fund_pfad = ausgabe.parent / "fundamentals.json"
     vorher_json = lade_json(ausgabe)
     if vorher_json.get("beispieldaten") and not args.beispieldaten:
         vorher_json = {}   # Beispieldaten nie als "letzten bekannten Wert" verwenden
@@ -1094,7 +1410,11 @@ def main() -> int:
         news, feed_status = beispiel_news(), [
             {"name": f["name"], "url": f["url"], "ok": True, "anzahl": 0, "fehler": None}
             for f in cfg.get("news", {}).get("feeds", [])]
-        kalender = beispiel_kalender()
+        fundamental = beispiel_fundamentaldaten(cfg)
+        kalender = beispiel_kalender() + termine_aus_fundamentaldaten(
+            fundamental, date.today(), date.today() + timedelta(days=90)) + verfallstage(
+            date.today(), date.today() + timedelta(days=90))
+        kalender.sort(key=lambda t: (t["datum"], t.get("zeit") or "99:99"))
         rnd = random.Random(7)
         stimmung = {
             "aktien": stimmung_eintrag(38, 41, 52, 61, 70, [rnd.uniform(20, 80) for _ in range(250)], "Beispieldaten"),
@@ -1106,8 +1426,11 @@ def main() -> int:
         kurse = lade_kurse(cfg, vorher_map, statistik)
         log.info("Lade News …")
         news, feed_status = lade_news(cfg, vorher_json)
-        log.info("Lade Wirtschaftskalender …")
-        kalender = lade_kalender(cfg, vorher_json, quellen)
+        log.info("Lade Fundamentaldaten …")
+        fundamental = lade_fundamentaldaten(cfg, fund_pfad, erzwingen=args.fundamental)
+        quellen["fundamentaldaten"] = fundamental.get("status", "aus Zwischenspeicher")
+        log.info("Lade Kalender …")
+        kalender = lade_kalender(cfg, vorher_json, quellen, fundamental)
         log.info("Lade Fear & Greed …")
         stimmung = lade_stimmung(vorher_json, quellen)
 
@@ -1156,6 +1479,11 @@ def main() -> int:
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(daten, f, ensure_ascii=False, separators=(",", ":"))  # kompakt = schneller
     os.replace(tmp, ausgabe)
+    # Fundamentaldaten in eigene Datei (wird von der App erst bei Bedarf geladen)
+    tmp_f = fund_pfad.with_suffix(".tmp")
+    with open(tmp_f, "w", encoding="utf-8") as f:
+        json.dump(fundamental, f, ensure_ascii=False, separators=(",", ":"))
+    os.replace(tmp_f, fund_pfad)
 
     log.info("Gespeichert: %s", ausgabe)
     log.info("Kurse frisch: %d von %d | News: %d | Termine: %d", frische, gesamt, len(news), len(kalender))

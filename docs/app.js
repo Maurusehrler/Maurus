@@ -14,8 +14,9 @@ const DATEN_URL = "data/markets.json";
 const ZEITZONE = "Europe/Zurich";
 
 // Zeiträume für den Umschalter (Kürzel -> Text in Überschriften)
-const ZEITRAEUME = { "1T": "1 Tag", "1W": "1 Woche", "1M": "1 Monat", "3M": "3 Monate", "YTD": "seit 1.1.", "1J": "1 Jahr" };
-const TABS = ["uebersicht", "aktien", "maerkte", "news"];
+const ZEITRAEUME = { "1T": "1 Tag", "1W": "1 Woche", "1M": "1 Monat", "3M": "3 Monate", "YTD": "seit 1.1.", "1J": "1 Jahr", "3J": "3 Jahre", "5J": "5 Jahre" };
+const LANGE_ZEITRAEUME = ["3J", "5J"];     // Mini-Charts aus Wochenwerten
+const TABS = ["uebersicht", "aktien", "maerkte", "kalender", "news"];
 
 // Zustand der App
 const zustand = {
@@ -114,19 +115,24 @@ function perf(e) {
   return p === undefined ? null : p;
 }
 
-/** Wie viele der letzten Verlaufspunkte gehören zum Zeitraum? */
-function punkteImZeitraum(e) {
-  const n = (e.verlauf || []).length;
-  if (zustand.zeitraum === "1T") return Math.min(n, 5);         // bei 1 Tag: Mini-Chart der letzten Woche
-  return Math.min(n, (e.tage && e.tage[zustand.zeitraum]) || n);
+/** Kursreihe für den gewählten Zeitraum (Tageswerte bis 1 Jahr, Wochenwerte für 3 und 5 Jahre) */
+function reiheImZeitraum(e, zeitraum = zustand.zeitraum) {
+  if (LANGE_ZEITRAEUME.includes(zeitraum)) {
+    const w = e.verlauf_w || [], n = e.tage_w && e.tage_w[zeitraum];
+    return n ? w.slice(-n) : w;
+  }
+  const v = e.verlauf || [];
+  if (zeitraum === "1T") return v.slice(-5);          // bei 1 Tag: Mini-Chart der letzten Woche
+  const n = e.tage && e.tage[zeitraum];
+  return n ? v.slice(-n) : v;
 }
 
 /** Veränderung in Punkten (Kurs heute minus Kurs am Anfang des Zeitraums) */
 function diffPunkte(e) {
   if (zustand.zeitraum === "1T") return e.diff;
-  const v = e.verlauf || [], n = e.tage && e.tage[zustand.zeitraum];
-  if (!n || v.length < n) return null;
-  return e.kurs - v[v.length - n];
+  const r = reiheImZeitraum(e);
+  if (perf(e) === null || r.length < 2) return null;
+  return e.kurs - r[0];
 }
 
 /** Aktien mit gültigem Wert, sortiert (bester zuerst) */
@@ -191,9 +197,8 @@ function zeigeKopf() {
    --------------------------------------------------------------------- */
 
 /** Mini-Chart (Sparkline) als SVG für den gewählten Zeitraum */
-function sparkline(e) {
-  const alle = e.verlauf || [];
-  const w = alle.slice(-punkteImZeitraum(e)).filter((v) => v !== null && !isNaN(v));
+function sparkline(e, zeitraum = zustand.zeitraum) {
+  const w = reiheImZeitraum(e, zeitraum).filter((v) => v !== null && !isNaN(v));
   if (w.length < 2) return '<svg viewBox="0 0 100 30"></svg>';
   const min = Math.min(...w), max = Math.max(...w), spanne = max - min || 1;
   const punkte = w.map((v, i) => [(i / (w.length - 1)) * 100, 28 - ((v - min) / spanne) * 26]);
@@ -227,7 +232,9 @@ function kachel(e) {
 function zeile(e, { unter = "", mitKurs = true, rang = "" } = {}) {
   const p = perf(e);
   const unterText = unter || e.einheit || "";
-  return `<div class="zeile ${mitKurs ? "" : "ohne-kurs"}">
+  // Aktien lassen sich antippen -> Detailansicht mit Kennzahlen
+  const klick = e.kategorie === "aktie" ? ` klickbar" data-symbol="${esc(e.symbol)}` : "";
+  return `<div class="zeile ${mitKurs ? "" : "ohne-kurs"}${klick}">
     <div class="n">${rang ? `<span class="rang">${rang}</span>` : ""}${esc(e.name)}${veraltetBadge(e)}${unterText ? `<span class="unter">${esc(unterText)}</span>` : ""}</div>
     ${mitKurs ? `<div class="k">${zahl(e.kurs, stellen(e))}</div>` : ""}
     <div><span class="pill ${farbe(p)}">${prozent(p)}</span></div>
@@ -444,9 +451,12 @@ function zeigeAlles() {
         `<li class="${farbe(a.diff_pct)}">${a.diff_pct >= 0 ? "▲" : "▼"} ${esc(a.text)}</li>`).join("");
       $("indizes").innerHTML = (d.indizes || []).map(kachel).join("");
       $("stimmung").innerHTML = stimmungHtml(d.stimmung);
+      zeigeAktieDesTages();
+      $("wissen").innerHTML = wissenHtml();
       $("mover-ch").innerHTML = topFlop(eindeutig(alleAktien()).filter((a) => a.land === "CH"));
       $("mover-us").innerHTML = topFlop(eindeutig(alleAktien()).filter((a) => a.land === "US"));
-      $("kalender-kurz").innerHTML = kalenderHtml(d.kalender, { maxTage: 2 });
+      // Übersicht: nur wichtige Termine (alle übrigen im Tab "Kalender")
+      $("kalender-kurz").innerHTML = kalenderHtml((d.kalender || []).filter((t) => t.wichtigkeit !== "tief"), { maxTage: 2 });
       $("news-kurz").innerHTML = newsHtml((d.news || []).slice(0, 5));
       break;
     }
@@ -461,11 +471,13 @@ function zeigeAlles() {
       $("devisen").innerHTML = liste(d.devisen);
       $("weitere").innerHTML = liste(d.weitere);
       break;
+    case "kalender":
+      zeigeKalender();
+      break;
     case "news": {
       let news = (d.news || []).filter((n) => zustand.newsFilter === "alle" || (n.region || "INT") === zustand.newsFilter);
       if (zustand.newsSortierung === "neu") news = [...news].sort((a, b) => (b.zeit || "").localeCompare(a.zeit || ""));
       $("news").innerHTML = newsHtml(news);
-      $("kalender").innerHTML = kalenderHtml(d.kalender);
       $("quellen").innerHTML = quellenHtml(d.quellen);
       break;
     }
@@ -481,7 +493,7 @@ function zeigeSteuerung() {
   document.querySelectorAll("#news-sortierung button").forEach((b) => b.classList.toggle("aktiv", b.dataset.sortierung === zustand.newsSortierung));
   document.querySelectorAll("#news-filter button").forEach((b) => b.classList.toggle("aktiv", b.dataset.filter === zustand.newsFilter));
   // Auf der News-Seite braucht es keinen Zeitraum
-  $("zeitleiste").classList.toggle("versteckt", zustand.tab === "news");
+  $("zeitleiste").classList.toggle("versteckt", zustand.tab === "news" || zustand.tab === "kalender");
 }
 
 function wechsleTab(tab) {
@@ -506,6 +518,7 @@ async function laden() {
     // Der Service Worker markiert Antworten aus dem Offline-Speicher
     zustand.offline = antwort.headers.get("X-Aus-Speicher") === "1";
     zeigeAlles();
+    ladeFundamentaldaten();          // Kennzahlen im Hintergrund nachladen (kennzahlen.js)
   } catch (fehler) {
     console.error(fehler);
     zustand.offline = true;
