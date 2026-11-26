@@ -368,6 +368,22 @@ def loese_isin(item: dict) -> dict:
     return {**item, "symbol": isin}      # nicht gefunden -> erscheint als "keine Daten"
 
 
+def offizieller_name(item: dict) -> dict:
+    """Holt bei Yahoo den offiziellen Produktnamen, wenn in config.yaml name: "auto" steht."""
+    if item.get("name") not in (None, "", "auto"):
+        return item
+    try:
+        import yfinance as yf
+        info = yf.Ticker(item["symbol"]).info or {}
+        name = info.get("longName") or info.get("shortName")
+        if name:
+            log.info("  Name für %s: %s", item["symbol"], name)
+            return {**item, "name": name}
+    except Exception as e:  # noqa: BLE001
+        log.info("  Name für %s nicht gefunden: %s", item.get("symbol"), e)
+    return {**item, "name": item.get("isin") or item["symbol"]}
+
+
 def basis_eintrag(item: dict, kategorie: str) -> dict:
     e = {"symbol": item["symbol"], "name": item["name"], "kategorie": kategorie}
     for feld in ("region", "einheit", "sektor", "land", "isin"):
@@ -400,7 +416,7 @@ def lade_kurse(cfg: dict, vorher: dict, statistik: dict) -> dict[str, list[dict]
     gruppen = [
         ("indizes", "index", cfg.get("indizes", [])),
         ("aktien", "aktie", aktien_liste(cfg)),
-        ("etfs", "etf", [loese_isin(i) for i in cfg.get("etfs", []) or []]),
+        ("etfs", "etf", [offizieller_name(loese_isin(i)) for i in cfg.get("etfs", []) or []]),
         ("rohstoffe", "rohstoff", cfg.get("rohstoffe", [])),
         ("devisen", "devisen", cfg.get("devisen", [])),
         ("weitere", "weitere", cfg.get("weitere", [])),

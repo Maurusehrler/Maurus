@@ -168,9 +168,10 @@ aktien:
 #   isin   = ISIN des Produkts; das Skript sucht das Yahoo-Symbol selbst
 #   symbol = (optional) Yahoo-Symbol direkt angeben, falls bekannt
 #   boerse = bevorzugte Börse(n) bei der Suche (Endung des Symbols)
+#   name   = Anzeigename; "auto" = offiziellen Namen bei Yahoo abfragen
 # ---------------------------------------------------------------------
 etfs:
-  - { isin: "IE00BD4TYL27", name: "Vanguard ESG North America All Cap", boerse: [".SW", ".L", ".DE", ".AS", ".MI"] }
+  - { isin: "IE00BD4TYL27", name: "auto", boerse: [".SW", ".L", ".DE", ".AS", ".MI"] }
 
 # ---------------------------------------------------------------------
 # US-SEKTOREN (S&P 500) – gemessen an den Sektor-ETFs von SPDR.
