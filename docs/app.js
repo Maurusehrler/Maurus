@@ -32,7 +32,7 @@ function zahl(wert, stellen = 2) {
 /** 1.234 -> "+1.23 %" */
 function prozent(p) {
   if (p === null || p === undefined || isNaN(p)) return "–";
-  return (p >= 0 ? "+" : "−") + Math.abs(p).toFixed(2) + " %";
+  return (p >= 0 ? "+" : "−") + Math.abs(p).toFixed(2) + "\u00a0%";
 }
 
 /** Vorzeichen-Klasse für die Farbe */

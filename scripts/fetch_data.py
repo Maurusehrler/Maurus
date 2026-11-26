@@ -88,8 +88,8 @@ def zahl_ch(wert: float, stellen: int = 2) -> str:
 def prozent_text(p: float, mit_vorzeichen: bool = True) -> str:
     """0.8 -> '+0.8 %'"""
     if mit_vorzeichen:
-        return f"{'+' if p >= 0 else '−'}{abs(p):.1f} %"
-    return f"{abs(p):.1f} %"
+        return f"{'+' if p >= 0 else '−'}{abs(p):.1f}\u00a0%"
+    return f"{abs(p):.1f}\u00a0%"
 
 
 def runden(v: float) -> float:
