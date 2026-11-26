@@ -33,11 +33,12 @@ indizes:
 # AKTIEN SCHWEIZ  (für Top-Gewinner/-Verlierer und Tagesüberblick)
 #   Zum Hinzufügen einfach eine neue Zeile im gleichen Format einfügen.
 #   Zum Entfernen die Zeile löschen (oder mit "#" auskommentieren).
+#   alternativ = (optional) Ersatz-Symbole, falls das erste keine Daten liefert
 # ---------------------------------------------------------------------
 aktien_ch:
   - { symbol: "NESN.SW", name: "Nestlé" }
   - { symbol: "NOVN.SW", name: "Novartis" }
-  - { symbol: "ROG.SW",  name: "Roche" }
+  - { symbol: "ROG.SW",  name: "Roche", alternativ: ["RO.SW"] }
   - { symbol: "UBSG.SW", name: "UBS" }
   - { symbol: "ABBN.SW", name: "ABB" }
   - { symbol: "ZURN.SW", name: "Zurich" }
@@ -125,6 +126,8 @@ news:
   max_artikel: 25            # so viele Schlagzeilen werden angezeigt
   max_alter_stunden: 36      # ältere Meldungen werden weggelassen
   max_pro_quelle: 5          # damit nicht eine Quelle alles dominiert
+  #   (Getestet am 26.11.2026. cash.ch, Handelszeitung, FuW, finanzen.ch und
+  #    Yahoo bieten derzeit keinen frei nutzbaren RSS-Feed an.)
   #   bonus = Zusatzpunkte für die Quelle (höher = weiter oben). So kommen
   #           Schweizer Meldungen vor allgemeinen internationalen News.
   feeds:
@@ -134,14 +137,6 @@ news:
     - { name: "finews.ch",       bonus: 4, url: "https://www.finews.ch/news/finanzplatz?format=feed&type=rss" }
     - { name: "finews.ch",       bonus: 4, url: "https://www.finews.ch/?format=feed&type=rss" }
     - { name: "SRF Wirtschaft",  bonus: 4, url: "https://www.srf.ch/news/bnf/rss/1926" }
-    - { name: "cash.ch",         bonus: 4, url: "https://www.cash.ch/rss" }
-    - { name: "cash.ch",         bonus: 4, url: "https://www.cash.ch/rss.xml" }
-    - { name: "cash.ch",         bonus: 4, url: "https://www.cash.ch/feeds/news" }
-    - { name: "Handelszeitung",  bonus: 4, url: "https://www.handelszeitung.ch/rss" }
-    - { name: "Handelszeitung",  bonus: 4, url: "https://www.handelszeitung.ch/feed" }
-    - { name: "swissinfo",       bonus: 3, url: "https://www.swissinfo.ch/ger/rss/wirtschaft" }
-    - { name: "Finanz und Wirtschaft", bonus: 4, url: "https://www.fuw.ch/feed" }
-    - { name: "finanzen.ch",     bonus: 3, url: "https://www.finanzen.ch/rss/news" }
     - { name: "SNB",             bonus: 4, url: "https://www.snb.ch/public/de/rss/news" }
     # --- Deutschland / Europa ---
     - { name: "tagesschau Wirtschaft", bonus: 2, url: "https://www.tagesschau.de/wirtschaft/index~rss2.xml" }
@@ -150,8 +145,6 @@ news:
     - { name: "CNBC",            bonus: 0, url: "https://www.cnbc.com/id/100003114/device/rss/rss.html" }
     - { name: "CNBC Markets",    bonus: 1, url: "https://www.cnbc.com/id/15839069/device/rss/rss.html" }
     - { name: "MarketWatch",     bonus: 0, url: "https://feeds.content.dowjones.io/public/rss/mw_topstories" }
-    - { name: "Yahoo Finance",   bonus: 0, url: "https://finance.yahoo.com/rss/topstories" }
-    - { name: "Yahoo Finance",   bonus: 0, url: "https://finance.yahoo.com/news/rss" }
     - { name: "BBC Business",    bonus: 0, url: "https://feeds.bbci.co.uk/news/business/rss.xml" }
     - { name: "Federal Reserve", bonus: 2, url: "https://www.federalreserve.gov/feeds/press_monetary.xml" }
 

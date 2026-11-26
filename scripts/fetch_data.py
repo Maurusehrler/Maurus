@@ -291,7 +291,7 @@ def basis_eintrag(item: dict, kategorie: str) -> dict:
 def ersatz_aus_vorherigem(item: dict, kategorie: str, vorher: dict) -> dict:
     """Letzten bekannten Wert übernehmen (oder leeren Eintrag, falls es keinen gibt)."""
     alt = vorher.get(f"{kategorie}:{item['symbol']}")
-    if alt and alt.get("kurs") is not None:
+    if alt and alt.get("kurs") is not None and alt.get("quelle") != "Beispieldaten":
         e = dict(alt)
         e["veraltet"] = True
         e["hinweis"] = "Quelle nicht erreichbar – letzter bekannter Wert"
@@ -343,6 +343,12 @@ def lade_kurse(cfg: dict, vorher: dict, statistik: dict) -> dict[str, list[dict]
             if sym in reihen:
                 e = eintrag_aus_serie(item, kategorie, reihen[sym], "Yahoo Finance")
             # --- Schritt 3: Ersatzquellen -------------------------------------
+            # a) Alternativ-Symbole aus config.yaml (z.B. andere Aktienklasse)
+            for alt_symbol in item.get("alternativ", []) if e is None else []:
+                p = yahoo_einzeln(alt_symbol)
+                if p:
+                    e = eintrag_aus_serie(item, kategorie, p, f"Yahoo Finance ({alt_symbol})")
+                    break
             if e is None and item.get("stooq"):
                 p = stooq(item["stooq"])
                 if p:
@@ -886,6 +892,8 @@ def main() -> int:
 
     ausgabe = Path(args.ausgabe)
     vorher_json = lade_json(ausgabe)
+    if vorher_json.get("beispieldaten") and not args.beispieldaten:
+        vorher_json = {}   # Beispieldaten nie als "letzten bekannten Wert" verwenden
     # Vorherige Werte nach "kategorie:symbol" ablegen (für die Ersatz-Logik)
     vorher_map = {}
     for gruppe in ("indizes", "aktien_ch", "aktien_us", "krypto", "rohstoffe", "devisen", "weitere"):
