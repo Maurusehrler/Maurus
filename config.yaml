@@ -124,27 +124,36 @@ schwellen:
 news:
   max_artikel: 25            # so viele Schlagzeilen werden angezeigt
   max_alter_stunden: 36      # ältere Meldungen werden weggelassen
-  max_pro_quelle: 6          # damit nicht eine Quelle alles dominiert
+  max_pro_quelle: 5          # damit nicht eine Quelle alles dominiert
+  #   bonus = Zusatzpunkte für die Quelle (höher = weiter oben). So kommen
+  #           Schweizer Meldungen vor allgemeinen internationalen News.
   feeds:
     # --- Schweiz ---
-    - { name: "NZZ Wirtschaft",  url: "https://www.nzz.ch/wirtschaft.rss" }
-    - { name: "NZZ Finanzen",    url: "https://www.nzz.ch/finanzen.rss" }
-    - { name: "finews.ch",       url: "https://www.finews.ch/news/finanzplatz?format=feed&type=rss" }
-    - { name: "finews.ch",       url: "https://www.finews.ch/?format=feed&type=rss" }
-    - { name: "cash.ch",         url: "https://www.cash.ch/rss/news" }
-    - { name: "Handelszeitung",  url: "https://www.handelszeitung.ch/rss.xml" }
-    - { name: "SRF Wirtschaft",  url: "https://www.srf.ch/news/bnf/rss/1926" }
-    - { name: "swissinfo",       url: "https://www.swissinfo.ch/ger/wirtschaft/rss" }
+    - { name: "NZZ Wirtschaft",  bonus: 4, url: "https://www.nzz.ch/wirtschaft.rss" }
+    - { name: "NZZ Finanzen",    bonus: 4, url: "https://www.nzz.ch/finanzen.rss" }
+    - { name: "finews.ch",       bonus: 4, url: "https://www.finews.ch/news/finanzplatz?format=feed&type=rss" }
+    - { name: "finews.ch",       bonus: 4, url: "https://www.finews.ch/?format=feed&type=rss" }
+    - { name: "SRF Wirtschaft",  bonus: 4, url: "https://www.srf.ch/news/bnf/rss/1926" }
+    - { name: "cash.ch",         bonus: 4, url: "https://www.cash.ch/rss" }
+    - { name: "cash.ch",         bonus: 4, url: "https://www.cash.ch/rss.xml" }
+    - { name: "cash.ch",         bonus: 4, url: "https://www.cash.ch/feeds/news" }
+    - { name: "Handelszeitung",  bonus: 4, url: "https://www.handelszeitung.ch/rss" }
+    - { name: "Handelszeitung",  bonus: 4, url: "https://www.handelszeitung.ch/feed" }
+    - { name: "swissinfo",       bonus: 3, url: "https://www.swissinfo.ch/ger/rss/wirtschaft" }
+    - { name: "Finanz und Wirtschaft", bonus: 4, url: "https://www.fuw.ch/feed" }
+    - { name: "finanzen.ch",     bonus: 3, url: "https://www.finanzen.ch/rss/news" }
+    - { name: "SNB",             bonus: 4, url: "https://www.snb.ch/public/de/rss/news" }
     # --- Deutschland / Europa ---
-    - { name: "tagesschau Wirtschaft", url: "https://www.tagesschau.de/wirtschaft/index~rss2.xml" }
-    - { name: "EZB",             url: "https://www.ecb.europa.eu/rss/press.html" }
+    - { name: "tagesschau Wirtschaft", bonus: 2, url: "https://www.tagesschau.de/wirtschaft/index~rss2.xml" }
+    - { name: "EZB",             bonus: 1, url: "https://www.ecb.europa.eu/rss/press.html" }
     # --- International ---
-    - { name: "CNBC",            url: "https://www.cnbc.com/id/100003114/device/rss/rss.html" }
-    - { name: "CNBC Markets",    url: "https://www.cnbc.com/id/15839069/device/rss/rss.html" }
-    - { name: "MarketWatch",     url: "https://feeds.content.dowjones.io/public/rss/mw_topstories" }
-    - { name: "Yahoo Finance",   url: "https://finance.yahoo.com/news/rssindex" }
-    - { name: "BBC Business",    url: "https://feeds.bbci.co.uk/news/business/rss.xml" }
-    - { name: "Federal Reserve", url: "https://www.federalreserve.gov/feeds/press_monetary.xml" }
+    - { name: "CNBC",            bonus: 0, url: "https://www.cnbc.com/id/100003114/device/rss/rss.html" }
+    - { name: "CNBC Markets",    bonus: 1, url: "https://www.cnbc.com/id/15839069/device/rss/rss.html" }
+    - { name: "MarketWatch",     bonus: 0, url: "https://feeds.content.dowjones.io/public/rss/mw_topstories" }
+    - { name: "Yahoo Finance",   bonus: 0, url: "https://finance.yahoo.com/rss/topstories" }
+    - { name: "Yahoo Finance",   bonus: 0, url: "https://finance.yahoo.com/news/rss" }
+    - { name: "BBC Business",    bonus: 0, url: "https://feeds.bbci.co.uk/news/business/rss.xml" }
+    - { name: "Federal Reserve", bonus: 2, url: "https://www.federalreserve.gov/feeds/press_monetary.xml" }
 
   # Stichwörter, die eine Meldung wichtiger machen (Gewicht = Zusatzpunkte).
   # Die Namen deiner Aktien von oben werden automatisch auch berücksichtigt.
@@ -178,6 +187,15 @@ news:
     Gold: 1
     Öl: 1
     Ölpreis: 1
+    # englische Begriffe (für internationale Feeds)
+    "Swiss": 3
+    franc: 3
+    inflation: 3
+    "S&P 500": 2
+    Nasdaq: 2
+    stocks: 1
+    Treasury: 2
+    yields: 2
 
 # ---------------------------------------------------------------------
 # WIRTSCHAFTSKALENDER

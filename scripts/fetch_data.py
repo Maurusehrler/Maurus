@@ -172,15 +172,24 @@ def yahoo_mehrere(symbole: list[str]) -> dict[str, list[tuple[str, float]]]:
 
 
 def yahoo_einzeln(symbol: str) -> list[tuple[str, float]] | None:
-    """Zweiter Versuch für ein einzelnes Symbol."""
-    try:
-        import yfinance as yf
-        df = yf.Ticker(symbol).history(period="2mo", interval="1d", auto_adjust=False)
-        serie = df["Close"].dropna()
-        punkte = [(idx.strftime("%Y-%m-%d"), float(v)) for idx, v in serie.items()]
-        return punkte if len(punkte) >= 2 else None
-    except Exception:  # noqa: BLE001
-        return None
+    """Zweiter Versuch für ein einzelnes Symbol (zwei verschiedene Abfragearten)."""
+    import yfinance as yf
+    for versuch in ("history", "download"):
+        try:
+            if versuch == "history":
+                df = yf.Ticker(symbol).history(period="2mo", interval="1d", auto_adjust=False)
+            else:
+                df = yf.download(symbol, period="3mo", interval="1d", auto_adjust=False,
+                                 progress=False, multi_level_index=False)
+            serie = df["Close"].dropna()
+            punkte = [(idx.strftime("%Y-%m-%d"), float(v)) for idx, v in serie.items()]
+            if len(punkte) >= 2:
+                return punkte
+            log.info("  %s (%s): keine Kursreihe erhalten", symbol, versuch)
+        except Exception as e:  # noqa: BLE001
+            log.info("  %s (%s) fehlgeschlagen: %s", symbol, versuch, str(e)[:120])
+        time.sleep(1)
+    return None
 
 
 def stooq(symbol: str) -> list[tuple[str, float]] | None:
@@ -445,7 +454,7 @@ def lade_news(cfg: dict, vorher: dict) -> tuple[list[dict], list[dict]]:
                         zeit = datetime(*x[feld][:6], tzinfo=timezone.utc)
                         break
                 artikel.append({"titel": titel, "link": link, "quelle": feed["name"],
-                                "zeit": zeit})
+                                "zeit": zeit, "bonus": float(feed.get("bonus", 0))})
             if not artikel:
                 return feed, [], "Feed leer oder kein RSS"
             return feed, artikel, None
@@ -469,7 +478,8 @@ def lade_news(cfg: dict, vorher: dict) -> tuple[list[dict], list[dict]]:
         alter_h = (jetzt - a["zeit"]).total_seconds() / 3600 if a["zeit"] else 18
         aktualitaet = max(0.0, 10 - alter_h / 2.4)  # 10 Punkte = brandneu, 0 = 24 h alt
         punkte, treffer = stichwort_treffer(a["titel"], stichwoerter, aktien_namen)
-        a["score"] = round(aktualitaet + min(punkte, 12), 2)
+        # Gesamtpunkte = Aktualität + Stichwörter (max. 12) + Bonus der Quelle (config.yaml)
+        a["score"] = round(aktualitaet + min(punkte, 12) + a["bonus"], 2)
         a["tags"] = treffer[:3]
         bewertet.append(a)
     bewertet.sort(key=lambda a: (a["score"], a["zeit"] or jetzt), reverse=True)
