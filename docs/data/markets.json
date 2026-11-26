@@ -1,38 +1,38 @@
 {
  "version": 1,
- "erstellt": "2026-11-26T13:28:14+00:00",
+ "erstellt": "2026-11-26T13:29:16+00:00",
  "lauf": "Update",
  "beispieldaten": false,
  "zeitzone": "Europe/Zurich",
  "zusammenfassung": [
-  "Der SMI notiert 0.9 % höher bei 14'790.98 Punkten, angeführt von ABB (+3.2 %).",
-  "An der Wall Street schloss der S&P 500 0.3 % tiefer, der Nasdaq verlor 0.6 %.",
-  "Auffälligster US-Titel war Nvidia (−3.9 %).",
-  "Der DAX gewann 2.0 %.",
-  "Bitcoin stieg um 3.4 % auf 60'776 USD (24 Std.).",
-  "Gold verteuerte sich um 1.6 %, Silber verteuerte sich um 4.0 %, Brent-Öl verbilligte sich um 3.6 %.",
+  "Der SMI notiert 0.9 % höher bei 14'790.19 Punkten, angeführt von ABB (+3.2 %).",
+  "An der Wall Street schloss der S&P 500 0.3 % tiefer, der Nasdaq verlor 0.6 %.",
+  "Auffälligster US-Titel war Nvidia (−3.9 %).",
+  "Der DAX gewann 1.9 %.",
+  "Bitcoin stieg um 3.4 % auf 60'781 USD (24 Std.).",
+  "Gold verteuerte sich um 1.6 %, Silber verteuerte sich um 3.9 %, Brent-Öl verbilligte sich um 3.5 %.",
   "Die Schwankungsbreite ist erhöht (VIX 26.8)."
  ],
  "auffaelligkeiten": [
   {
    "name": "VIX",
    "kategorie": "Indikator",
-   "diff_pct": -5.267,
+   "diff_pct": -5.302,
    "text": "VIX auf erhöhtem Niveau (26.8) – Märkte nervös"
   },
   {
    "name": "Silber",
    "kategorie": "Rohstoff",
-   "diff_pct": 3.977,
+   "diff_pct": 3.877,
    "schwelle": 3.0,
-   "text": "Silber +4.0 % (Rohstoff, Schwelle ±3 %)"
+   "text": "Silber +3.9 % (Rohstoff, Schwelle ±3 %)"
   },
   {
    "name": "Öl (Brent)",
    "kategorie": "Rohstoff",
-   "diff_pct": -3.583,
+   "diff_pct": -3.509,
    "schwelle": 3.0,
-   "text": "Öl (Brent) −3.6 % (Rohstoff, Schwelle ±3 %)"
+   "text": "Öl (Brent) −3.5 % (Rohstoff, Schwelle ±3 %)"
   }
  ],
  "indizes": [
@@ -41,10 +41,10 @@
    "name": "SMI",
    "kategorie": "index",
    "region": "Schweiz",
-   "kurs": 14790.98,
+   "kurs": 14790.19,
    "vortag": 14664.92,
-   "diff": 126.061,
-   "diff_pct": 0.86,
+   "diff": 125.271,
+   "diff_pct": 0.854,
    "datum": "2026-11-26",
    "verlauf": [
     14597.63,
@@ -69,10 +69,10 @@
     14735.64,
     14733.89,
     14664.92,
-    14790.98
+    14790.19
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -111,7 +111,7 @@
     20778.32
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -150,7 +150,7 @@
     7182.78
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -189,7 +189,7 @@
     23585.8
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -228,7 +228,7 @@
     50182.95
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -236,10 +236,10 @@
    "name": "DAX",
    "kategorie": "index",
    "region": "Europa",
-   "kurs": 25188.88,
+   "kurs": 25181.9,
    "vortag": 24702.13,
-   "diff": 486.75,
-   "diff_pct": 1.97,
+   "diff": 479.77,
+   "diff_pct": 1.942,
    "datum": "2026-11-26",
    "verlauf": [
     25590.77,
@@ -264,10 +264,10 @@
     25337.27,
     25017.81,
     24702.13,
-    25188.88
+    25181.9
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -275,10 +275,10 @@
    "name": "Euro Stoxx 50",
    "kategorie": "index",
    "region": "Europa",
-   "kurs": 6006.59,
+   "kurs": 6006.33,
    "vortag": 5894.46,
-   "diff": 112.13,
-   "diff_pct": 1.902,
+   "diff": 111.87,
+   "diff_pct": 1.898,
    "datum": "2026-11-26",
    "verlauf": [
     6164.69,
@@ -303,10 +303,10 @@
     6074.47,
     6003.76,
     5894.46,
-    6006.59
+    6006.33
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   }
  ],
@@ -315,10 +315,10 @@
    "symbol": "NESN.SW",
    "name": "Nestlé",
    "kategorie": "aktie_ch",
-   "kurs": 87.24,
+   "kurs": 87.19,
    "vortag": 87.15,
-   "diff": 0.09,
-   "diff_pct": 0.103,
+   "diff": 0.04,
+   "diff_pct": 0.046,
    "datum": "2026-11-26",
    "verlauf": [
     83.25,
@@ -343,10 +343,10 @@
     84.88,
     86.28,
     87.15,
-    87.24
+    87.19
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -384,17 +384,17 @@
     128.0
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
    "symbol": "ROG.SW",
    "name": "Roche",
    "kategorie": "aktie_ch",
-   "kurs": 412.4,
+   "kurs": 412.8,
    "vortag": 411.0,
-   "diff": 1.39999,
-   "diff_pct": 0.341,
+   "diff": 1.79999,
+   "diff_pct": 0.438,
    "datum": "2026-11-26",
    "verlauf": [
     405.4,
@@ -419,10 +419,10 @@
     404.8,
     412.2,
     411.0,
-    412.4
+    412.8
    ],
    "quelle": "Yahoo Finance (RO.SW)",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -460,7 +460,7 @@
     37.49
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -498,17 +498,17 @@
     65.36
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
    "symbol": "ZURN.SW",
    "name": "Zurich",
    "kategorie": "aktie_ch",
-   "kurs": 644.0,
+   "kurs": 643.6,
    "vortag": 637.4,
-   "diff": 6.59998,
-   "diff_pct": 1.035,
+   "diff": 6.19995,
+   "diff_pct": 0.973,
    "datum": "2026-11-26",
    "verlauf": [
     616.0,
@@ -533,20 +533,20 @@
     635.0,
     636.2,
     637.4,
-    644.0
+    643.6
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
    "symbol": "CFR.SW",
    "name": "Richemont",
    "kategorie": "aktie_ch",
-   "kurs": 172.0,
+   "kurs": 172.05,
    "vortag": 168.4,
-   "diff": 3.60001,
-   "diff_pct": 2.138,
+   "diff": 3.65001,
+   "diff_pct": 2.167,
    "datum": "2026-11-26",
    "verlauf": [
     164.15,
@@ -571,20 +571,20 @@
     174.4,
     172.1,
     168.4,
-    172.0
+    172.05
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
    "symbol": "HOLN.SW",
    "name": "Holcim",
    "kategorie": "aktie_ch",
-   "kurs": 75.5,
+   "kurs": 75.52,
    "vortag": 74.32,
-   "diff": 1.18,
-   "diff_pct": 1.588,
+   "diff": 1.2,
+   "diff_pct": 1.615,
    "datum": "2026-11-26",
    "verlauf": [
     68.06,
@@ -609,10 +609,10 @@
     74.42,
     73.28,
     74.32,
-    75.5
+    75.52
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -650,17 +650,17 @@
     154.6
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
    "symbol": "LONN.SW",
    "name": "Lonza",
    "kategorie": "aktie_ch",
-   "kurs": 666.4,
+   "kurs": 666.0,
    "vortag": 662.0,
-   "diff": 4.40002,
-   "diff_pct": 0.665,
+   "diff": 4.0,
+   "diff_pct": 0.604,
    "datum": "2026-11-26",
    "verlauf": [
     635.8,
@@ -685,10 +685,10 @@
     659.6,
     658.6,
     662.0,
-    666.4
+    666.0
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -726,7 +726,7 @@
     189.35
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -764,7 +764,7 @@
     64.7
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -802,7 +802,7 @@
     639.4
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -840,7 +840,7 @@
     4049.0
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -878,7 +878,7 @@
     710.0
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -916,7 +916,7 @@
     969.6
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -954,7 +954,7 @@
     592.2
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -992,17 +992,17 @@
     221.0
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
    "symbol": "LOGN.SW",
    "name": "Logitech",
    "kategorie": "aktie_ch",
-   "kurs": 83.28,
+   "kurs": 83.32,
    "vortag": 81.34,
-   "diff": 1.94,
-   "diff_pct": 2.385,
+   "diff": 1.98,
+   "diff_pct": 2.434,
    "datum": "2026-11-26",
    "verlauf": [
     91.96,
@@ -1027,20 +1027,20 @@
     84.0,
     82.9,
     81.34,
-    83.28
+    83.32
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
    "symbol": "GALD.SW",
    "name": "Galderma",
    "kategorie": "aktie_ch",
-   "kurs": 183.25,
+   "kurs": 183.2,
    "vortag": 184.0,
-   "diff": -0.75,
-   "diff_pct": -0.408,
+   "diff": -0.8,
+   "diff_pct": -0.435,
    "datum": "2026-11-26",
    "verlauf": [
     185.0,
@@ -1065,10 +1065,10 @@
     187.7,
     183.3,
     184.0,
-    183.25
+    183.2
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   }
  ],
@@ -1108,7 +1108,7 @@
     355.58
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -1146,7 +1146,7 @@
     489.93
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -1184,7 +1184,7 @@
     149.3
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -1222,7 +1222,7 @@
     244.43
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -1260,7 +1260,7 @@
     273.1
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -1298,7 +1298,7 @@
     609.89
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -1336,7 +1336,7 @@
     380.14
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   }
  ],
@@ -1346,10 +1346,10 @@
    "name": "Gold",
    "kategorie": "rohstoff",
    "einheit": "USD/oz",
-   "kurs": 3593.0,
+   "kurs": 3591.6,
    "vortag": 3535.8,
-   "diff": 57.2,
-   "diff_pct": 1.618,
+   "diff": 55.8,
+   "diff_pct": 1.578,
    "datum": "2026-11-26",
    "verlauf": [
     4074.6,
@@ -1374,10 +1374,10 @@
     3651.4,
     3561.9,
     3535.8,
-    3593.0
+    3591.6
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -1385,10 +1385,10 @@
    "name": "Silber",
    "kategorie": "rohstoff",
    "einheit": "USD/oz",
-   "kurs": 41.645,
+   "kurs": 41.605,
    "vortag": 40.052,
-   "diff": 1.593,
-   "diff_pct": 3.977,
+   "diff": 1.553,
+   "diff_pct": 3.877,
    "datum": "2026-11-26",
    "verlauf": [
     54.293,
@@ -1413,10 +1413,10 @@
     43.147,
     40.76,
     40.052,
-    41.645
+    41.605
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -1424,10 +1424,10 @@
    "name": "Öl (Brent)",
    "kategorie": "rohstoff",
    "einheit": "USD/Fass",
-   "kurs": 91.22,
+   "kurs": 91.29,
    "vortag": 94.61,
-   "diff": -3.39,
-   "diff_pct": -3.583,
+   "diff": -3.32,
+   "diff_pct": -3.509,
    "datum": "2026-11-26",
    "verlauf": [
     113.88,
@@ -1452,10 +1452,10 @@
     89.37,
     91.4,
     94.61,
-    91.22
+    91.29
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -1463,10 +1463,10 @@
    "name": "Öl (WTI)",
    "kategorie": "rohstoff",
    "einheit": "USD/Fass",
-   "kurs": 84.56,
+   "kurs": 84.62,
    "vortag": 83.68,
-   "diff": 0.88,
-   "diff_pct": 1.052,
+   "diff": 0.94,
+   "diff_pct": 1.123,
    "datum": "2026-11-26",
    "verlauf": [
     99.9,
@@ -1491,10 +1491,10 @@
     80.17,
     82.05,
     83.68,
-    84.56
+    84.62
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   }
  ],
@@ -1503,10 +1503,10 @@
    "symbol": "USDCHF=X",
    "name": "USD/CHF",
    "kategorie": "devisen",
-   "kurs": 0.83406,
+   "kurs": 0.83381,
    "vortag": 0.83578,
-   "diff": -0.00172,
-   "diff_pct": -0.206,
+   "diff": -0.00197,
+   "diff_pct": -0.236,
    "datum": "2026-11-26",
    "verlauf": [
     0.82755,
@@ -1531,20 +1531,20 @@
     0.84093,
     0.84146,
     0.83578,
-    0.83406
+    0.83381
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
    "symbol": "EURCHF=X",
    "name": "EUR/CHF",
    "kategorie": "devisen",
-   "kurs": 0.91552,
+   "kurs": 0.91537,
    "vortag": 0.91615,
-   "diff": -0.00063,
-   "diff_pct": -0.069,
+   "diff": -0.00078,
+   "diff_pct": -0.085,
    "datum": "2026-11-26",
    "verlauf": [
     0.92479,
@@ -1569,20 +1569,20 @@
     0.92259,
     0.91787,
     0.91615,
-    0.91552
+    0.91537
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
    "symbol": "EURUSD=X",
    "name": "EUR/USD",
    "kategorie": "devisen",
-   "kurs": 1.09806,
+   "kurs": 1.09794,
    "vortag": 1.09623,
-   "diff": 0.00183,
-   "diff_pct": 0.167,
+   "diff": 0.00171,
+   "diff_pct": 0.156,
    "datum": "2026-11-26",
    "verlauf": [
     1.11738,
@@ -1607,10 +1607,10 @@
     1.09715,
     1.09081,
     1.09623,
-    1.09806
+    1.09794
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   }
  ],
@@ -1620,10 +1620,10 @@
    "name": "VIX (Volatilität)",
    "kategorie": "weitere",
    "einheit": "Punkte",
-   "kurs": 26.8,
+   "kurs": 26.79,
    "vortag": 28.29,
-   "diff": -1.49,
-   "diff_pct": -5.267,
+   "diff": -1.5,
+   "diff_pct": -5.302,
    "datum": "2026-11-26",
    "verlauf": [
     17.52,
@@ -1648,10 +1648,10 @@
     26.62,
     26.36,
     28.29,
-    26.8
+    26.79
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   },
   {
@@ -1690,7 +1690,7 @@
     4.848
    ],
    "quelle": "Yahoo Finance",
-   "stand": "2026-11-26T13:28:23+00:00",
+   "stand": "2026-11-26T13:29:23+00:00",
    "veraltet": false
   }
  ],
@@ -1699,9 +1699,9 @@
    "symbol": "BTC-USD",
    "name": "Bitcoin",
    "kategorie": "krypto",
-   "kurs": 60776.0,
-   "diff": 1979.13,
-   "diff_pct": 3.366,
+   "kurs": 60781.0,
+   "diff": 1991.66,
+   "diff_pct": 3.373,
    "datum": "2026-11-26",
    "verlauf": [
     80800.83,
@@ -1734,10 +1734,10 @@
     61227.55,
     59758.92,
     60374.15,
-    60780.67
+    60770.36
    ],
    "quelle": "CoinGecko",
-   "stand": "2026-11-26T13:28:26+00:00",
+   "stand": "2026-11-26T13:29:26+00:00",
    "veraltet": false,
    "zeitraum": "24 Std."
   },
@@ -1745,9 +1745,9 @@
    "symbol": "ETH-USD",
    "name": "Ethereum",
    "kategorie": "krypto",
-   "kurs": 1704.43,
-   "diff": 54.13,
-   "diff_pct": 3.28,
+   "kurs": 1704.37,
+   "diff": 54.36,
+   "diff_pct": 3.286,
    "datum": "2026-11-26",
    "verlauf": [
     2347.32,
@@ -1780,10 +1780,10 @@
     1709.32,
     1677.95,
     1690.52,
-    1704.37
+    1703.7
    ],
    "quelle": "CoinGecko",
-   "stand": "2026-11-26T13:28:26+00:00",
+   "stand": "2026-11-26T13:29:26+00:00",
    "veraltet": false,
    "zeitraum": "24 Std."
   }
@@ -1836,7 +1836,7 @@
     "tariff",
     "stocks"
    ],
-   "score": 12.54
+   "score": 12.53
   },
   {
    "titel": "Wie viel Geld bleibt im Ruhestand? Nur 28 Prozent haben sich das schon gefragt",
@@ -1844,7 +1844,7 @@
    "quelle": "finews.ch",
    "zeit": "2026-11-26T09:55+00:00",
    "tags": [],
-   "score": 12.52
+   "score": 12.51
   },
   {
    "titel": "Duales Bildungssystem – In dieser Elektro-Firma ist rund jeder Fünfte ein Lernender",
@@ -1852,7 +1852,7 @@
    "quelle": "SRF Wirtschaft",
    "zeit": "2026-11-26T09:51+00:00",
    "tags": [],
-   "score": 12.49
+   "score": 12.48
   },
   {
    "titel": "Genfer Vermögensverwalter stösst nach Dubai vor",
@@ -1860,7 +1860,7 @@
    "quelle": "finews.ch",
    "zeit": "2026-11-26T09:50+00:00",
    "tags": [],
-   "score": 12.49
+   "score": 12.48
   },
   {
    "titel": "US-Feiertag – Truthahn, Sprit, Flüge: Thanksgiving kostet mehr denn je",
@@ -1868,7 +1868,7 @@
    "quelle": "SRF Wirtschaft",
    "zeit": "2026-11-26T08:36+00:00",
    "tags": [],
-   "score": 11.97
+   "score": 11.96
   },
   {
    "titel": "U.S. tariff-hike threats pile pressure on partners to sign trade deals",
@@ -1878,7 +1878,7 @@
    "tags": [
     "tariff"
    ],
-   "score": 11.71
+   "score": 11.7
   },
   {
    "titel": "Glarner KB steckt strategischen Rahmen bis 2030 ab",
@@ -1886,7 +1886,7 @@
    "quelle": "finews.ch",
    "zeit": "2026-11-26T07:29+00:00",
    "tags": [],
-   "score": 11.51
+   "score": 11.5
   },
   {
    "titel": "Marktbericht: Aktieninvestoren blicken vorsichtig nach vorn",
@@ -1894,7 +1894,7 @@
    "quelle": "tagesschau Wirtschaft",
    "zeit": "2026-11-26T12:04+00:00",
    "tags": [],
-   "score": 11.42
+   "score": 11.41
   },
   {
    "titel": "Streit um EU-Haushalt: Warum die Slowakei blockieren will",
@@ -1902,7 +1902,7 @@
    "quelle": "tagesschau Wirtschaft",
    "zeit": "2026-11-26T11:04+00:00",
    "tags": [],
-   "score": 11.0
+   "score": 10.99
   },
   {
    "titel": "Reallöhne sind im Sommer langsamer gewachsen",
@@ -1910,7 +1910,7 @@
    "quelle": "tagesschau Wirtschaft",
    "zeit": "2026-11-26T10:59+00:00",
    "tags": [],
-   "score": 10.97
+   "score": 10.96
   },
   {
    "titel": "Semiconductor chips are the new oil. Here's why",
@@ -1918,7 +1918,7 @@
    "quelle": "CNBC Markets",
    "zeit": "2026-11-26T13:19+00:00",
    "tags": [],
-   "score": 10.94
+   "score": 10.93
   },
   {
    "titel": "Black Weeks: Wie die Rabattschlacht Handel und Kunden verändert",
@@ -1934,7 +1934,7 @@
    "quelle": "SRF Wirtschaft",
    "zeit": "2026-11-26T06:06+00:00",
    "tags": [],
-   "score": 10.93
+   "score": 10.92
   },
   {
    "titel": "SPD reagiert verhalten auf CDU-Vorstoß zur Rente",
@@ -1942,7 +1942,7 @@
    "quelle": "tagesschau Wirtschaft",
    "zeit": "2026-11-26T10:41+00:00",
    "tags": [],
-   "score": 10.84
+   "score": 10.83
   },
   {
    "titel": "Futures point to Black Friday gains for Wall Street as global markets welcome U.S. resilience.",
@@ -1952,7 +1952,7 @@
    "tags": [
     "Wall Street"
    ],
-   "score": 10.81
+   "score": 10.8
   },
   {
    "titel": "The tech rout should bottom soon, with a 25% rally for the S&P 500 to follow, says Deutsche Bank",
@@ -1962,7 +1962,7 @@
    "tags": [
     "S&P 500"
    ],
-   "score": 10.63
+   "score": 10.62
   },
   {
    "titel": "Meeting of 28-29 October 2026",
@@ -1980,7 +1980,7 @@
    "tags": [
     "Börse"
    ],
-   "score": 10.29
+   "score": 10.28
   },
   {
    "titel": "Trump baut seine Zollmauer wieder auf – und niemand kann ihn so schnell stoppen",
@@ -1988,7 +1988,7 @@
    "quelle": "NZZ Wirtschaft",
    "zeit": "2026-11-26T04:30+00:00",
    "tags": [],
-   "score": 10.26
+   "score": 10.25
   },
   {
    "titel": "Die Satelliten von Iceye zeigen beinahe in Echtzeit, wie Russland an der Ostsee aufrüstet – bald könnte die finnische Firma für Elon Musk zur Konkurrenz werden",
@@ -1996,7 +1996,7 @@
    "quelle": "NZZ Wirtschaft",
    "zeit": "2026-11-26T04:30+00:00",
    "tags": [],
-   "score": 10.26
+   "score": 10.25
   },
   {
    "titel": "Ungenaue Berechnungen: Wer im Kanton Zürich eine Immobilie verkauft, zahlt vielleicht zu hohe Steuern",
@@ -2004,7 +2004,7 @@
    "quelle": "NZZ Finanzen",
    "zeit": "2026-11-26T04:30+00:00",
    "tags": [],
-   "score": 10.26
+   "score": 10.25
   }
  ],
  "kalender": [
