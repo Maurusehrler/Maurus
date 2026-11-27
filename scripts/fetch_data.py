@@ -584,8 +584,11 @@ def lade_news(cfg: dict, vorher: dict) -> tuple[list[dict], list[dict]]:
 
     def ein_feed(feed: dict):
         try:
-            r = http_get(feed["url"], timeout=15, versuche=2,
-                         headers={"Accept": "application/rss+xml, application/xml, text/xml, */*"})
+            try:
+                r = http_get(feed["url"], timeout=15, versuche=2,
+                             headers={"Accept": "application/rss+xml, application/xml, text/xml, */*"})
+            except Exception:  # noqa: BLE001
+                r = http_get(feed["url"], timeout=15, versuche=1)   # zweiter Versuch ohne besondere Kopfzeilen
             geparst = feedparser.parse(r.content)
             artikel = []
             for x in geparst.entries:
@@ -1533,8 +1536,8 @@ def beispiel_makro() -> dict:
             werte.append(round(w, 2))
         reihen[k] = {"name": info["name"], "einheit": info["einheit"], "quelle": "Beispieldaten",
                      "daten": tage, "werte": werte, "aktuell": werte[-1], "datum": tage[-1]}
-    kurve = {"laufzeiten": [l for l, _ in m.ZINSKURVE], "heute": [3.9, 3.85, 3.8, 3.6, 3.5, 3.6, 4.1, 4.6],
-             "monat": [4.0, 3.95, 3.9, 3.7, 3.6, 3.7, 4.2, 4.7], "jahr": [4.6, 4.5, 4.4, 4.2, 4.2, 4.2, 4.4, 4.6],
+    kurve = {"laufzeiten": [l for l, _ in m.ZINSKURVE], "heute": [3.9, 3.6, 4.1, 4.6],
+             "monat": [4.0, 3.7, 4.2, 4.7], "jahr": [4.6, 4.2, 4.4, 4.6],
              "datum": date.today().isoformat()}
     return {"reihen": reihen, "zinskurve": kurve}
 
@@ -1626,6 +1629,13 @@ def ergaenze_analyse(kurse: dict, fundamental: dict) -> None:
     for gruppe in kurse.values():                 # Sicherheit: interne Felder nie speichern
         for e in gruppe:
             e.pop("_reihe", None)
+
+
+def politiker_kurzliste(politiker: dict, cfg: dict, anzahl: int = 6) -> list[dict]:
+    beobachten = {n.lower() for n in (cfg.get("politiker") or {}).get("beobachten", [])}
+    trades = [t for t in politiker.get("trades") or [] if t.get("ticker") and not t.get("papier")]
+    auswahl = [t for t in trades if t.get("nachname", "").lower() in beobachten] or trades
+    return auswahl[:anzahl]
 
 
 def erstelle_briefing(daten: dict, politiker: dict, cfg: dict) -> tuple[str, str]:
@@ -1759,6 +1769,8 @@ def main() -> int:
         "saison": saison,
         "alarme": cfg.get("alarme") or [],
         "politiker_beobachten": (cfg.get("politiker") or {}).get("beobachten", []),
+        # Die neuesten Trades der beobachteten Politiker (für die Übersicht, ohne die grosse Datei)
+        "politiker_neu": politiker_kurzliste(politiker or {}, cfg),
         "quellen": {
             "kurse": statistik,
             "kurse_frisch": f"{frische} von {gesamt}",

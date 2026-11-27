@@ -30,7 +30,9 @@ log = logging.getLogger("boerse")
 
 INDEX_URL = "https://disclosures-clerk.house.gov/public_disc/financial-pdfs/{jahr}FD.zip"
 PDF_URL = "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/{jahr}/{doc}.pdf"
-PARTEIEN_URL = "https://theunitedstates.io/congress-legislators/legislators-current.json"
+# Öffentlicher Datensatz "congress-legislators" (zuerst direkt von GitHub, sonst von der Projektseite)
+PARTEIEN_URLS = ["https://raw.githubusercontent.com/unitedstates/congress-legislators/gh-pages/legislators-current.json",
+                 "https://theunitedstates.io/congress-legislators/legislators-current.json"]
 UA = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
                     "(KHTML, like Gecko) Version/17.0 Safari/605.1.15"}
 
@@ -124,17 +126,25 @@ def lese_ptr_text(text: str) -> list[dict]:
 
 def _parteien() -> dict:
     """(Nachname, Bundesstaat) -> Partei (D/R/I) aus dem öffentlichen Datensatz 'congress-legislators'."""
-    try:
-        daten = requests.get(PARTEIEN_URL, headers=UA, timeout=30).json()
-        tabelle = {}
-        for p in daten:
-            term = p["terms"][-1]
-            kuerzel = {"Democrat": "D", "Republican": "R"}.get(term.get("party"), "I")
-            tabelle[(p["name"]["last"].lower(), term.get("state"))] = kuerzel
-        return tabelle
-    except Exception as e:  # noqa: BLE001
-        log.info("  Parteien-Liste nicht geladen: %s", e)
-        return {}
+    for url in PARTEIEN_URLS:
+        try:
+            daten = requests.get(url, headers=UA, timeout=20).json()
+            tabelle = {}
+            for p in daten:
+                term = p["terms"][-1]
+                kuerzel = {"Democrat": "D", "Republican": "R"}.get(term.get("party"), "I")
+                tabelle[(p["name"]["last"].lower(), term.get("state"))] = kuerzel
+            return tabelle
+        except Exception as e:  # noqa: BLE001
+            log.info("  Parteien-Liste (%s) nicht geladen: %s", url.split("/")[2], str(e)[:80])
+    return {}
+
+
+def _kurzer_titel(titel: str) -> str:
+    """'Apple Inc. - Common Stock' -> 'Apple Inc.' (spart Platz)"""
+    t = re.sub(r"\s*-\s*(Class [A-Z] )?(Common Stock|Ordinary Shares|Common Shares|American Depositary Shares?)\b.*$", "", titel)
+    t = re.sub(r"\s+(Common Stock|Ordinary Shares)$", "", t)
+    return t.strip()[:90]
 
 
 def lade_politiker(alt: dict, max_neu: int = 200, tage: int = 365) -> dict:
@@ -165,7 +175,7 @@ def lade_politiker(alt: dict, max_neu: int = 200, tage: int = 365) -> dict:
     neu = [m for m in meldungen if m["doc"] not in verarbeitet and m["eingereicht"] >= grenze]
     neu.sort(key=lambda m: m["eingereicht"], reverse=True)
     neu = neu[:max_neu]
-    parteien = _parteien() if neu else {}
+    parteien = _parteien()
 
     def lies(m):
         url = PDF_URL.format(jahr=m["jahr"], doc=m["doc"])
@@ -187,10 +197,11 @@ def lade_politiker(alt: dict, max_neu: int = 200, tage: int = 365) -> dict:
             person = f"{m['vorname']} {m['name']}".strip()
             partei = parteien.get((m["name"].lower(), staat), "")
             basis = {"person": person, "nachname": m["name"], "staat": m["staat"], "partei": partei,
-                     "kammer": "Repräsentantenhaus", "gemeldet": m["eingereicht"], "link": url}
+                     "gemeldet": m["eingereicht"], "doc": m["doc"], "jahr": m["jahr"]}
             if liste:
                 gelesen += 1
                 for t in liste:
+                    t["titel"] = _kurzer_titel(t["titel"])
                     trades.append({**basis, **t})
             else:
                 papier += 1   # eingescannt/handschriftlich -> nur Hinweis mit Link
@@ -199,6 +210,30 @@ def lade_politiker(alt: dict, max_neu: int = 200, tage: int = 365) -> dict:
             verarbeitet[m["doc"]] = m["eingereicht"]
     log.info("  Kongress: %d neue PDFs gelesen, %d nicht lesbar (Scan), %d Fehler", gelesen, papier, fehler)
 
+    # Parteien nachtragen (auch bei älteren Einträgen), Platz sparen
+    for t in trades:
+        if not t.get("partei") and parteien:
+            t["partei"] = parteien.get((t.get("nachname", "").lower(), (t.get("staat") or "")[:2]), "")
+        if "link" in t:                       # alte Form -> Dokument-Nummer + Jahr
+            m = re.search(r"/(\d{4})/(\d+)\.pdf", t.pop("link"))
+            if m:
+                t["jahr"], t["doc"] = m.group(1), m.group(2)
+        t.pop("kammer", None)
+        if t.get("titel"):
+            t["titel"] = _kurzer_titel(t["titel"])
+        # Leere Felder und Standardwerte weglassen (Aktie, selbst) – spart Platz
+        for k in [k for k, v in t.items() if v in (None, "") or (k, v) in (("anlage", "Aktie"), ("besitzer", "selbst"))]:
+            del t[k]
+    # Doppelte Meldungen (z.B. Korrekturen) entfernen: gleicher Trade -> neueste Meldung behalten
+    eindeutig, gesehen = [], set()
+    for t in sorted(trades, key=lambda t: t.get("gemeldet", ""), reverse=True):
+        schluessel = (t.get("person"), t.get("ticker"), t.get("titel"), t.get("art"), t.get("datum"),
+                      t.get("betrag"), t.get("besitzer"), t.get("doc") if t.get("papier") else "")
+        if schluessel in gesehen:
+            continue
+        gesehen.add(schluessel)
+        eindeutig.append(t)
+    trades = eindeutig
     # Alte Einträge entfernen, nach Datum sortieren
     trades = [t for t in trades if (t.get("datum") or t.get("gemeldet") or "") >= grenze]
     trades.sort(key=lambda t: (t.get("gemeldet") or "", t.get("datum") or ""), reverse=True)

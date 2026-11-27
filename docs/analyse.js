@@ -303,14 +303,14 @@ function zeigeMakro() {
     const serien = [{ name: "Heute", x: idx, y: k.heute, farbe: SERIEN_FARBEN[0], dicke: 2.5 },
       { name: "Vor 1 Monat", x: idx, y: k.monat, farbe: SERIEN_FARBEN[1], gestrichelt: true },
       { name: "Vor 1 Jahr", x: idx, y: k.jahr, farbe: SERIEN_FARBEN[2], gestrichelt: true }];
-    const invertiert = k.heute[k.laufzeiten.indexOf("2J")] > k.heute[k.laufzeiten.indexOf("10J")];
+    const invertiert = k.heute[0] > k.heute[k.laufzeiten.indexOf("10J")];
     html += `<section class="karte"><h2>US-Zinskurve <span class="etikett">${kurzDatum(k.datum)}${(k.datum || "").slice(0, 4)}</span></h2>
       ${linienChart(serien, { xTyp: "zahl", einheit: "%", xFormat: (x) => k.laufzeiten[Math.round(x)] || "", xTooltip: (x) => `Laufzeit ${k.laufzeiten[Math.round(x)]}`, yTooltip: (v) => zahl(v, 2), titel: "Zinskurve" })}
       <p class="leise klein">Zinsen für US-Staatsanleihen nach Laufzeit. Normal steigt die Kurve. ${invertiert ? "<b>Aktuell ist sie invertiert (kurze Zinsen höher als lange)</b> – das ging in der Vergangenheit oft einer Rezession voraus." : "Aktuell ist sie normal (lange Zinsen höher als kurze)."}</p></section>`;
   }
   html += makroChart(["leitzins_snb", "leitzins_ezb", "leitzins_fed"], "Leitzinsen der Notenbanken", "Die Leitzinsen bestimmen, wie teuer Geld ist. Sinkende Zinsen helfen meist der Börse.");
-  html += makroChart(["rendite_ch10", "rendite_de10", "rendite_us10"], "Rendite 10-jähriger Staatsanleihen");
-  html += makroChart(["spread_10_2"], "Rezessions-Signal: US-Zinsdifferenz 10J − 2J", "Fällt die Linie unter 0 (invertierte Zinskurve), folgte historisch oft innerhalb von 6–24 Monaten eine Rezession. Kein sicherer Indikator.");
+  html += makroChart(["rendite_ch10", "rendite_ez10", "rendite_us10"], "Rendite 10-jähriger Staatsanleihen");
+  html += makroChart(["spread_10_3m"], "Rezessions-Signal: US-Zinsdifferenz 10 Jahre − 3 Monate", "Fällt die Linie unter 0 (invertierte Zinskurve), folgte historisch oft innerhalb von 6–24 Monaten eine Rezession. Kein sicherer Indikator.");
   html += makroChart(["inflation_ch", "inflation_ez", "inflation_us"], "Inflation (Teuerung ggü. Vorjahr)", "Ziel der Notenbanken: SNB 0–2 %, EZB und Fed 2 %.");
   html += makroChart(["arbeitslos_ch", "arbeitslos_ez", "arbeitslos_us"], "Arbeitslosenquote");
   html += makroChart(["bip_ch", "bip_ez", "bip_us"], "Wirtschaftswachstum (BIP ggü. Vorjahr)");

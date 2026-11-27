@@ -41,6 +41,12 @@ function parteiBadge(p) {
   return `<span class="partei partei-${esc(p)}" title="${p === "D" ? "Demokraten" : p === "R" ? "Republikaner" : "Unabhängig"}">${esc(p)}</span>`;
 }
 
+/** Link zur offiziellen Meldung (PDF beim House Clerk) */
+function pdfLink(t) {
+  if (t.link) return sichererLink(t.link);
+  return t.doc && t.jahr ? `https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/${encodeURIComponent(t.jahr)}/${encodeURIComponent(t.doc)}.pdf` : "";
+}
+
 function tradeZeile(t, { mitPerson = true } = {}) {
   const inListe = t.ticker && eindeutig(alleAktien()).some((a) => a.symbol === t.ticker);
   const klick = inListe ? ` klickbar" data-symbol="${esc(t.ticker)}` : "";
@@ -52,7 +58,7 @@ function tradeZeile(t, { mitPerson = true } = {}) {
     </div>
     <div class="trade-titel">${t.ticker ? `<b>${esc(t.ticker)}</b> ` : ""}${esc(t.titel || "")}${t.anlage && t.anlage !== "Aktie" ? ` <span class="tag">${esc(t.anlage)}</span>` : ""}</div>
     <div class="leise klein">${t.betrag ? esc(t.betrag) + " · " : ""}Trade ${t.datum ? kurzDatum(t.datum) + t.datum.slice(2, 4) : "–"} · gemeldet ${t.gemeldet ? kurzDatum(t.gemeldet) + t.gemeldet.slice(2, 4) : "–"}${t.besitzer && t.besitzer !== "selbst" ? " · " + esc(t.besitzer) : ""}
-      ${t.link ? ` · <a href="${esc(sichererLink(t.link))}" target="_blank" rel="noopener noreferrer">PDF</a>` : ""}</div>
+      ${pdfLink(t) ? ` · <a href="${esc(pdfLink(t))}" target="_blank" rel="noopener noreferrer">PDF</a>` : ""}</div>
     ${t.beschreibung ? `<div class="klein trade-beschreibung">${esc(t.beschreibung)}</div>` : ""}
   </div>`;
 }
@@ -130,11 +136,12 @@ async function zeigePolitiker() {
     </section>`;
 }
 
-/** Übersicht: neueste Trades der beobachteten Politiker */
+/** Übersicht: neueste Trades der beobachteten Politiker (steht schon in markets.json) */
 async function zeigePolitikerKurz() {
   const ziel = $("politiker-kurz");
   if (!ziel) return;
-  const d = await ladePolitiker();
+  const kurz = zustand.daten && zustand.daten.politiker_neu;
+  const d = kurz ? { trades: kurz } : await ladePolitiker();
   const alle = (d.trades || []).filter((t) => !t.papier && t.ticker);
   const auswahl = (alle.filter(beobachtet).length ? alle.filter(beobachtet) : alle).slice(0, 5);
   ziel.innerHTML = auswahl.length ? `<div class="trades">${auswahl.map((t) => tradeZeile(t)).join("")}</div>`
