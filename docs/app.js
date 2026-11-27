@@ -16,7 +16,13 @@ const ZEITZONE = "Europe/Zurich";
 // Zeiträume für den Umschalter (Kürzel -> Text in Überschriften)
 const ZEITRAEUME = { "1T": "1 Tag", "1W": "1 Woche", "1M": "1 Monat", "3M": "3 Monate", "YTD": "seit 1.1.", "1J": "1 Jahr", "3J": "3 Jahre", "5J": "5 Jahre" };
 const LANGE_ZEITRAEUME = ["3J", "5J"];     // Mini-Charts aus Wochenwerten
-const TABS = ["uebersicht", "aktien", "maerkte", "kalender", "news"];
+const TABS = ["uebersicht", "aktien", "maerkte", "insider", "kalender", "news"];
+// Unterbereiche pro Tab (erster Eintrag = Standard)
+const UNTERBEREICHE = {
+  aktien: ["sektoren", "heatmap", "screener", "vergleich"],
+  maerkte: ["kurse", "makro", "saison", "rechner"],
+  insider: ["politiker", "firmen"],
+};
 
 // Zustand der App
 const zustand = {
@@ -38,6 +44,8 @@ function erinnern(schluessel, erlaubt, standard) {
 zustand.tab = erinnern("tab", TABS, "uebersicht");
 zustand.zeitraum = erinnern("zeitraum2", Object.keys(ZEITRAEUME), "1T");
 zustand.region = erinnern("region", ["alle", "ch", "us", "andere"], "alle");
+zustand.unter = {};
+for (const [tab, liste] of Object.entries(UNTERBEREICHE)) zustand.unter[tab] = erinnern("unter_" + tab, liste, liste[0]);
 zustand.newsSortierung = erinnern("newsSortierung", ["wichtig", "neu"], "wichtig");
 zustand.newsFilter = erinnern("newsFilter", ["alle", "CH", "INT"], "alle");
 
@@ -452,6 +460,9 @@ function zeigeAlles() {
       $("indizes").innerHTML = (d.indizes || []).map(kachel).join("");
       $("stimmung").innerHTML = stimmungHtml(d.stimmung);
       zeigeAktieDesTages();
+      zeigeFavoriten();
+      zeigeUeberraschungen();
+      zeigePolitikerKurz();
       $("wissen").innerHTML = wissenHtml();
       $("mover-ch").innerHTML = topFlop(eindeutig(alleAktien()).filter((a) => a.land === "CH"));
       $("mover-us").innerHTML = topFlop(eindeutig(alleAktien()).filter((a) => a.land === "US"));
@@ -460,10 +471,22 @@ function zeigeAlles() {
       $("news-kurz").innerHTML = newsHtml((d.news || []).slice(0, 5));
       break;
     }
-    case "aktien":
-      zeigeSektoren();
+    case "aktien": {
+      const u = zustand.unter.aktien;
+      $("aktien-titel").innerHTML = `${{ sektoren: "Sektoren", heatmap: "Heatmap", screener: "Screener", vergleich: "Vergleich" }[u]} <span class="etikett zeitraum-text">${esc(zt)}</span>`;
+      if (u === "sektoren") zeigeSektoren();
+      else if (u === "heatmap") zeigeHeatmap();
+      else if (u === "screener") zeigeScreener();
+      else zeigeVergleich();
+      break;
+    }
+    case "insider":
+      zeigeInsider();
       break;
     case "maerkte":
+      if (zustand.unter.maerkte === "makro") { zeigeMakro(); break; }
+      if (zustand.unter.maerkte === "saison") { zeigeSaison(); break; }
+      if (zustand.unter.maerkte === "rechner") { zeigeRechner(); break; }
       $("indizes-liste").innerHTML = liste(d.indizes, { unter: "" });
       $("etfs").innerHTML = liste((d.etfs || []).map((e) => ({ ...e, einheit: e.isin || "" })));
       $("krypto").innerHTML = liste(d.krypto);
@@ -492,8 +515,27 @@ function zeigeSteuerung() {
   document.querySelectorAll("#region-wahl button").forEach((b) => b.classList.toggle("aktiv", b.dataset.region === zustand.region));
   document.querySelectorAll("#news-sortierung button").forEach((b) => b.classList.toggle("aktiv", b.dataset.sortierung === zustand.newsSortierung));
   document.querySelectorAll("#news-filter button").forEach((b) => b.classList.toggle("aktiv", b.dataset.filter === zustand.newsFilter));
-  // Auf der News-Seite braucht es keinen Zeitraum
-  $("zeitleiste").classList.toggle("versteckt", zustand.tab === "news" || zustand.tab === "kalender");
+  // Unterbereiche ein-/ausblenden
+  document.querySelectorAll("[data-unter]").forEach((b) => {
+    const [tab, u] = b.dataset.unter.split(":");
+    b.classList.toggle("aktiv", zustand.unter[tab] === u);
+  });
+  document.querySelectorAll("[data-unterseite]").forEach((el) => {
+    const [tab, u] = el.dataset.unterseite.split(":");
+    el.classList.toggle("aktiv", zustand.unter[tab] === u);
+  });
+  // Regionen-Filter braucht es beim Vergleich nicht
+  document.querySelector(".region-zeile #region-wahl").classList.toggle("versteckt", zustand.unter.aktien === "vergleich");
+  // Zeitraum-Leiste nur dort, wo sie etwas bewirkt
+  const ohneZeitraum = ["news", "kalender", "insider"].includes(zustand.tab)
+    || (zustand.tab === "maerkte" && zustand.unter.maerkte !== "kurse");
+  $("zeitleiste").classList.toggle("versteckt", ohneZeitraum);
+}
+
+function wechsleUnterbereich(tab, u) {
+  zustand.unter[tab] = u;
+  merken("unter_" + tab, u);
+  zeigeAlles();
 }
 
 function wechsleTab(tab) {
@@ -575,6 +617,10 @@ $("neu-laden").addEventListener("click", laden);
 
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => wechsleTab(b.dataset.tab)));
 document.querySelectorAll("[data-gehe]").forEach((b) => b.addEventListener("click", () => wechsleTab(b.dataset.gehe)));
+document.querySelectorAll("[data-unter]").forEach((b) => b.addEventListener("click", () => {
+  const [tab, u] = b.dataset.unter.split(":");
+  wechsleUnterbereich(tab, u);
+}));
 
 document.querySelectorAll("#zeitraum-wahl button").forEach((b) => b.addEventListener("click", () => {
   zustand.zeitraum = b.dataset.zeitraum;

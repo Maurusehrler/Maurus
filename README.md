@@ -17,6 +17,21 @@ Persönliche Börsen-Übersicht für iPhone und iPad. Sie aktualisiert sich jede
   KGV, PEG, KBV, Margen, Eigenkapitalrendite, Dividende, Verschuldung, Analysten-Kursziele (mit Ampel und Erklärung)
 - **News:** Schlagzeilen aus RSS-Feeds (sortierbar: Wichtigste/Neueste, Filter: Schweiz/International), Wirtschaftskalender, Datenquellen-Status
 
+**Weitere Funktionen:**
+- **Aktien → Heatmap:** alle Aktien als Kacheln (Grösse = Börsenwert, Farbe = Kursveränderung)
+- **Aktien → Screener:** Aktien filtern (KGV, Dividende, Marge, Wachstum, Verschuldung, Score, RSI) mit Vorlagen
+- **Aktien → Vergleich:** bis 5 Aktien im selben Chart (Start = 100), Kennzahlen nebeneinander, Korrelation
+- **Qualitäts-Score** (0–100) pro Aktie aus Bewertung, Profitabilität, Wachstum und Bilanz
+- **Detailansicht:** 50-/200-Tage-Linie mit Golden/Death Cross, RSI, KGV im Zeitverlauf, Gewinn-Überraschungen,
+  Insider-Transaktionen, Trades von US-Politikern, Kursalarm einrichten, ⭐ Favorit
+- **Märkte → Zinsen & Konjunktur:** US-Zinskurve, Leitzinsen SNB/EZB/Fed, 10-jährige Renditen, Rezessions-Signal,
+  Inflation, Arbeitslosigkeit, BIP (Quelle: FRED / SNB)
+- **Märkte → Saisonalität** (Ø Rendite pro Monat für SMI, S&P 500, DAX) und **Sparrechner** (Zinseszins)
+- **Insider:** Aktien-Trades von US-Kongressabgeordneten (z.B. Nancy Pelosi; offizielle STOCK-Act-Meldungen)
+  und Käufe/Verkäufe von Firmen-Insidern
+- **Suche** (Lupe oben) und **Favoriten** (⭐, nur auf deinem Gerät gespeichert)
+- **Push-Nachrichten:** Morgen-Briefing um ca. 07:00 und Kursalarme (siehe unten)
+
 **Zeitraum-Umschalter** oben: **1T · 1W · 1M · 3M · YTD · 1J · 3J · 5J** (1 Tag, 1 Woche, 1 Monat, 3 Monate,
 seit Jahresbeginn, 1, 3 und 5 Jahre). Er gilt für Kurse, Mini-Charts, Top & Flop und Sektoren.
 Die App merkt sich Tab, Zeitraum und Region.
@@ -113,6 +128,32 @@ GitHub Pages ist im Gratis-Konto nur für öffentliche Repositories verfügbar.
 Die Daten selbst werden nur 2x täglich auf GitHub erneuert (oder wenn du den Workflow manuell startest).
 
 ---
+
+## 🔔 Push-Nachrichten einrichten (Morgen-Briefing + Kursalarme)
+
+Die Nachrichten laufen über die kostenlose App **ntfy** (kein Konto nötig):
+
+1. **ntfy** aus dem App Store auf iPhone und/oder iPad installieren und öffnen. Benachrichtigungen erlauben.
+2. In ntfy auf **+** tippen → bei „Topic“ einen **langen, zufälligen Namen** eingeben,
+   z.B. `boerse-maurus-7k2p9x4q` (wie ein Passwort – wer den Namen kennt, kann mitlesen) → **Subscribe**.
+3. Auf GitHub: **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+   - Name: `NTFY_TOPIC`
+   - Secret: genau denselben Namen wie in Schritt 2 → **Add secret**
+4. Test: **Actions** → „Kursalarme prüfen“ → **Run workflow**. (Eine Nachricht kommt nur, wenn ein Alarm zutrifft.)
+   Das Morgen-Briefing kommt automatisch beim 07:00-Update.
+
+**Alarme ändern:** in `config.yaml` unter `alarme:`. In der App bei einer Aktie unter „🔔 Kursalarm“
+stehen fertige Zeilen zum Kopieren. Geprüft wird alle 30 Minuten (Mo–Fr, ca. 08:00–23:00).
+**Briefing abschalten:** in `config.yaml` `morgen_briefing: false`.
+
+## 🏛️ Politiker-Trades
+
+Quelle sind die offiziellen Meldungen des **US-Repräsentantenhauses** (House Clerk, STOCK Act).
+Abgeordnete müssen Trades bis zu **45 Tage** später melden; Beträge gibt es nur als Spanne.
+Handschriftlich eingereichte (eingescannte) Meldungen können nicht automatisch gelesen werden.
+Der **Senat** ist (noch) nicht enthalten, weil er keine frei maschinenlesbaren Daten anbietet.
+Wen die App hervorhebt, steht in `config.yaml` unter `politiker: beobachten:`.
+Beim ersten Mal werden die Meldungen über mehrere Läufe nach und nach eingelesen.
 
 ## ✏️ Aktien hinzufügen oder entfernen
 

@@ -47,6 +47,9 @@ from zoneinfo import ZoneInfo
 import requests
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from benachrichtigung import sende  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # Grundeinstellungen
 # ---------------------------------------------------------------------------
@@ -55,7 +58,9 @@ CONFIG_DATEI = ROOT / "config.yaml"
 AUSGABE_DATEI = ROOT / "docs" / "data" / "markets.json"
 FUNDAMENTAL_DATEI = ROOT / "docs" / "data" / "fundamentals.json"
 STECKBRIEF_DATEI = ROOT / "steckbriefe.yaml"
-FUNDAMENTAL_MAX_ALTER_STD = 20    # Fundamentaldaten höchstens 1x pro Tag neu holen
+POLITIKER_DATEI_NAME = "politiker.json"
+FUNDAMENTAL_MAX_ALTER_STD = 20
+FUNDAMENTAL_VERSION = 2           # erhöhen, wenn neue Felder dazukommen -> alles neu laden    # Fundamentaldaten höchstens 1x pro Tag neu holen
 
 # Viele Webseiten blockieren Anfragen ohne "Browser-Kennung".
 USER_AGENT = (
@@ -105,10 +110,10 @@ def runden(v: float) -> float:
         return None
     a = abs(v)
     if a < 10:
-        return round(v, 5)
+        return round(v, 4)
     if a < 1000:
-        return round(v, 3)
-    return round(v, 2)
+        return round(v, 2)
+    return round(v, 1)
 
 
 def http_get(url: str, timeout: int = 20, versuche: int = 3, **kwargs) -> requests.Response:
@@ -474,12 +479,14 @@ def lade_kurse(cfg: dict, vorher: dict, statistik: dict) -> dict[str, list[dict]
             e = None
             if sym in reihen:
                 e = eintrag_aus_serie(item, kategorie, reihen[sym], "Yahoo Finance")
+                e["_reihe"] = reihen[sym]       # nur intern (Technik/KGV-Historie), wird nicht gespeichert
             # --- Schritt 3: Ersatzquellen -------------------------------------
             # a) Alternativ-Symbole aus config.yaml (z.B. andere Aktienklasse)
             for alt_symbol in item.get("alternativ", []) if e is None else []:
                 p = yahoo_einzeln(alt_symbol)
                 if p:
                     e = eintrag_aus_serie(item, kategorie, p, f"Yahoo Finance ({alt_symbol})")
+                    e["_reihe"] = p
                     break
             if e is None and item.get("stooq"):
                 p = stooq(item["stooq"])
@@ -880,6 +887,66 @@ def datum_text(v) -> str | None:
         return None
 
 
+def insider_art(text: str, transaktion: str = "") -> str:
+    """Englische Yahoo-Beschreibung -> deutsche Art der Insider-Transaktion."""
+    t = f"{text} {transaktion}".lower()
+    if "purchase" in t or "buy" in t:
+        return "Kauf"
+    if "sale" in t or "sold" in t:
+        return "Verkauf"
+    if "gift" in t:
+        return "Schenkung"
+    if "option" in t or "exercise" in t or "conversion" in t:
+        return "Optionsausübung"
+    if "award" in t or "grant" in t:
+        return "Zuteilung"
+    return "Sonstiges"
+
+
+def insider_transaktionen(t) -> list[dict]:
+    """Käufe/Verkäufe von Managern und Verwaltungsräten (letzte 12 Monate, aus Pflichtmeldungen)."""
+    try:
+        df = t.insider_transactions
+        if df is None or df.empty:
+            return []
+        grenze = (date.today() - timedelta(days=365)).isoformat()
+        liste = []
+        for _, z in df.iterrows():
+            datum = datum_text(z.get("Start Date"))
+            if not datum or datum < grenze:
+                continue
+            liste.append({
+                "datum": datum,
+                "person": str(z.get("Insider") or "").title()[:60],
+                "position": str(z.get("Position") or "")[:60],
+                "art": insider_art(str(z.get("Text") or ""), str(z.get("Transaction") or "")),
+                "aktien": zahl_oder_none(z.get("Shares"), stellen=0),
+                "wert": zahl_oder_none(z.get("Value"), stellen=0),
+                "text": str(z.get("Text") or "")[:120],
+            })
+        return sorted(liste, key=lambda x: x["datum"], reverse=True)[:25]
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def gewinn_ueberraschungen(t) -> list[dict]:
+    """Letzte Quartale: erwarteter vs. tatsächlicher Gewinn je Aktie."""
+    try:
+        df = t.earnings_history
+        if df is None or df.empty:
+            return []
+        liste = []
+        for idx, z in df.iterrows():
+            schaetzung, ist = zahl_oder_none(z.get("epsEstimate"), stellen=4), zahl_oder_none(z.get("epsActual"), stellen=4)
+            if ist is None:
+                continue
+            ueber = round((ist - schaetzung) / abs(schaetzung) * 100, 1) if schaetzung else None
+            liste.append({"quartal": datum_text(idx) or str(idx)[:10], "schaetzung": schaetzung, "ist": ist, "prozent": ueber})
+        return sorted(liste, key=lambda x: x["quartal"])[-8:]
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def fundamental_eine_aktie(symbol: str) -> dict:
     """Alle Kennzahlen zu einer Aktie (4 Anfragen bei Yahoo)."""
     import yfinance as yf
@@ -965,11 +1032,102 @@ def fundamental_eine_aktie(symbol: str) -> dict:
     except Exception:  # noqa: BLE001
         termine = {"ex_div": k["ex_div"]}
     k["termine"] = termine
+    k["insider"] = insider_transaktionen(t)
+    k["ueberraschungen"] = gewinn_ueberraschungen(t)
     beschreibung = (info.get("longBusinessSummary") or "").strip()
     if len(beschreibung) > 700:
         beschreibung = beschreibung[:700].rsplit(". ", 1)[0] + "."
     k["beschreibung_en"] = beschreibung or None
     return k
+
+
+def gleitender_schnitt(werte: list[float], n: int) -> list[float | None]:
+    """Gleitender Durchschnitt über n Werte (None, solange zu wenige Werte da sind)."""
+    ergebnis, summe = [], 0.0
+    for i, w in enumerate(werte):
+        summe += w
+        if i >= n:
+            summe -= werte[i - n]
+        ergebnis.append(summe / n if i >= n - 1 else None)
+    return ergebnis
+
+
+def rsi(werte: list[float], n: int = 14) -> float | None:
+    """Relative Stärke (0–100): über 70 = 'überkauft', unter 30 = 'überverkauft'."""
+    if len(werte) <= n:
+        return None
+    gew, verl = 0.0, 0.0
+    for i in range(1, n + 1):
+        d = werte[i] - werte[i - 1]
+        gew, verl = gew + max(d, 0), verl + max(-d, 0)
+    gew, verl = gew / n, verl / n
+    for i in range(n + 1, len(werte)):
+        d = werte[i] - werte[i - 1]
+        gew = (gew * (n - 1) + max(d, 0)) / n
+        verl = (verl * (n - 1) + max(-d, 0)) / n
+    return round(100.0 if verl == 0 else 100 - 100 / (1 + gew / verl), 1)
+
+
+def berechne_technik(punkte: list[tuple[str, float]]) -> dict:
+    """50- und 200-Tage-Linie, Kreuzungen (Golden/Death Cross) und RSI."""
+    werte = [v for _, v in punkte]
+    ma50, ma200 = gleitender_schnitt(werte, 50), gleitender_schnitt(werte, 200)
+    n = min(len(werte), VERLAUF_PUNKTE)
+    start = len(werte) - n
+    kreuze = []
+    for i in range(max(start, 1), len(werte)):
+        a0, b0, a1, b1 = ma50[i - 1], ma200[i - 1], ma50[i], ma200[i]
+        if None in (a0, b0, a1, b1):
+            continue
+        if a0 <= b0 and a1 > b1:
+            kreuze.append({"i": i - start, "typ": "golden", "datum": punkte[i][0]})
+        elif a0 >= b0 and a1 < b1:
+            kreuze.append({"i": i - start, "typ": "death", "datum": punkte[i][0]})
+    kurs = werte[-1]
+    return {
+        # Linien für den Chart: jeder 3. Wert der letzten ~270 Handelstage (spart Platz)
+        "ma50": [runden(v) if v else None for v in ma50[start:]][::-3][::-1],
+        "ma200": [runden(v) if v else None for v in ma200[start:]][::-3][::-1],
+        "kreuze": kreuze[-4:],
+        "rsi": rsi(werte[-300:]),
+        "abstand_ma50": round((kurs / ma50[-1] - 1) * 100, 1) if ma50[-1] else None,
+        "abstand_ma200": round((kurs / ma200[-1] - 1) * 100, 1) if ma200[-1] else None,
+        "trend": None if not (ma50[-1] and ma200[-1]) else ("aufwärts" if ma50[-1] > ma200[-1] else "abwärts"),
+    }
+
+
+def berechne_kgv_hist(punkte: list[tuple[str, float]], jahre: list[dict], faktor: float) -> dict | None:
+    """KGV im Zeitverlauf: Wochenkurs geteilt durch den zuletzt gemeldeten Jahresgewinn je Aktie.
+
+    Annahme: Jahreszahlen sind ca. 75 Tage nach Jahresende bekannt. faktor rechnet den
+    Gewinn in die Kurswährung um (z.B. Novartis meldet in USD, die Aktie notiert in CHF).
+    """
+    eps = sorted((int(j["jahr"]), j["eps"]) for j in jahre if j.get("eps") is not None)
+    if not eps or not faktor:
+        return None
+    werte = []
+    for tag, kurs in wochenwerte(punkte)[-WOCHEN_PUNKTE:]:
+        d = date.fromisoformat(tag)
+        bekannt = [e for jahr, e in eps if date(jahr, 12, 31) + timedelta(days=75) <= d]
+        werte.append(round(kurs / (bekannt[-1] * faktor), 1) if bekannt and bekannt[-1] > 0 else None)
+    gueltig = [w for w in werte if w is not None and 0 < w < 500]
+    if len(gueltig) < 20:
+        return None
+    gueltig_sortiert = sorted(gueltig)
+    return {"werte": werte[::-2][::-1], "schritt_wochen": 2, "min": gueltig_sortiert[0], "max": gueltig_sortiert[-1],
+            "schnitt": round(sum(gueltig) / len(gueltig), 1),
+            "median": gueltig_sortiert[len(gueltig_sortiert) // 2], "aktuell": gueltig[-1] if werte[-1] else None}
+
+
+def waehrungsfaktor(von: str | None, nach: str | None, kurse: dict) -> float | None:
+    """Umrechnungsfaktor zwischen Währungen über die Devisenkurse (CHF, USD, EUR)."""
+    if not von or not nach or von == nach:
+        return 1.0
+    devisen = {e["symbol"]: e.get("kurs") for e in kurse.get("devisen", [])}
+    in_chf = {"CHF": 1.0, "USD": devisen.get("USDCHF=X"), "EUR": devisen.get("EURCHF=X")}
+    if in_chf.get(von) and in_chf.get(nach):
+        return in_chf[von] / in_chf[nach]
+    return None
 
 
 def lade_steckbriefe() -> dict:
@@ -998,6 +1156,8 @@ def lade_fundamentaldaten(cfg: dict, pfad: Path, erzwingen: bool = False) -> dic
             pass
     # "fehlend" = neue Aktien oder solche ohne Kennzahlen (letzter Abruf fehlgeschlagen)
     fehlend = [a for a in aktien if "kurs" not in ((alt.get("aktien") or {}).get(a["symbol"]) or {})]
+    if alt.get("version") != FUNDAMENTAL_VERSION:
+        alter_std = 999.0          # neue Felder -> komplett neu holen
     if not erzwingen and alter_std < FUNDAMENTAL_MAX_ALTER_STD and not fehlend:
         log.info("Fundamentaldaten sind aktuell (%.1f Std. alt) – kein Neuladen nötig", alter_std)
         daten = alt
@@ -1036,6 +1196,7 @@ def lade_fundamentaldaten(cfg: dict, pfad: Path, erzwingen: bool = False) -> dic
                     daten["aktien"][item["symbol"]]["veraltet"] = True
     if zu_holen:
         daten["erstellt"] = jetzt_utc().isoformat(timespec="seconds")
+        daten["version"] = FUNDAMENTAL_VERSION
         log.info("  -> %d von %d erhalten", ok_anzahl, len(zu_holen))
         daten["status"] = f"{ok_anzahl} von {len(zu_holen)} beim letzten Abruf"
 
@@ -1286,8 +1447,13 @@ def beispiel_kurse(cfg: dict) -> dict[str, list[dict]]:
     for gruppe, kat in [("indizes", "index"), ("aktien", "aktie"), ("etfs", "etf"),
                         ("rohstoffe", "rohstoff"), ("devisen", "devisen"), ("weitere", "weitere"),
                         ("krypto", "krypto"), ("sektoren_us", "sektor")]:
-        erg[gruppe] = [eintrag_aus_serie(i, kat, serie(i["symbol"], vol[kat]), "Beispieldaten")
-                       for i in listen.get(gruppe, [])]
+        erg[gruppe] = []
+        for i in listen.get(gruppe, []):
+            reihe = serie(i["symbol"], vol[kat])
+            e = eintrag_aus_serie(i, kat, reihe, "Beispieldaten")
+            if kat == "aktie":
+                e["_reihe"] = reihe
+            erg[gruppe].append(e)
     # Ein paar grosse Bewegungen einbauen, damit "Auffälligkeiten" etwas zeigen
     for gruppe, idx, faktor in [("aktien", 2, 1.064), ("aktien", 40, 1.031), ("krypto", 0, 0.946)]:
         if len(erg[gruppe]) > idx:
@@ -1340,12 +1506,68 @@ def beispiel_fundamentaldaten(cfg: dict) -> dict:
             "termine": {"zahlen": (date.today() + timedelta(days=rnd.randint(1, 80))).isoformat(),
                         "eps_schaetzung": rnd.uniform(0.5, 5), "umsatz_schaetzung": umsatz / 4,
                         "ex_div": (date.today() + timedelta(days=rnd.randint(1, 90))).isoformat() if i % 3 == 0 else None},
+            "insider": [{"datum": (date.today() - timedelta(days=rnd.randint(1, 200))).isoformat(),
+                         "person": rnd.choice(["Jane Doe", "John Smith", "Anna Muster"]),
+                         "position": rnd.choice(["CEO", "Director", "CFO"]), "art": rnd.choice(["Kauf", "Verkauf", "Verkauf", "Zuteilung"]),
+                         "aktien": rnd.randint(500, 50000), "wert": rnd.randint(50000, 9000000), "text": ""}
+                        for _ in range(rnd.randint(0, 5))],
+            "ueberraschungen": [{"quartal": f"2025-{q:02d}-30", "schaetzung": 1.0 + q / 10, "ist": 1.0 + q / 10 + rnd.uniform(-0.2, 0.3),
+                                 "prozent": round(rnd.uniform(-15, 25), 1)} for q in (3, 6, 9, 12)],
             "beschreibung_en": "Example company description from Yahoo Finance (English).",
             "stand": jetzt_utc().isoformat(timespec="seconds"),
         }
         if item["symbol"] in steckbriefe:
             aktien[item["symbol"]]["steckbrief"] = steckbriefe[item["symbol"]]
     return {"erstellt": jetzt_utc().isoformat(timespec="seconds"), "status": "Beispieldaten", "aktien": aktien}
+
+
+def beispiel_makro() -> dict:
+    rnd = random.Random(5)
+    reihen = {}
+    import makro as m
+    for k, info in m.REIHEN.items():
+        tage = [(date.today() - timedelta(days=30 * i)).isoformat() for i in range(72, -1, -1)]
+        w, werte = rnd.uniform(0, 4), []
+        for _ in tage:
+            w = max(-1, w + rnd.gauss(0, 0.15))
+            werte.append(round(w, 2))
+        reihen[k] = {"name": info["name"], "einheit": info["einheit"], "quelle": "Beispieldaten",
+                     "daten": tage, "werte": werte, "aktuell": werte[-1], "datum": tage[-1]}
+    kurve = {"laufzeiten": [l for l, _ in m.ZINSKURVE], "heute": [3.9, 3.85, 3.8, 3.6, 3.5, 3.6, 4.1, 4.6],
+             "monat": [4.0, 3.95, 3.9, 3.7, 3.6, 3.7, 4.2, 4.7], "jahr": [4.6, 4.5, 4.4, 4.2, 4.2, 4.2, 4.4, 4.6],
+             "datum": date.today().isoformat()}
+    return {"reihen": reihen, "zinskurve": kurve}
+
+
+def beispiel_saison() -> dict:
+    rnd = random.Random(6)
+    return {n: {"monate": [{"monat": m, "schnitt": round(rnd.uniform(-1.5, 2.5), 2), "median": 0.8,
+                            "positiv": rnd.randint(40, 75), "jahre": 30} for m in range(1, 13)],
+                "dieses_jahr": {m: round(rnd.uniform(-4, 4), 2) for m in range(1, date.today().month + 1)},
+                "von": 1996, "bis": date.today().year} for n in ("SMI", "S&P 500", "DAX")}
+
+
+def beispiel_politiker() -> dict:
+    rnd = random.Random(8)
+    leute = [("Nancy", "Pelosi", "CA11", "D"), ("Josh", "Gottheimer", "NJ05", "D"), ("Michael", "McCaul", "TX10", "R"),
+             ("Marjorie Taylor", "Greene", "GA14", "R"), ("Ro", "Khanna", "CA17", "D")]
+    titel = [("NVDA", "NVIDIA Corporation"), ("AAPL", "Apple Inc."), ("MSFT", "Microsoft Corp."), ("GOOGL", "Alphabet Inc."),
+             ("TSLA", "Tesla Inc."), ("AVGO", "Broadcom Inc."), ("PANW", "Palo Alto Networks"), ("AMZN", "Amazon.com Inc.")]
+    trades = []
+    for i in range(40):
+        v, n, st, pa = rnd.choice(leute)
+        tk, ti = rnd.choice(titel)
+        d = date.today() - timedelta(days=rnd.randint(5, 120))
+        bmin = rnd.choice([1001, 15001, 50001, 250001, 1000001])
+        trades.append({"person": f"{v} {n}", "nachname": n, "staat": st, "partei": pa, "kammer": "Repräsentantenhaus",
+                       "titel": ti, "ticker": tk, "anlage": rnd.choice(["Aktie", "Option"]),
+                       "art": rnd.choice(["Kauf", "Verkauf", "Teilverkauf"]), "datum": d.isoformat(),
+                       "gemeldet": (d + timedelta(days=rnd.randint(5, 40))).isoformat(),
+                       "betrag": f"${bmin:,} - ${bmin * 3:,}", "betrag_min": bmin, "betrag_max": bmin * 3,
+                       "besitzer": rnd.choice(["Ehepartner", "selbst", "gemeinsam"]), "link": "https://example.com"})
+    trades.sort(key=lambda t: t["gemeldet"], reverse=True)
+    return {"stand": jetzt_utc().isoformat(timespec="seconds"), "quelle": "Beispieldaten", "status": "Beispieldaten",
+            "trades": trades, "verarbeitet": {}}
 
 
 def beispiel_news() -> list[dict]:
@@ -1384,6 +1606,49 @@ def beispiel_kalender() -> list[dict]:
 # ===========================================================================
 # HAUPTPROGRAMM
 # ===========================================================================
+def ergaenze_analyse(kurse: dict, fundamental: dict) -> None:
+    """Technische Signale und KGV-Historie berechnen (Kursreihen + Jahresgewinne)."""
+    for e in kurse.get("aktien", []):
+        reihe = e.pop("_reihe", None)
+        f = (fundamental.get("aktien") or {}).get(e["symbol"])
+        if not reihe or f is None or len(reihe) < 60:
+            continue
+        try:
+            technik = berechne_technik(reihe)
+            f["technik"] = technik
+            # Kurzinfo auch in markets.json (für Screener/Listen)
+            e["rsi"], e["trend"], e["abstand_ma200"] = technik["rsi"], technik["trend"], technik["abstand_ma200"]
+            faktor = waehrungsfaktor(f.get("bilanz_waehrung"), f.get("waehrung"), kurse)
+            if f.get("jahre"):
+                f["kgv_hist"] = berechne_kgv_hist(reihe, f["jahre"], faktor)
+        except Exception as ex:  # noqa: BLE001
+            log.info("  Analyse %s: %s", e["symbol"], ex)
+    for gruppe in kurse.values():                 # Sicherheit: interne Felder nie speichern
+        for e in gruppe:
+            e.pop("_reihe", None)
+
+
+def erstelle_briefing(daten: dict, politiker: dict, cfg: dict) -> tuple[str, str]:
+    """Kurzer Text für die Push-Nachricht am Morgen."""
+    teile = list(daten.get("zusammenfassung", []))[:4]
+    st = daten.get("stimmung") or {}
+    if st.get("aktien") or st.get("krypto"):
+        teile.append("Fear & Greed: " + " · ".join(
+            f"{n} {round(st[k]['wert'])} ({st[k]['text']})" for k, n in (("aktien", "Aktien"), ("krypto", "Krypto")) if st.get(k)))
+    heute = date.today().isoformat()
+    termine = [t for t in daten.get("kalender", []) if t["datum"] == heute and t.get("wichtigkeit") != "tief"]
+    if termine:
+        teile.append("Heute: " + "; ".join(f"{t.get('zeit') or ''} {t['titel']}".strip() for t in termine[:5]))
+    beobachten = [n.lower() for n in (cfg.get("politiker") or {}).get("beobachten", [])]
+    gestern = (date.today() - timedelta(days=2)).isoformat()
+    neue = [t for t in (politiker.get("trades") or []) if t.get("gemeldet", "") >= gestern
+            and t.get("nachname", "").lower() in beobachten and t.get("ticker")]
+    if neue:
+        teile.append("Neue Politiker-Trades: " + "; ".join(
+            f"{t['person']} {t['art']} {t['ticker']} ({t['betrag']})" for t in neue[:5]))
+    return "☀️ Börsen-Briefing", "\n\n".join(teile)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Börsendaten holen und als JSON speichern")
     parser.add_argument("--beispieldaten", action="store_true", help="Testdaten ohne Internet erzeugen")
@@ -1396,6 +1661,7 @@ def main() -> int:
 
     ausgabe = Path(args.ausgabe)
     fund_pfad = ausgabe.parent / "fundamentals.json"
+    pol_pfad = ausgabe.parent / POLITIKER_DATEI_NAME
     vorher_json = lade_json(ausgabe)
     if vorher_json.get("beispieldaten") and not args.beispieldaten:
         vorher_json = {}   # Beispieldaten nie als "letzten bekannten Wert" verwenden
@@ -1429,6 +1695,7 @@ def main() -> int:
         }
         quellen["kalender"] = "Beispieldaten"
         statistik["Beispieldaten"] = sum(len(v) for v in kurse.values())
+        makro, saison, politiker = beispiel_makro(), beispiel_saison(), beispiel_politiker()
     else:
         kurse = lade_kurse(cfg, vorher_map, statistik)
         log.info("Lade News …")
@@ -1440,6 +1707,21 @@ def main() -> int:
         kalender = lade_kalender(cfg, vorher_json, quellen, fundamental)
         log.info("Lade Fear & Greed …")
         stimmung = lade_stimmung(vorher_json, quellen)
+        import makro as makro_modul
+        log.info("Lade Makrodaten (Zinsen, Inflation, Konjunktur) …")
+        makro = makro_modul.lade_makro(vorher_json.get("makro"), quellen)
+        log.info("Lade Saisonalität …")
+        saison = makro_modul.lade_saisonalitaet(vorher_json.get("saison"), quellen)
+        log.info("Lade Politiker-Trades (US-Kongress) …")
+        politiker = lade_json(pol_pfad)
+        try:
+            import politiker as politiker_modul
+            pcfg = cfg.get("politiker") or {}
+            politiker = politiker_modul.lade_politiker(politiker, max_neu=pcfg.get("max_neue_pro_lauf", 200))
+            quellen["politiker"] = "OK – " + politiker.get("status", "")
+        except Exception as e:  # noqa: BLE001
+            log.warning("Politiker-Trades nicht geladen: %s", e)
+            quellen["politiker"] = f"Fehler: {str(e)[:80]} – zeige letzten Stand"
 
     lokal = jetzt.astimezone(tz)
     if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
@@ -1452,6 +1734,7 @@ def main() -> int:
     frische = sum(1 for g in kurse.values() for e in g if e.get("kurs") is not None and not e.get("veraltet"))
     gesamt = sum(len(g) for g in kurse.values())
 
+    ergaenze_analyse(kurse, fundamental)
     zusammenfassung = erstelle_zusammenfassung(kurse, cfg, jetzt)
     if frische == 0 and vorher_json.get("zusammenfassung"):
         # Nichts Frisches erhalten: letzte gute Zusammenfassung behalten
@@ -1472,6 +1755,10 @@ def main() -> int:
         "news": news,
         "kalender": kalender,
         "boersen": cfg.get("boersen", []),
+        "makro": makro,
+        "saison": saison,
+        "alarme": cfg.get("alarme") or [],
+        "politiker_beobachten": (cfg.get("politiker") or {}).get("beobachten", []),
         "quellen": {
             "kurse": statistik,
             "kurse_frisch": f"{frische} von {gesamt}",
@@ -1491,6 +1778,17 @@ def main() -> int:
     with open(tmp_f, "w", encoding="utf-8") as f:
         json.dump(fundamental, f, ensure_ascii=False, separators=(",", ":"))
     os.replace(tmp_f, fund_pfad)
+    if politiker:
+        tmp_p = pol_pfad.with_suffix(".tmp")
+        with open(tmp_p, "w", encoding="utf-8") as f:
+            json.dump(politiker, f, ensure_ascii=False, separators=(",", ":"))
+        os.replace(tmp_p, pol_pfad)
+
+    # Morgen-Briefing als Push-Nachricht (nur beim Morgen-Lauf oder auf Wunsch)
+    if not args.beispieldaten and (lauf == "Morgen-Update" or os.environ.get("BRIEFING") == "1") \
+            and (cfg.get("benachrichtigungen") or {}).get("morgen_briefing", True):
+        titel, text = erstelle_briefing(daten, politiker or {}, cfg)
+        sende(titel, text, tags="sunny,chart_with_upwards_trend")
 
     log.info("Gespeichert: %s", ausgabe)
     log.info("Kurse frisch: %d von %d | News: %d | Termine: %d", frische, gesamt, len(news), len(kalender))

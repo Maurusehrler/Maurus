@@ -29,7 +29,8 @@ async function ladeFundamentaldaten() {
   } catch (e) {
     console.warn("Fundamentaldaten:", e);
   }
-  if (zustand.tab === "uebersicht") zeigeAktieDesTages();
+  // Bereiche, die Kennzahlen brauchen, neu zeichnen
+  if (["uebersicht", "aktien", "insider"].includes(zustand.tab)) zeigeAlles();
 }
 
 function fundamentalVon(symbol) {
@@ -48,6 +49,7 @@ function betrag(n, waehrung = "") {
   if (a >= 1e12) return zahl(n / 1e12, 2) + " Bio." + w;
   if (a >= 1e9) return zahl(n / 1e9, 2) + " Mrd." + w;
   if (a >= 1e6) return zahl(n / 1e6, 1) + " Mio." + w;
+  if (a >= 1e4) return zahl(n / 1e3, 0) + " Tsd." + w;
   return zahl(n, 0) + w;
 }
 
@@ -232,6 +234,7 @@ function zeigeAktieDesTages() {
     </div>
     <p class="adt-text">${esc(sb.was || f.beschreibung_en || "Für diese Aktie gibt es noch keinen Steckbrief.")}</p>
     ${f.kurs !== undefined ? kurzKennzahlen(f) : '<p class="leise klein">Kennzahlen werden geladen …</p>'}
+    ${(() => { const sc = qualitaetsScore(f, a); return sc ? `<p class="klein">Qualitäts-Score: <span class="score-mini score-${sc.stufe}">${sc.gesamt}</span>${sc.staerken.length ? ` · ${sc.staerken.slice(0, 2).join(", ")}` : ""}</p>` : ""; })()}
     ${sb.chancen ? `<p class="klein"><b class="plus">＋ Chancen:</b> ${esc(sb.chancen)}</p>` : ""}
     ${sb.risiken ? `<p class="klein"><b class="minus">− Risiken:</b> ${esc(sb.risiken)}</p>` : ""}
     ${sb.fakt ? `<p class="klein fakt">💡 <b>Wusstest du?</b> ${esc(sb.fakt)}</p>` : ""}
@@ -241,21 +244,172 @@ function zeigeAktieDesTages() {
 /* ---------------------------------------------------------------------
    Detailansicht einer Aktie
    --------------------------------------------------------------------- */
-function grosserChart(e, zeitraum) {
-  const w = reiheImZeitraum(e, zeitraum).filter((v) => v !== null && !isNaN(v));
-  if (w.length < 2) return '<p class="leise">Kein Verlauf verfügbar.</p>';
-  const min = Math.min(...w), max = Math.max(...w), spanne = max - min || 1;
-  const pts = w.map((v, i) => [(i / (w.length - 1)) * 300, 112 - ((v - min) / spanne) * 104]);
-  const linie = pts.map((p) => p.map((z) => z.toFixed(1)).join(",")).join(" ");
-  const klasse = w[w.length - 1] >= w[0] ? "plus" : "minus";
-  return `<div class="gross-chart">
-    <svg viewBox="0 0 300 120" preserveAspectRatio="none" class="${klasse}" aria-label="Kursverlauf">
-      <line x1="0" y1="8" x2="300" y2="8" class="gitter"/><line x1="0" y1="112" x2="300" y2="112" class="gitter"/>
-      <polygon points="0,120 ${linie} 300,120" fill="currentColor" opacity="0.12"/>
-      <polyline points="${linie}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
-    </svg>
-    <span class="achse oben">${zahl(max, 2)}</span><span class="achse unten">${zahl(min, 2)}</span>
-  </div>`;
+/** Gleitender Durchschnitt (für Wochenwerte bei 3J/5J) */
+function gleitend(werte, n) {
+  return werte.map((_, i) => (i < n - 1 ? null : werte.slice(i - n + 1, i + 1).reduce((a, v) => a + v, 0) / n));
+}
+
+/** Ungefähres Datum für "vor x Handelstagen/Wochen" */
+function datumVor(e, schritte, wochen) {
+  const ende = Date.parse((e.datum || isoTag(new Date())) + "T00:00:00Z");
+  return new Date(ende - schritte * (wochen ? 7 : 1.4) * 864e5);
+}
+
+/** Grosser Kurschart mit 50-/200-Tage-Linie und Golden/Death Cross */
+function grosserChart(e, zeitraum, f) {
+  const lang = LANGE_ZEITRAEUME.includes(zeitraum);
+  const r = reiheImZeitraum(e, zeitraum);
+  if (r.length < 2) return '<p class="leise">Kein Verlauf verfügbar.</p>';
+  const n = r.length;
+  const x = r.map((_, i) => i - n + 1);
+  const serien = [{ name: "Kurs", x, y: r, farbe: r[n - 1] >= r[0] ? "var(--plus)" : "var(--minus)", flaeche: true }];
+  const markierungen = [];
+  const technik = f && f.technik;
+  if (lang) {
+    const w = e.verlauf_w || [];
+    const m10 = gleitend(w, 10).slice(-n), m40 = gleitend(w, 40).slice(-n);
+    serien.push({ name: "10-Wochen-Linie (≈50 Tage)", x, y: m10, farbe: "var(--serie-1)", dicke: 1.5 });
+    serien.push({ name: "40-Wochen-Linie (≈200 Tage)", x, y: m40, farbe: "var(--serie-2)", dicke: 1.5 });
+  } else if (technik && technik.ma50 && zeitraum !== "1T" && zeitraum !== "1W") {
+    // MA-Werte liegen als jeder 3. Tag vor (letzter Wert = heute)
+    const zuSerie = (liste) => {
+      const xs = [], ys = [];
+      liste.forEach((v, k) => { const off = -3 * (liste.length - 1 - k); if (off >= -n + 1) { xs.push(off); ys.push(v); } });
+      return { xs, ys };
+    };
+    const a = zuSerie(technik.ma50), b = zuSerie(technik.ma200);
+    serien.push({ name: "50-Tage-Linie", x: a.xs, y: a.ys, farbe: "var(--serie-1)", dicke: 1.5 });
+    serien.push({ name: "200-Tage-Linie", x: b.xs, y: b.ys, farbe: "var(--serie-2)", dicke: 1.5 });
+    const len = (e.verlauf || []).length;
+    for (const k of technik.kreuze || []) {
+      const off = k.i - (len - 1);
+      if (off >= -n + 1) markierungen.push({ x: off, text: k.typ === "golden" ? "Golden Cross" : "Death Cross", klasse: k.typ });
+    }
+  }
+  const fmtX = (v) => fmtMonatKurz.format(datumVor(e, -v, lang));
+  return `<div class="blatt-chart">${linienChart(serien, {
+    xTyp: "zahl", hoehe: 190, xFormat: fmtX, xTooltip: (v) => "≈ " + fmtTagMonatJahr.format(datumVor(e, -v, lang)),
+    yFormat: (v) => zahl(v, Math.abs(r[0]) < 10 ? 2 : 0), yTooltip: (v) => zahl(v, 2), markierungen, titel: "Kursverlauf",
+  })}</div>`;
+}
+
+/** Kurzfazit der Technik (Trend, RSI) */
+function technikHtml(t) {
+  if (!t) return "";
+  const rsiText = t.rsi === null || t.rsi === undefined ? "–" : t.rsi >= 70 ? "überkauft" : t.rsi <= 30 ? "überverkauft" : "neutral";
+  const rsiStufe = t.rsi >= 70 || t.rsi <= 30 ? "mittel" : "neutral";
+  const letztes = (t.kreuze || []).slice(-1)[0];
+  return `<div class="technik">
+    <div><span class="leise klein">Trend (50 vs. 200 Tage)</span><b class="${t.trend === "aufwärts" ? "plus" : t.trend === "abwärts" ? "minus" : ""}">${t.trend ? (t.trend === "aufwärts" ? "▲ aufwärts" : "▼ abwärts") : "–"}</b></div>
+    <div><span class="leise klein">Abstand 200-Tage-Linie</span><b class="${farbe(t.abstand_ma200)}">${t.abstand_ma200 === null || t.abstand_ma200 === undefined ? "–" : prozent(t.abstand_ma200)}</b></div>
+    <div><span class="leise klein">RSI (14 Tage)</span><b>${t.rsi === null || t.rsi === undefined ? "–" : zahl(t.rsi, 0)}</b> <span class="ampel ampel-${rsiStufe}"><span class="ampel-punkt"></span>${rsiText}</span></div>
+    ${letztes ? `<div><span class="leise klein">Letztes Signal</span><b class="${letztes.typ === "golden" ? "plus" : "minus"}">${letztes.typ === "golden" ? "Golden Cross" : "Death Cross"}</b> <span class="leise klein">${kurzDatum(letztes.datum)}${letztes.datum.slice(2, 4)}</span></div>` : ""}
+  </div>
+  <p class="leise klein">Golden Cross = 50-Tage-Linie steigt über die 200-Tage-Linie (gilt als positives Signal), Death Cross = umgekehrt. RSI über 70 = stark gestiegen (überkauft), unter 30 = stark gefallen (überverkauft).</p>`;
+}
+
+/* ---------------------------------------------------------------------
+   Qualitäts-Score (0–100) aus 4 Säulen à 25 Punkte
+   Grobe, transparente Faustregel – keine Anlageberatung.
+   --------------------------------------------------------------------- */
+function skala(wert, schlecht, gut) {
+  if (wert === null || wert === undefined || isNaN(wert)) return null;
+  const t = (wert - schlecht) / (gut - schlecht);
+  return Math.max(0, Math.min(1, t));
+}
+function mittel(teile) {
+  const g = teile.filter((t) => t !== null);
+  return g.length ? g.reduce((a, b) => a + b, 0) / g.length : null;
+}
+function gewinnCagr(jahre) {
+  const g = (jahre || []).filter((j) => j.gewinn !== undefined);
+  if (g.length < 3 || g[0].gewinn <= 0 || g[g.length - 1].gewinn <= 0) return null;
+  return (Math.pow(g[g.length - 1].gewinn / g[0].gewinn, 1 / (g.length - 1)) - 1) * 100;
+}
+
+function qualitaetsScore(f, a) {
+  if (!f || f.kurs === undefined) return null;
+  const finanz = ["Banken & Finanzen", "Versicherungen"].includes((a && a.sektor) || f.sektor);
+  const kgv = f.kgv_fwd > 0 ? f.kgv_fwd : f.kgv > 0 ? f.kgv : null;
+  const saeulen = {
+    Bewertung: mittel([kgv === null ? (f.kgv !== null && f.kgv <= 0 ? 0 : null) : skala(kgv, 40, 12), f.peg > 0 ? skala(f.peg, 3, 1) : null]),
+    Profitabilität: mittel([skala(f.roe, 0, 25), skala(f.marge_netto, 0, 20)]),
+    Wachstum: mittel([skala(f.umsatz_wachstum, -5, 15), skala(gewinnCagr(f.jahre) ?? f.gewinn_wachstum, -10, 20)]),
+    Bilanz: mittel([finanz ? null : skala(f.verschuldung, 250, 30), f.fcf === null || f.fcf === undefined ? null : f.fcf > 0 ? 1 : 0,
+      finanz ? null : skala(f.liquiditaet, 0.7, 1.8)]),
+  };
+  const vorhanden = Object.values(saeulen).filter((v) => v !== null);
+  if (vorhanden.length < 2) return null;
+  const gesamt = Math.round((vorhanden.reduce((s, v) => s + v, 0) / vorhanden.length) * 100);
+  const texte = {
+    Bewertung: ["Günstig bewertet", "Hoch bewertet"], Profitabilität: ["Sehr profitabel", "Schwache Profitabilität"],
+    Wachstum: ["Starkes Wachstum", "Schwaches Wachstum"], Bilanz: ["Solide Bilanz", "Hohe Verschuldung / wenig Cash"],
+  };
+  const staerken = [], schwaechen = [];
+  for (const [k, v] of Object.entries(saeulen)) {
+    if (v === null) continue;
+    if (v >= 0.7) staerken.push(texte[k][0]); else if (v <= 0.35) schwaechen.push(texte[k][1]);
+  }
+  return { gesamt, saeulen, staerken, schwaechen, stufe: gesamt >= 70 ? "gut" : gesamt >= 50 ? "mittel" : "schlecht" };
+}
+
+function scoreHtml(sc) {
+  if (!sc) return "";
+  const ring = 2 * Math.PI * 34, anteil = sc.gesamt / 100;
+  return `<div class="score">
+    <svg viewBox="0 0 80 80" class="score-ring score-${sc.stufe}" aria-label="Qualitäts-Score ${sc.gesamt} von 100">
+      <circle cx="40" cy="40" r="34" class="ring-hg"/><circle cx="40" cy="40" r="34" class="ring-wert" stroke-dasharray="${(ring * anteil).toFixed(1)} ${ring.toFixed(1)}" transform="rotate(-90 40 40)"/>
+      <text x="40" y="46" text-anchor="middle" class="ring-zahl">${sc.gesamt}</text></svg>
+    <div class="score-saeulen">${Object.entries(sc.saeulen).map(([k, v]) => `<div class="score-saeule"><span>${k}</span>
+      <span class="score-spur"><span style="width:${v === null ? 0 : Math.round(v * 100)}%" class="score-${v === null ? "neutral" : v >= 0.7 ? "gut" : v >= 0.4 ? "mittel" : "schlecht"}"></span></span>
+      <b>${v === null ? "–" : Math.round(v * 25)}</b></div>`).join("")}</div>
+  </div>
+  ${sc.staerken.length ? `<p class="klein"><b class="plus">Stärken:</b> ${sc.staerken.join(" · ")}</p>` : ""}
+  ${sc.schwaechen.length ? `<p class="klein"><b class="minus">Schwächen:</b> ${sc.schwaechen.join(" · ")}</p>` : ""}
+  <p class="leise klein">Score aus Bewertung, Profitabilität, Wachstum und Bilanz (je max. 25 Punkte). Faustregel, keine Empfehlung.</p>`;
+}
+
+/** KGV heute im Vergleich zu den letzten Jahren */
+function kgvHistHtml(e, h) {
+  if (!h || !h.werte) return "";
+  const n = h.werte.length, schritt = h.schritt_wochen || 1;
+  const x = h.werte.map((_, i) => -(n - 1 - i) * schritt);
+  const aktuell = h.aktuell;
+  const urteil = aktuell === null || aktuell === undefined ? "" : aktuell < h.schnitt * 0.9 ? "<b class='plus'>günstiger als im Durchschnitt</b>"
+    : aktuell > h.schnitt * 1.1 ? "<b class='minus'>teurer als im Durchschnitt</b>" : "<b>etwa im Durchschnitt</b>";
+  return `<section class="blatt-abschnitt"><h3>KGV im Zeitverlauf</h3>
+    ${linienChart([{ name: "KGV", x, y: h.werte, farbe: "var(--serie-1)" }, { name: "Durchschnitt", x: [x[0], 0], y: [h.schnitt, h.schnitt], farbe: "var(--serie-2)", gestrichelt: true }],
+      { xTyp: "zahl", hoehe: 150, band: { min: h.min, max: h.max }, xFormat: (v) => fmtMonatKurz.format(datumVor(e, -v, true)),
+        xTooltip: (v) => "≈ " + fmtTagMonatJahr.format(datumVor(e, -v, true)), yFormat: (v) => zahl(v, 0), yTooltip: (v) => zahl(v, 1), titel: "KGV-Verlauf" })}
+    <p class="klein">Aktuell ${aktuell ? zahl(aktuell, 1) : "–"} · Durchschnitt ${zahl(h.schnitt, 1)} · Spanne ${zahl(h.min, 1)}–${zahl(h.max, 1)} → ${urteil}.</p>
+    <p class="leise klein">Berechnet aus Kurs und zuletzt gemeldetem Jahresgewinn je Aktie (Näherung).</p></section>`;
+}
+
+/** Gewinn-Überraschungen der letzten Quartale */
+function ueberraschungHtml(liste) {
+  if (!liste || !liste.length) return "";
+  const max = Math.max(...liste.map((u) => Math.abs(u.prozent || 0)), 1);
+  return `<section class="blatt-abschnitt"><h3>Gewinn-Überraschungen</h3>
+    <div class="ueberr">${liste.map((u) => `<div class="ueberr-zeile">
+      <span class="leise klein">${kurzDatum(u.quartal)}${(u.quartal || "").slice(2, 4)}</span>
+      <span class="klein">erw. ${zahl(u.schaetzung, 2)} → <b>${zahl(u.ist, 2)}</b></span>
+      <span class="spur"><span class="balken ${farbe(u.prozent) || "plus"}" style="width:${((Math.abs(u.prozent || 0) / max) * 50).toFixed(1)}%"></span></span>
+      <span class="pill ${farbe(u.prozent)}">${prozent(u.prozent)}</span></div>`).join("")}</div>
+    <p class="leise klein">Tatsächlicher Gewinn je Aktie im Vergleich zur Analysten-Schätzung pro Quartal.</p></section>`;
+}
+
+function alarmHtml(e) {
+  const kurs = e.kurs || 0;
+  const zeilen = [`  - { symbol: "${e.symbol}", name: "${e.name}", unter: ${zahl(kurs * 0.9, 2).replace(/'/g, "")} }`,
+    `  - { symbol: "${e.symbol}", name: "${e.name}", ueber: ${zahl(kurs * 1.1, 2).replace(/'/g, "")} }`,
+    `  - { symbol: "${e.symbol}", name: "${e.name}", tag_prozent: 5 }`];
+  const aktiv = ((zustand.daten && zustand.daten.alarme) || []).filter((a) => a.symbol === e.symbol);
+  return `<details class="blatt-abschnitt alarm-box" id="alarm-box"><summary><h3>🔔 Kursalarm ${aktiv.length ? `<span class="etikett">${aktiv.length} aktiv</span>` : ""}</h3></summary>
+    ${aktiv.length ? `<p class="klein">Aktiv: ${aktiv.map((a) => [a.ueber ? `über ${a.ueber}` : "", a.unter ? `unter ${a.unter}` : "", a.tag_prozent ? `±${a.tag_prozent} % am Tag` : ""].filter(Boolean).join(", ")).join(" · ")}</p>` : ""}
+    <p class="klein">Alarme stehen in <b>config.yaml</b> unter <code>alarme:</code>. Eine dieser Zeilen kopieren und dort einfügen:</p>
+    ${zeilen.map((z) => `<div class="code-zeile"><code>${esc(z)}</code><button type="button" class="link-knopf" data-kopieren="${esc(z)}">Kopieren</button></div>`).join("")}
+    <p class="klein"><a href="https://github.com/Maurusehrler/Maurus/edit/main/config.yaml" target="_blank" rel="noopener">config.yaml auf GitHub bearbeiten →</a></p>
+    <p class="leise klein">Geprüft wird alle 30 Minuten während der Börsenzeiten. Die Nachricht kommt über die App „ntfy“ (siehe README).</p></details>`;
 }
 
 /** Balken für den Reingewinn pro Jahr */
@@ -303,7 +457,7 @@ function spanneHtml(titel, tief, hoch, kurs, waehrung) {
 }
 
 function oeffneAktie(symbol, { nachOben = true } = {}) {
-  const e = eindeutig(alleAktien()).find((a) => a.symbol === symbol);
+  const e = eindeutig(alleAktien()).find((a) => a.symbol === symbol) || alleEintraege().find((a) => a.symbol === symbol);
   if (!e) return;
   const f = fundamentalVon(symbol) || {};
   const sb = f.steckbrief || {};
@@ -323,7 +477,10 @@ function oeffneAktie(symbol, { nachOben = true } = {}) {
 
   $("blatt-inhalt").innerHTML = `
     <div class="blatt-kopf">
-      <h2 id="blatt-titel">${LAND_FLAGGE[e.land] || ""} ${esc(e.name)}</h2>
+      <div class="blatt-titel-zeile">
+        <h2 id="blatt-titel">${LAND_FLAGGE[e.land] || ""} ${esc(e.name)}</h2>
+        <button type="button" class="stern" data-favorit="${esc(e.symbol)}" aria-label="Favorit">${istFavorit(e.symbol) ? "⭐" : "☆"}</button>
+      </div>
       <div class="leise klein">${esc(e.symbol)} · ${esc(e.sektor || "")}${f.branche ? " · " + esc(f.branche) : ""}</div>
       <div class="blatt-kurs"><b>${zahl(e.kurs, 2)}</b> <span class="leise">${esc(f.waehrung || "")}</span>
         <span class="pill ${farbe(p)}">${prozent(p)}</span> <span class="leise klein">${esc(z === "1T" ? "heute" : ZEITRAEUME[z])}</span></div>
@@ -331,7 +488,9 @@ function oeffneAktie(symbol, { nachOben = true } = {}) {
     <div class="umschalter breit-umschalter blatt-zeitraum" role="group" aria-label="Zeitraum">
       ${Object.keys(ZEITRAEUME).map((k) => `<button type="button" data-blatt-zeitraum="${k}" class="${k === z ? "aktiv" : ""}">${k}</button>`).join("")}
     </div>
-    ${grosserChart(e, z)}
+    ${grosserChart(e, z, f)}
+    ${f.technik ? `<section class="blatt-abschnitt"><h3>Technische Signale</h3>${technikHtml(f.technik)}</section>` : ""}
+    ${(() => { const sc = qualitaetsScore(f, e); return sc ? `<section class="blatt-abschnitt"><h3>Qualitäts-Score</h3>${scoreHtml(sc)}</section>` : ""; })()}
 
     ${sb.was || f.beschreibung_en ? `<section class="blatt-abschnitt">
       <h3>Was macht ${esc(e.name)}?</h3>
@@ -353,6 +512,9 @@ function oeffneAktie(symbol, { nachOben = true } = {}) {
       <p class="leise klein">Ampel = grobe Faustregel zur Orientierung. Je nach Branche sind andere Werte normal. Keine Anlageberatung.</p>
     </section>
 
+    ${kgvHistHtml(e, f.kgv_hist)}
+    ${ueberraschungHtml(f.ueberraschungen)}
+
     ${f.kursziel || f.hoch52 ? `<section class="blatt-abschnitt">
       <h3>Analysten & Kursspanne</h3>
       ${f.empfehlung ? `<p>Empfehlung: <b>${esc(EMPFEHLUNG[f.empfehlung] || f.empfehlung)}</b>${f.analysten ? ` <span class="leise klein">(${f.analysten} Analysten)</span>` : ""}</p>` : ""}
@@ -368,9 +530,22 @@ function oeffneAktie(symbol, { nachOben = true } = {}) {
       ${t.ex_div ? `<p>💰 Ex-Dividende: <b>${kurzDatum(t.ex_div)}${t.ex_div.slice(0, 4)}</b></p>` : ""}
     </section>` : ""}
 
+    ${(f.insider || []).length ? `<section class="blatt-abschnitt"><h3>🕵️ Insider-Transaktionen</h3>
+      <div class="trades">${f.insider.slice(0, 8).map((i) => insiderZeile({ ...i, waehrung: f.waehrung }, false)).join("")}</div></section>` : ""}
+    ${e.kategorie === "aktie" && e.land === "US" ? '<section class="blatt-abschnitt" id="blatt-politiker"><h3>🏛️ Trades von US-Politikern</h3><p class="leise klein">Wird geladen …</p></section>' : ""}
+    ${alarmHtml(e)}
+
     <p class="leise klein">Quelle: Yahoo Finance${f.stand ? ", Stand " + fmtDatumZeit.format(new Date(f.stand)) : ""}${f.veraltet ? " (letzter Abruf fehlgeschlagen)" : ""}. Daten ohne Gewähr.</p>`;
   $("blatt-inhalt").dataset.symbol = symbol;
   zeigeBlatt(nachOben);
+  // Politiker-Trades zu dieser Aktie nachladen
+  if ($("blatt-politiker")) {
+    politikerZuAktie(symbol).then((liste) => {
+      const box = $("blatt-politiker");
+      if (box) box.innerHTML = `<h3>🏛️ Trades von US-Politikern</h3>${liste.length
+        ? `<div class="trades">${liste.map((t) => tradeZeile(t)).join("")}</div>` : '<p class="leise klein">Keine gemeldeten Trades in den letzten 12 Monaten.</p>'}`;
+    });
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -451,6 +626,14 @@ document.addEventListener("click", (ev) => {
   const bz = ev.target.closest("[data-blatt-zeitraum]");
   if (bz) { blattZeitraum = bz.dataset.blattZeitraum; oeffneAktie($("blatt-inhalt").dataset.symbol, { nachOben: false }); return; }
   if (ev.target.closest("#naechste-aktie")) { aktieVersatz += 1; zeigeAktieDesTages(); return; }
+  const fav = ev.target.closest("[data-favorit]");
+  if (fav) { favoritUmschalten(fav.dataset.favorit); fav.textContent = istFavorit(fav.dataset.favorit) ? "⭐" : "☆"; if (zustand.tab === "uebersicht") zeigeFavoriten(); return; }
+  const kopie = ev.target.closest("[data-kopieren]");
+  if (kopie) {
+    const text = kopie.dataset.kopieren;
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(() => { kopie.textContent = "Kopiert ✓"; }, () => { kopie.textContent = "Bitte markieren"; });
+    return;
+  }
   if (ev.target.closest("#lexikon-knopf")) { zeigeLexikon(); return; }
   if (ev.target.closest("#blatt-zu") || ev.target.id === "blatt-hintergrund") schliesseBlatt();
 });

@@ -441,3 +441,165 @@ body.blatt-offen { overflow: hidden; }
 .termin-tief .termin-titel { color: var(--leise); }
 .kz-zeile .kz-name { overflow-wrap: anywhere; }
 @media (max-width: 499px) { .jahre-tab .eps { display: none; } }
+
+/* =====================================================================
+   Erweiterungen 2: Unterbereiche, Suche, Heatmap, Screener, Vergleich,
+   Diagramme, Makro, Saisonalität, Rechner, Insider/Politiker, Score
+   ===================================================================== */
+:root {
+  /* Linienfarben (geprüfte Palette: Blau, Orange, Türkis, Gelb, Magenta, Violett) */
+  --serie-1: #257de0; --serie-2: #f47230; --serie-3: #00b894; --serie-4: #f2a600; --serie-5: #ee7fac; --serie-6: #6a4ce2;
+  --neutral-mitte: #d7dae0;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --serie-1: #338ced; --serie-2: #e76624; --serie-3: #00a888; --serie-4: #d28e05; --serie-5: #e24d8b; --serie-6: #9887ef; --neutral-mitte: #3a4258; }
+}
+
+/* 6 Tabs unten auf dem iPhone */
+@media (max-width: 699px) { .tabs button { font-size: .58rem; } .tabs svg { width: 22px; height: 22px; } }
+
+.kopf-knoepfe { display: flex; gap: 6px; flex-shrink: 0; }
+.knopf.rund { padding: 8px 10px; }
+
+/* Unterbereiche */
+.unternav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 0 6px; }
+.unternav::-webkit-scrollbar { display: none; }
+.unternav button { border: 0; background: var(--karte); color: var(--leise); font: inherit; font-size: .85rem; font-weight: 600; padding: 7px 13px; border-radius: 999px; white-space: nowrap; cursor: pointer; box-shadow: var(--schatten); }
+.unternav button.aktiv { background: var(--akzent); color: #fff; }
+.unterseite { display: none; flex-direction: column; gap: 14px; }
+.unterseite.aktiv { display: flex; }
+.raster.zwei-gleich { grid-template-columns: 1fr; }
+@media (min-width: 700px) { .raster.zwei-gleich { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.hinweis-karte { background: var(--neutral-hg); box-shadow: none; }
+.hinweis-karte p { margin: 0; }
+
+/* Eingabefelder */
+.eingabe { width: 100%; font: inherit; font-size: 16px; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--linie); background: var(--karte); color: var(--text); }
+.klein-eingabe { width: auto; min-width: 0; flex: 1 1 140px; padding: 6px 9px; }
+select.eingabe { appearance: auto; }
+#screener-sortierung { font: inherit; font-size: .82rem; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--linie); background: var(--karte); color: var(--text); }
+.filter-raster { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+.filter-raster label { font-size: .78rem; color: var(--leise); display: flex; flex-direction: column; gap: 3px; }
+.filter-raster .knopf { grid-column: 1 / -1; justify-content: center; }
+.screener-filter { margin-top: 12px; }
+
+/* Suche */
+.suche { position: fixed; inset: 0; z-index: 50; background: var(--hg); overflow-y: auto;
+  padding: calc(env(safe-area-inset-top) + 10px) max(16px, env(safe-area-inset-right)) 30px max(16px, env(safe-area-inset-left)); }
+.suche-kopf { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; position: sticky; top: 0; background: var(--hg); padding-bottom: 6px; }
+@media (min-width: 700px) { .suche { inset: 6vh auto auto 50%; transform: translateX(-50%); width: min(640px, 94vw); max-height: 80vh; border-radius: 18px; box-shadow: 0 10px 40px rgba(0,0,0,.3); } }
+
+/* Heatmap */
+.heatmap { position: relative; width: 100%; border-radius: 10px; overflow: hidden; background: var(--hg); }
+.hm-sektor { position: absolute; border: 1px solid var(--hg); box-sizing: border-box; }
+.hm-sektor-name { position: absolute; left: 3px; top: 0; font-size: .62rem; font-weight: 700; color: var(--leise); white-space: nowrap; overflow: hidden; max-width: calc(100% - 6px); text-overflow: ellipsis; text-transform: uppercase; letter-spacing: .02em; }
+.hm-zelle { position: absolute; border: 0; padding: 2px; border-radius: 3px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--text); font: inherit; overflow: hidden; cursor: pointer; text-align: center; line-height: 1.15; }
+.hm-name { font-size: .68rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.hm-wert { font-size: .64rem; font-weight: 600; }
+.heatmap-legende { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: .72rem; color: var(--leise); }
+.hm-skala { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--minus), var(--neutral-mitte), var(--plus)); }
+
+/* Screener / Score */
+.screener-zeile { grid-template-columns: minmax(0, 1fr) auto auto; }
+.score-mini { display: inline-flex; align-items: center; justify-content: center; min-width: 2.2em; height: 1.7em; border-radius: 8px; font-size: .78rem; font-weight: 700; color: #fff; }
+.score-mini.score-gut { background: var(--gut); } .score-mini.score-mittel { background: var(--mittel); } .score-mini.score-schlecht { background: var(--schlecht); }
+@media (prefers-color-scheme: dark) { .score-mini { color: #0b0f1a; } }
+.score { display: flex; gap: 14px; align-items: center; }
+.score-ring { width: 84px; height: 84px; flex-shrink: 0; }
+.score-ring .ring-hg { fill: none; stroke: var(--neutral-hg); stroke-width: 8; }
+.score-ring .ring-wert { fill: none; stroke-width: 8; stroke-linecap: round; }
+.score-ring.score-gut .ring-wert { stroke: var(--gut); } .score-ring.score-mittel .ring-wert { stroke: var(--mittel); } .score-ring.score-schlecht .ring-wert { stroke: var(--schlecht); }
+.ring-zahl { font-size: 20px; font-weight: 700; fill: var(--text); }
+.score-saeulen { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.score-saeule { display: grid; grid-template-columns: 6.5em minmax(0, 1fr) 1.6em; gap: 6px; align-items: center; font-size: .78rem; }
+.score-saeule b { text-align: right; }
+.score-spur { height: 7px; background: var(--neutral-hg); border-radius: 4px; overflow: hidden; }
+.score-spur span { display: block; height: 100%; border-radius: 4px; }
+.score-spur .score-gut { background: var(--gut); } .score-spur .score-mittel { background: var(--mittel); } .score-spur .score-schlecht { background: var(--schlecht); }
+
+/* Diagramme */
+.chart { position: relative; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; touch-action: pan-y; }
+.chart .gitter { stroke: var(--linie); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.chart .gitter.null { stroke: var(--leise); }
+.achse-text { font-size: 9px; fill: var(--leise); font-family: inherit; }
+.chart .band { fill: var(--neutral-hg); opacity: .8; }
+.chart .fadenkreuz { stroke: var(--leise); stroke-width: 1; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; }
+.chart .markierung { stroke-width: 1; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
+.chart .markierung.golden { stroke: var(--gut); } .chart .markierung.death { stroke: var(--schlecht); }
+.markierung-text { font-size: 8px; font-weight: 700; }
+.markierung-text.golden { fill: var(--gut); } .markierung-text.death { fill: var(--schlecht); }
+.chart-tooltip { position: absolute; top: 22px; pointer-events: none; background: var(--karte); border: 1px solid var(--linie); border-radius: 8px; padding: 5px 8px; font-size: .72rem; box-shadow: var(--schatten); white-space: nowrap; z-index: 3; }
+.chart-tooltip .tip-titel { color: var(--leise); margin-bottom: 2px; }
+.chart-tooltip i, .legende i, .farb-punkt { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+.legende i.rund { border-radius: 50%; }
+.legende { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .74rem; color: var(--text); margin-bottom: 6px; }
+.blatt-chart { background: var(--karte); border-radius: var(--radius); padding: 10px; box-shadow: var(--schatten); }
+
+/* Technik */
+.technik { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.technik > div { background: var(--neutral-hg); border-radius: 10px; padding: 7px 9px; display: flex; flex-direction: column; gap: 2px; }
+
+/* Vergleich */
+.vergleich-auswahl { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.vergleich-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--neutral-hg); border-radius: 999px; padding: 4px 4px 4px 10px; font-size: .82rem; }
+.vergleich-chip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.vergleich-chip button { border: 0; background: none; color: var(--leise); cursor: pointer; font-size: .8rem; padding: 2px 6px; }
+#vergleich-suche { margin-bottom: 10px; }
+.vergleich-tab, .korr-tab { border-collapse: collapse; width: 100%; font-size: .8rem; }
+.vergleich-tab th, .vergleich-tab td, .korr-tab th, .korr-tab td { padding: 6px 7px; border-top: 1px solid var(--linie); text-align: right; white-space: nowrap; }
+.vergleich-tab td:first-child, .korr-tab th:first-child { text-align: left; color: var(--leise); }
+.vergleich-tab th { font-size: .75rem; }
+.korr-tab td { text-align: center; font-weight: 600; border: 2px solid var(--karte); border-radius: 4px; }
+
+/* Makro */
+.makro-werte { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .8rem; margin-bottom: 6px; }
+
+/* Saisonalität */
+.saison-chart { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; height: 230px; margin: 8px 0; }
+.saison-spalte { display: flex; flex-direction: column; align-items: center; min-width: 0; border-radius: 8px; padding: 2px 0; }
+.saison-spalte.aktuell { background: var(--neutral-hg); }
+.saison-wert { font-size: .62rem; font-weight: 600; height: 16px; white-space: nowrap; }
+.saison-flaeche { position: relative; flex: 1; width: 100%; }
+.saison-flaeche::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--linie); }
+.saison-balken { position: absolute; left: 22%; right: 22%; min-height: 1px; }
+.saison-balken.plus { background: var(--plus); border-radius: 4px 4px 0 0; }
+.saison-balken.minus { background: var(--minus); border-radius: 0 0 4px 4px; }
+.saison-punkt { position: absolute; left: 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: var(--text); border: 1.5px solid var(--karte); z-index: 1; }
+.saison-monat { font-size: .66rem; color: var(--leise); }
+.saison-positiv { font-size: .6rem; color: var(--leise); }
+
+/* Rechner */
+.rechner-zahlen { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+.rechner-zahlen > div { display: flex; flex-direction: column; }
+.rechner-zahlen > div:first-child { grid-column: 1 / -1; }
+.gross-zahl { font-size: 1.6rem; }
+#rechner-vorlagen { margin-top: 10px; }
+
+/* Insider / Politiker */
+.trades { display: flex; flex-direction: column; }
+.trade { padding: 9px 4px; border-top: 1px solid var(--linie); }
+.trade:first-child { border-top: 0; }
+.trade-kopf { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.trade-person { font-weight: 600; font-size: .88rem; min-width: 0; }
+.trade-titel { font-size: .86rem; margin: 2px 0; }
+.trade-beschreibung { color: var(--leise); margin-top: 3px; }
+.trade a { color: var(--akzent); }
+.partei { display: inline-flex; align-items: center; justify-content: center; width: 1.4em; height: 1.4em; border-radius: 4px; font-size: .68rem; font-weight: 700; color: #fff; vertical-align: middle; }
+.partei-D { background: #2563eb; } .partei-R { background: #dc2626; } .partei-I { background: #6b7280; }
+.filter-zeile-pol { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.zeile-knopf { width: 100%; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.balken-zeile.einfach { cursor: default; }
+.balken-zeile.einfach.klickbar { cursor: pointer; }
+.spur.links::before { display: none; }
+.spur.links .balken.plus { left: 0; }
+.ueberr { display: flex; flex-direction: column; gap: 4px; }
+.ueberr-zeile { display: grid; grid-template-columns: 4.2em minmax(0, 1.3fr) minmax(0, 1fr) 4.8em; gap: 8px; align-items: center; }
+
+/* Detail: Favorit, Alarm */
+.blatt-titel-zeile { display: flex; align-items: center; gap: 6px; padding-right: 40px; }
+.stern { border: 0; background: none; font-size: 1.4rem; cursor: pointer; padding: 2px 4px; line-height: 1; color: var(--mittel); }
+.alarm-box summary h3 { margin: 0; }
+.code-zeile { display: flex; gap: 8px; align-items: center; background: var(--neutral-hg); border-radius: 8px; padding: 6px 8px; margin: 5px 0; }
+.code-zeile code { flex: 1; font-size: .68rem; overflow-x: auto; white-space: nowrap; }

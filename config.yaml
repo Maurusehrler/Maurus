@@ -226,6 +226,33 @@ weitere:
   - { symbol: "^TNX", name: "US-Rendite 10 Jahre",   einheit: "%" }
 
 # ---------------------------------------------------------------------
+# KURSALARME (Push-Nachricht aufs iPhone über die App "ntfy")
+#   Wird alle 30 Minuten während der Börsenzeiten geprüft.
+#   ueber        = melden, wenn der Kurs über diesen Wert steigt
+#   unter        = melden, wenn der Kurs unter diesen Wert fällt
+#   tag_prozent  = melden, wenn sich der Kurs heute um mehr als ±X % bewegt
+#   Tipp: In der App bei einer Aktie auf "🔔 Alarm" tippen – dort steht die
+#   passende Zeile zum Kopieren.
+# ---------------------------------------------------------------------
+alarme:
+  - { symbol: "NVDA",    name: "Nvidia",  tag_prozent: 6 }
+  - { symbol: "NESN.SW", name: "Nestlé",  tag_prozent: 4 }
+  - { symbol: "BTC-USD", name: "Bitcoin", tag_prozent: 7 }
+  - { symbol: "^SSMI",   name: "SMI",     tag_prozent: 2.5 }
+
+benachrichtigungen:
+  morgen_briefing: true     # jeden Morgen um ca. 07:00 eine Zusammenfassung aufs Handy
+
+# ---------------------------------------------------------------------
+# POLITIKER-TRADES (US-Repräsentantenhaus, offizielle STOCK-Act-Meldungen)
+#   beobachten = Nachnamen, die in der App hervorgehoben werden und deren
+#                neue Trades im Morgen-Briefing erscheinen
+# ---------------------------------------------------------------------
+politiker:
+  beobachten: ["Pelosi", "Gottheimer", "Khanna", "McCaul", "Greene", "Crenshaw", "Bresnahan", "Fallon", "Larsen"]
+  max_neue_pro_lauf: 250
+
+# ---------------------------------------------------------------------
 # AUFFÄLLIGKEITEN: ab welcher Tagesbewegung (in %) ein Hinweis erscheint
 # ---------------------------------------------------------------------
 schwellen:

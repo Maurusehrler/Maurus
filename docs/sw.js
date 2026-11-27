@@ -6,7 +6,7 @@
    WICHTIG: Wenn du HTML/CSS/JS änderst, erhöhe die VERSION unten um 1,
    damit iPhone/iPad die neue Version laden.
    ===================================================================== */
-const VERSION = "v4";
+const VERSION = "v5";
 const APP_SPEICHER = `boerse-app-${VERSION}`;
 const DATEN_SPEICHER = "boerse-daten";
 const APP_DATEIEN = [
@@ -14,7 +14,10 @@ const APP_DATEIEN = [
   "index.html",
   "style.css",
   "app.js",
+  "charts.js",
   "kennzahlen.js",
+  "analyse.js",
+  "insider.js",
   "kalender.js",
   "manifest.json",
   "icons/icon-180.png",
