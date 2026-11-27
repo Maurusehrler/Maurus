@@ -521,6 +521,8 @@ def lade_kurse(cfg: dict, vorher: dict, statistik: dict) -> dict[str, list[dict]
             e = eintrag_aus_serie(item, "krypto", reihe_yahoo, "Yahoo Finance")
         else:
             e = ersatz_aus_vorherigem(item, "krypto", vorher)
+        if reihe_yahoo and not e.get("veraltet"):
+            e["_reihe"] = reihe_yahoo          # nur intern (Stimmungsindex), wird nicht gespeichert
         zaehle(statistik, e)
         krypto.append(e)
     ergebnis["krypto"] = krypto
