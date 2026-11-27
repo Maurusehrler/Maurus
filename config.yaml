@@ -240,6 +240,18 @@ alarme:
   - { symbol: "BTC-USD", name: "Bitcoin", tag_prozent: 7 }
   - { symbol: "^SSMI",   name: "SMI",     tag_prozent: 2.5 }
 
+# ---------------------------------------------------------------------
+# STIMMUNG (Fear & Greed) für weitere Märkte – eigene Berechnung aus den Kursen
+#   breite_land = Marktbreite aus deinen Aktien dieses Landes (CH, US) mitberechnen
+# ---------------------------------------------------------------------
+stimmung_maerkte:
+  - { symbol: "^SSMI",     name: "Schweiz (SMI)",         breite_land: "CH" }
+  - { symbol: "^STOXX50E", name: "Europa (Euro Stoxx 50)" }
+  - { symbol: "^GDAXI",    name: "Deutschland (DAX)" }
+  - { symbol: "^IXIC",     name: "USA Tech (Nasdaq)",     breite_land: "US" }
+  - { symbol: "GC=F",      name: "Gold" }
+  - { symbol: "BTC-USD",   name: "Bitcoin (eigene)" }
+
 benachrichtigungen:
   morgen_briefing: true     # jeden Morgen um ca. 07:00 eine Zusammenfassung aufs Handy
 

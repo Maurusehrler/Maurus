@@ -158,6 +158,40 @@ async function politikerZuAktie(symbol) {
 /* ---------------------------------------------------------------------
    Firmen-Insider
    --------------------------------------------------------------------- */
+/** Insider-Käufe (nach oben, grün) und -Verkäufe (nach unten, rot) pro Monat, in USD */
+function insiderMonatsChart(liste) {
+  const monate = [];
+  const heute = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(Date.UTC(heute.getFullYear(), heute.getMonth() - i, 1));
+    monate.push({ key: d.toISOString().slice(0, 7), name: MONATE[d.getUTCMonth()], kauf: 0, verkauf: 0 });
+  }
+  const proMonat = Object.fromEntries(monate.map((m) => [m.key, m]));
+  for (const i of liste) {
+    const m = proMonat[(i.datum || "").slice(0, 7)];
+    if (!m || !i.wert) continue;
+    if (i.art === "Kauf") m.kauf += inUsd(i.wert, i.waehrung); else if (i.art === "Verkauf") m.verkauf += inUsd(i.wert, i.waehrung);
+  }
+  const max = Math.max(...monate.map((m) => Math.max(m.kauf, m.verkauf)), 1);
+  return `<div class="insider-chart">${monate.map((m) => `<div class="ic-spalte" title="${m.name}: Käufe ${betrag(m.kauf)} $, Verkäufe ${betrag(m.verkauf)} $">
+      <div class="ic-oben"><div class="ic-balken plus" style="height:${((m.kauf / max) * 100).toFixed(1)}%"></div></div>
+      <div class="ic-monat">${m.name}</div>
+      <div class="ic-unten"><div class="ic-balken minus" style="height:${((m.verkauf / max) * 100).toFixed(1)}%"></div></div>
+    </div>`).join("")}</div>
+    <div class="legende"><span><i style="background:var(--plus)"></i>Käufe</span><span><i style="background:var(--minus)"></i>Verkäufe</span><span class="leise">in USD umgerechnet</span></div>`;
+}
+
+/** Horizontale Balken pro Firma (grösste Verkäufe bzw. Käufe) */
+function insiderFirmenBalken(eintraege, feld, klasse) {
+  const liste = eintraege.filter((x) => x[feld] > 0).sort((a, b) => b[feld] - a[feld]).slice(0, 10);
+  if (!liste.length) return '<p class="leise klein">Keine Einträge.</p>';
+  const max = liste[0][feld];
+  return `<div class="balken-liste">${liste.map((x) => `<div class="balken-zeile einfach klickbar" data-symbol="${esc(x.symbol)}">
+    <span class="n">${esc(x.firma)} <span class="anz">${x[feld === "verkaufUsd" ? "anzVerkauf" : "anzKauf"]}×</span></span>
+    <span class="spur links"><span class="balken ${klasse} links-balken" style="width:${((x[feld] / max) * 100).toFixed(1)}%"></span></span>
+    <span class="wert">${betrag(x[feld])} $</span></div>`).join("")}</div>`;
+}
+
 function zeigeFirmenInsider() {
   const ziel = $("firmen-insider");
   if (!fundamental) { ziel.innerHTML = '<section class="karte"><p class="leise">Wird geladen …</p></section>'; return; }
@@ -174,11 +208,32 @@ function zeigeFirmenInsider() {
     if (i.art === "Kauf") x.kauf += i.wert || 0; else x.verkauf += i.wert || 0;
   }
   const mitKauf = Object.values(netto).filter((x) => x.kauf > 0).sort((a, b) => b.kauf - a.kauf);
+  // Für die Balken: Beträge in USD und Anzahl Transaktionen
+  for (const x of Object.values(netto)) {
+    x.kaufUsd = inUsd(x.kauf, x.waehrung); x.verkaufUsd = inUsd(x.verkauf, x.waehrung);
+    x.anzKauf = alle.filter((i) => i.symbol === x.symbol && i.art === "Kauf" && i.datum >= grenze).length;
+    x.anzVerkauf = alle.filter((i) => i.symbol === x.symbol && i.art === "Verkauf" && i.datum >= grenze).length;
+  }
   const liste = alle.filter((i) => insiderArt === "alle" || i.art === insiderArt);
   ziel.innerHTML = `
     <section class="karte hinweis-karte"><p class="klein">🕵️ Manager und Verwaltungsräte müssen eigene Aktienkäufe und -verkäufe melden.
       <b>Käufe gelten als aussagekräftiger</b> – Insider verkaufen aus vielen Gründen (Steuern, Hauskauf), kaufen aber meist nur, wenn sie an steigende Kurse glauben.
       <span class="leise">Quelle: Yahoo Finance (v.a. US-Aktien; für Schweizer Titel oft keine Daten).</span></p></section>
+    <section class="karte">
+      <h2>Insider-Käufe und -Verkäufe pro Monat <span class="etikett">alle deine Aktien</span></h2>
+      ${insiderMonatsChart(alle)}
+    </section>
+    <div class="raster zwei-gleich">
+      <section class="karte">
+        <h2>Grösste Insider-Verkäufe <span class="etikett">6 Monate</span></h2>
+        ${insiderFirmenBalken(Object.values(netto), "verkaufUsd", "minus")}
+        <p class="leise klein">Verkäufe sind häufig (Steuern, Diversifikation, geplante Verkaufsprogramme) und für sich allein kein Warnsignal.</p>
+      </section>
+      <section class="karte">
+        <h2>Grösste Insider-Käufe <span class="etikett">6 Monate</span></h2>
+        ${insiderFirmenBalken(Object.values(netto), "kaufUsd", "plus")}
+      </section>
+    </div>
     <section class="karte">
       <h2>Aktien mit Insider-Käufen <span class="etikett">6 Monate</span></h2>
       ${mitKauf.length ? `<div class="zeilen">${mitKauf.map((x) => `<div class="zeile klickbar" data-symbol="${esc(x.symbol)}">

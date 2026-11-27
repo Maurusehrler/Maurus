@@ -356,6 +356,15 @@ function tacho(wert) {
   </svg>`;
 }
 
+/** Balken für einen Einzelfaktor (0–100) */
+function faktorHtml(f) {
+  return `<div class="faktor" title="${esc(f.info || "")}">
+    <span class="faktor-name">${esc(f.name)}<span class="unter">${esc(f.info || "")}</span></span>
+    <span class="faktor-spur"><span class="faktor-punkt ${stimmungKlasse(f.wert)}" style="left:${Math.max(0, Math.min(100, f.wert)).toFixed(0)}%"></span></span>
+    <b class="${stimmungKlasse(f.wert)}">${Math.round(f.wert)}</b>
+  </div>`;
+}
+
 function stimmungHtml(st) {
   if (!st || (!st.aktien && !st.krypto)) return '<p class="leise">Noch keine Daten (erscheinen nach dem nächsten Update).</p>';
   const block = (titel, x) => {
@@ -371,7 +380,46 @@ function stimmungHtml(st) {
       <div class="vergleich">${vgl}</div>
     </div>`;
   };
-  return block("Aktien (USA)", st.aktien) + block("Krypto", st.krypto);
+  let html = `<div class="stimmung-raster">${block("Aktien USA (CNN)", st.aktien)}${block("Krypto", st.krypto)}</div>`;
+
+  // Weitere Märkte (eigene Berechnung) als kleine Tachos – antippen für die Faktoren
+  const maerkte = st.maerkte || [];
+  if (maerkte.length) {
+    html += `<h3 class="stimmung-titel">Weitere Märkte <span class="leise klein">(eigene Berechnung · antippen für Details)</span></h3>
+      <div class="stimmung-mini-raster">${maerkte.map((m) => `<details class="stimmung-mini">
+        <summary>
+          <div class="mini-tacho">${tacho(m.wert)}</div>
+          <div class="mini-text"><b>${esc(m.name)}</b>
+            <span><b class="${stimmungKlasse(m.wert)}">${Math.round(m.wert)} · ${esc(m.text)}</b></span>
+            <span class="leise klein">Woche ${m.woche !== null && m.woche !== undefined ? Math.round(m.woche) : "–"} · Monat ${m.monat !== null && m.monat !== undefined ? Math.round(m.monat) : "–"}</span></div>
+        </summary>
+        <div class="faktoren">${(m.faktoren || []).map(faktorHtml).join("")}</div>
+      </details>`).join("")}</div>`;
+  }
+  // Die 7 CNN-Faktoren
+  if (st.aktien && (st.aktien.faktoren || []).length) {
+    html += `<details class="stimmung-details"><summary>Die 7 Faktoren des CNN-Index (USA)</summary>
+      <div class="faktoren">${st.aktien.faktoren.map(faktorHtml).join("")}</div></details>`;
+  }
+  // Verlauf über 1 Jahr
+  const serien = [];
+  const linie = (name, x, abstand) => x && (x.verlauf || []).length > 5 && serien.push({
+    name, x: x.verlauf.map((_, i) => -Math.round((x.verlauf.length - 1 - i) * abstand)), y: x.verlauf });
+  linie("Aktien USA (CNN)", st.aktien, 365 / 252);
+  linie("Krypto", st.krypto, 1);
+  const ch = maerkte.find((m) => m.symbol === "^SSMI");
+  linie("Schweiz", ch, 7);
+  if (serien.length) {
+    html += `<details class="stimmung-details"><summary>Verlauf der letzten 12 Monate</summary>
+      ${linienChart(serien, { xTyp: "zahl", hoehe: 170, band: { min: 45, max: 55 }, xFormat: (v) => (v === 0 ? "heute" : `vor ${Math.round(-v / 30)} Mt.`),
+        xTooltip: (v) => (v === 0 ? "heute" : `vor ca. ${Math.round(-v)} Tagen`), yFormat: (v) => zahl(v, 0), yTooltip: (v) => `${Math.round(v)} (${stimmungText(v)})`, titel: "Fear & Greed Verlauf" })}
+      <p class="leise klein">0 = extreme Angst, 100 = extreme Gier. Graues Band = neutral (45–55).</p></details>`;
+  }
+  return html;
+}
+
+function stimmungText(w) {
+  return w < 25 ? "Extreme Angst" : w < 45 ? "Angst" : w <= 55 ? "Neutral" : w < 75 ? "Gier" : "Extreme Gier";
 }
 
 /* ---------------------------------------------------------------------

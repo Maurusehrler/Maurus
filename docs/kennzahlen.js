@@ -233,6 +233,8 @@ function zeigeAktieDesTages() {
       </div>
     </div>
     <p class="adt-text">${esc(sb.was || f.beschreibung_en || "Für diese Aktie gibt es noch keinen Steckbrief.")}</p>
+    ${sb.geld ? `<h4 class="adt-frage">💰 Wie verdient ${esc(a.name)} Geld?</h4><p class="klein">${esc(sb.geld)}</p>` : ""}
+    ${sb.konkurrenz ? `<h4 class="adt-frage">⚔️ Konkurrenz – was ist anders?</h4><p class="klein">${esc(sb.konkurrenz)}</p>` : ""}
     ${f.kurs !== undefined ? kurzKennzahlen(f) : '<p class="leise klein">Kennzahlen werden geladen …</p>'}
     ${(() => { const sc = qualitaetsScore(f, a); return sc ? `<p class="klein">Qualitäts-Score: <span class="score-mini score-${sc.stufe}">${sc.gesamt}</span>${sc.staerken.length ? ` · ${sc.staerken.slice(0, 2).join(", ")}` : ""}</p>` : ""; })()}
     ${sb.chancen ? `<p class="klein"><b class="plus">＋ Chancen:</b> ${esc(sb.chancen)}</p>` : ""}
@@ -495,6 +497,8 @@ function oeffneAktie(symbol, { nachOben = true } = {}) {
     ${sb.was || f.beschreibung_en ? `<section class="blatt-abschnitt">
       <h3>Was macht ${esc(e.name)}?</h3>
       <p>${esc(sb.was || f.beschreibung_en)}</p>
+      ${sb.geld ? `<h4>💰 Wie verdient ${esc(e.name)} Geld?</h4><p>${esc(sb.geld)}</p>` : ""}
+      ${sb.konkurrenz ? `<h4>⚔️ Konkurrenz – was ist anders?</h4><p>${esc(sb.konkurrenz)}</p>` : ""}
       ${sb.chancen ? `<p class="klein"><b class="plus">＋ Chancen:</b> ${esc(sb.chancen)}</p>` : ""}
       ${sb.risiken ? `<p class="klein"><b class="minus">− Risiken:</b> ${esc(sb.risiken)}</p>` : ""}
       ${sb.fakt ? `<p class="klein fakt">💡 <b>Wusstest du?</b> ${esc(sb.fakt)}</p>` : ""}
@@ -531,6 +535,7 @@ function oeffneAktie(symbol, { nachOben = true } = {}) {
     </section>` : ""}
 
     ${(f.insider || []).length ? `<section class="blatt-abschnitt"><h3>🕵️ Insider-Transaktionen</h3>
+      ${insiderMonatsChart(f.insider.map((i) => ({ ...i, waehrung: f.waehrung })))}
       <div class="trades">${f.insider.slice(0, 8).map((i) => insiderZeile({ ...i, waehrung: f.waehrung }, false)).join("")}</div></section>` : ""}
     ${e.kategorie === "aktie" && e.land === "US" ? '<section class="blatt-abschnitt" id="blatt-politiker"><h3>🏛️ Trades von US-Politikern</h3><p class="leise klein">Wird geladen …</p></section>' : ""}
     ${alarmHtml(e)}

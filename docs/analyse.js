@@ -104,31 +104,56 @@ function treemap(eintraege, x, y, b, h) {
   return ergebnis;
 }
 
+let heatmapModus = speicherLesen("heatmapModus", "sektoren");   // sektoren / alle / branchen
+
+function hmZelle(t, grenze, inhalt) {
+  return `<button type="button" class="hm-zelle ${t.klasse || "klickbar"}" ${t.attribut || `data-symbol="${esc(t.symbol)}"`} title="${esc(t.titel || t.name)}"
+    style="left:${t.x}px;top:${t.y}px;width:${Math.max(t.b - 1, 0)}px;height:${Math.max(t.h - 1, 0)}px;background:${divergierendeFarbe(t.p, grenze)}">${inhalt}</button>`;
+}
+
 function zeigeHeatmap() {
+  document.querySelectorAll("#heatmap-modus button").forEach((b) => b.classList.toggle("aktiv", b.dataset.heatmap === heatmapModus));
   const box = $("heatmap");
   const breite = box.clientWidth || 360;
   const hoehe = Math.max(420, Math.min(window.innerHeight * 0.72, breite * 1.1));
   box.style.height = hoehe + "px";
   const aktien = eindeutig(alleAktien()).filter(passtZuRegion).map((a) => {
     const f = fundamentalVon(a.symbol) || {};
-    return { ...a, wert: inUsd(f.marktkap, f.waehrung) || 1e9 };
+    return { ...a, wert: inUsd(f.marktkap, f.waehrung) || 1e9, p: perf(a) };
   });
+  const grenze = FARB_GRENZE[zustand.zeitraum] || 10;
+  const beschriftung = (t) => (t.b > 46 && t.h > 30
+    ? `<span class="hm-name">${esc(t.name.length > 14 && t.b < 90 ? t.symbol.split(".")[0] : t.name)}</span><span class="hm-wert">${prozent(t.p)}</span>` : "");
+  let html = "";
+
+  // Branchen zusammenfassen (Börsenwert-gewichtete Veränderung)
   const sektoren = {};
   for (const a of aktien) (sektoren[a.sektor || "Andere"] = sektoren[a.sektor || "Andere"] || []).push(a);
-  const sektorListe = Object.entries(sektoren).map(([name, titel]) => ({ name, titel, wert: titel.reduce((s, t) => s + t.wert, 0) }))
-    .sort((a, b) => b.wert - a.wert);
-  const grenze = FARB_GRENZE[zustand.zeitraum] || 10;
-  let html = "";
-  for (const s of treemap(sektorListe, 0, 0, breite, hoehe)) {
-    html += `<div class="hm-sektor" style="left:${s.x}px;top:${s.y}px;width:${s.b}px;height:${s.h}px"><span class="hm-sektor-name">${esc(s.name)}</span></div>`;
-    const innen = treemap(s.titel.sort((a, b) => b.wert - a.wert), s.x + 1, s.y + 15, Math.max(s.b - 2, 1), Math.max(s.h - 16, 1));
-    for (const t of innen) {
-      const p = perf(t);
-      const gross = t.b > 46 && t.h > 30;
-      html += `<button type="button" class="hm-zelle klickbar" data-symbol="${esc(t.symbol)}" title="${esc(t.name)}: ${prozent(p)}"
-        style="left:${t.x}px;top:${t.y}px;width:${Math.max(t.b - 1, 0)}px;height:${Math.max(t.h - 1, 0)}px;background:${divergierendeFarbe(p, grenze)}">
-        ${gross ? `<span class="hm-name">${esc(t.name.length > 14 && t.b < 90 ? t.symbol.split(".")[0] : t.name)}</span><span class="hm-wert">${prozent(p)}</span>` : ""}
-      </button>`;
+  const sektorListe = Object.entries(sektoren).map(([name, titel]) => {
+    const wert = titel.reduce((s, t) => s + t.wert, 0);
+    const mitP = titel.filter((t) => t.p !== null && t.p !== undefined);
+    const gewicht = mitP.reduce((s, t) => s + t.wert, 0);
+    return { name, titel, wert, p: gewicht ? mitP.reduce((s, t) => s + t.p * t.wert, 0) / gewicht : null };
+  }).sort((a, b) => b.wert - a.wert);
+
+  if (heatmapModus === "alle") {
+    $("heatmap-hinweis").textContent = "Alle Aktien gemeinsam, ohne Branchen-Gruppierung. Fläche = Börsenwert, Farbe = Kursveränderung.";
+    for (const t of treemap(aktien.sort((a, b) => b.wert - a.wert), 0, 0, breite, hoehe)) {
+      html += hmZelle({ ...t, titel: `${t.name} (${t.sektor}): ${prozent(t.p)}` }, grenze, beschriftung(t));
+    }
+  } else if (heatmapModus === "branchen") {
+    $("heatmap-hinweis").textContent = "Eine Kachel pro Branche. Fläche = Börsenwert aller Titel, Farbe = nach Börsenwert gewichtete Veränderung. Antippen für die Titel.";
+    for (const t of treemap(sektorListe, 0, 0, breite, hoehe)) {
+      html += hmZelle({ ...t, klasse: "", attribut: `data-hm-sektor="${esc(t.name)}"`, titel: `${t.name}: ${prozent(t.p)}` }, grenze,
+        t.b > 60 && t.h > 36 ? `<span class="hm-name gross">${esc(t.name)}</span><span class="hm-wert gross">${prozent(t.p)}</span><span class="hm-anzahl">${t.titel.length} Titel</span>` : "");
+    }
+  } else {
+    $("heatmap-hinweis").textContent = "Fläche = Börsenwert, Farbe = Kursveränderung im gewählten Zeitraum. Antippen für Details.";
+    for (const s of treemap(sektorListe, 0, 0, breite, hoehe)) {
+      html += `<div class="hm-sektor" style="left:${s.x}px;top:${s.y}px;width:${s.b}px;height:${s.h}px"><span class="hm-sektor-name">${esc(s.name)} ${prozent(s.p)}</span></div>`;
+      for (const t of treemap(s.titel.sort((a, b) => b.wert - a.wert), s.x + 1, s.y + 15, Math.max(s.b - 2, 1), Math.max(s.h - 16, 1))) {
+        html += hmZelle({ ...t, titel: `${t.name}: ${prozent(t.p)}` }, grenze, beschriftung(t));
+      }
     }
   }
   box.innerHTML = html;
@@ -433,6 +458,15 @@ function zeigeUeberraschungen() {
    Bedienung
    ===================================================================== */
 document.addEventListener("click", (ev) => {
+  const hm = ev.target.closest("[data-heatmap]");
+  if (hm) { heatmapModus = hm.dataset.heatmap; speicherSchreiben("heatmapModus", heatmapModus); zeigeHeatmap(); return; }
+  const hs = ev.target.closest("[data-hm-sektor]");
+  if (hs) {   // Branche angetippt -> Sektoren-Ansicht, zur Karte scrollen
+    wechsleUnterbereich("aktien", "sektoren");
+    const karte = document.getElementById("sektor-" + encodeURIComponent(hs.dataset.hmSektor));
+    if (karte) { karte.scrollIntoView({ behavior: "smooth", block: "center" }); karte.classList.add("hervor"); setTimeout(() => karte.classList.remove("hervor"), 1500); }
+    return;
+  }
   const v = ev.target.closest("[data-vorlage]");
   if (v) { screener = { filter: {}, vorlage: v.dataset.vorlage || null, sort: null }; speicherSchreiben("screener", screener); zeigeScreener(); return; }
   if (ev.target.closest("#screener-zuruecksetzen")) { screener = { filter: {}, vorlage: null, sort: "_score" }; speicherSchreiben("screener", screener); zeigeScreener(); return; }

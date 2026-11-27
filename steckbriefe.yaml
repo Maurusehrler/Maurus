@@ -2,7 +2,9 @@
 #  STECKBRIEFE – kurze Porträts für "Aktie des Tages" und die Detailansicht
 # ---------------------------------------------------------------------
 #  Pro Aktie (Symbol wie in config.yaml):
-#    was      = Was macht das Unternehmen? (1–2 Sätze)
+#    was        = Was macht das Unternehmen? (1–2 Sätze)
+#    geld       = Wie verdient die Firma ihr Geld?
+#    konkurrenz = Wichtigste Konkurrenten und was die Firma von ihnen unterscheidet
 #    chancen  = Was spricht dafür?
 #    risiken  = Worauf muss man achten?
 #    fakt     = (optional) "Wusstest du?"
@@ -13,398 +15,580 @@
 # ---------------------------- Technologie ----------------------------
 AAPL:
   was: "Apple entwickelt iPhone, Mac, iPad, Apple Watch und verdient zunehmend mit Diensten wie App Store, iCloud, Apple Music und Apple Pay."
+  geld: "Rund die Hälfte des Umsatzes stammt aus dem iPhone. Dazu kommen Mac, iPad, Wearables und vor allem Dienste (App Store, iCloud, Apple Music, Apple Pay, Lizenzzahlungen von Google für die Standard-Suche), die mit sehr hohen Margen zum Gewinn beitragen."
+  konkurrenz: "Konkurrenten: Samsung, Google (Android), Xiaomi. Apple kontrolliert Hardware, Software und Chips selbst und verkauft im Premium-Segment. Das geschlossene Ökosystem macht den Wechsel zu anderen Marken unbequem."
   chancen: "Sehr treue Kundschaft, starkes Ökosystem, hohe Margen im Service-Geschäft und grosse Aktienrückkäufe."
   risiken: "Abhängigkeit vom iPhone, Produktion stark in Asien, Regulierung des App Stores."
   fakt: "Apple kauft seit Jahren für Dutzende Milliarden Dollar pro Jahr eigene Aktien zurück."
 MSFT:
   was: "Microsoft verkauft Software (Windows, Office 365), betreibt die Cloud-Plattform Azure und besitzt LinkedIn sowie die Xbox-Sparte."
+  geld: "Drei Säulen: Cloud (Azure), Büro-Software und Dienste (Microsoft 365, LinkedIn, Dynamics) sowie Windows, Xbox und Suchwerbung (Bing). Ein grosser Teil sind Abos, die jedes Jahr neu bezahlt werden."
+  konkurrenz: "Konkurrenten: Amazon (AWS) und Google in der Cloud, Google Workspace bei Büro-Software. Microsoft ist in fast jeder Firma installiert und bündelt Produkte geschickt. Durch die Partnerschaft mit OpenAI ist es früh bei KI dabei."
   chancen: "Azure und KI-Dienste wachsen stark, Abo-Modelle bringen planbare Einnahmen."
   risiken: "Sehr hohe Investitionen in Rechenzentren, Wettbewerb mit Amazon und Google in der Cloud, Kartellbehörden."
 NVDA:
   was: "Nvidia entwickelt Grafikchips (GPUs), die heute vor allem in Rechenzentren für künstliche Intelligenz eingesetzt werden."
+  geld: "Der Grossteil des Umsatzes kommt aus dem Rechenzentrums-Geschäft: KI-Chips (GPUs) samt Netzwerktechnik für Cloud-Anbieter und Grossfirmen. Kleinere Teile sind Grafikkarten für Gamer, Profi-Grafik und Autochips."
+  konkurrenz: "Konkurrenten: AMD, Intel sowie eigene Chips der Cloud-Riesen (Google TPU, Amazon Trainium). Nvidias Vorsprung liegt in der Software CUDA, mit der fast alle KI-Entwickler arbeiten, und im kompletten System aus Chip, Netzwerk und Software."
   chancen: "Marktführer bei KI-Chips mit eigener Software-Plattform (CUDA), enorme Nachfrage der Cloud-Anbieter."
   risiken: "Hohe Bewertung, Abhängigkeit von wenigen Grosskunden, Exportbeschränkungen nach China, zyklische Chipbranche."
   fakt: "Nvidia stellt seine Chips nicht selbst her – gefertigt wird beim taiwanischen Auftragsfertiger TSMC."
 AVGO:
   was: "Broadcom stellt Netzwerk- und Spezialchips her (auch massgeschneiderte KI-Chips) und verkauft Infrastruktur-Software wie VMware."
+  geld: "Etwa zwei Drittel Halbleiter (Netzwerkchips, Funkchips für Smartphones, massgeschneiderte KI-Chips für Google, Meta u.a.) und etwa ein Drittel Infrastruktur-Software (VMware, Mainframe- und Sicherheitssoftware) mit langen Lizenzverträgen."
+  konkurrenz: "Konkurrenten: Marvell (Netzwerk-/Spezialchips), Nvidia (Netzwerk), Microsoft/Nutanix (Virtualisierung). Broadcom kauft gezielt marktführende Nischenfirmen und trimmt sie auf hohe Margen."
   chancen: "Profitiert vom Ausbau der KI-Rechenzentren, hohe Margen, wachsende Dividende."
   risiken: "Hohe Schulden nach Übernahmen, Abhängigkeit von Grosskunden wie Apple und Google."
 ORCL:
   was: "Oracle ist bekannt für Datenbank-Software und baut stark seine Cloud-Infrastruktur für KI-Anwendungen aus."
+  geld: "Verdient an Datenbank- und Unternehmenssoftware (Lizenzen und Wartung), Cloud-Anwendungen (ERP, Personalwesen) und zunehmend an der Vermietung von Rechenleistung (Oracle Cloud Infrastructure), auch für KI-Firmen."
+  konkurrenz: "Konkurrenten: Amazon, Microsoft und Google in der Cloud, SAP und Workday bei Firmensoftware. Oracle hat sehr viele treue Datenbank-Kunden und bietet Cloud-Rechenleistung oft günstiger an."
   chancen: "Grosse Cloud-Aufträge, viele treue Firmenkunden mit Oracle-Datenbanken."
   risiken: "Sehr hohe Investitionen und steigende Verschuldung, Konkurrenz durch die grossen Cloud-Anbieter."
 AMD:
   was: "AMD entwickelt Prozessoren (CPUs) und Grafikchips für PCs, Spielkonsolen und Rechenzentren."
+  geld: "Umsatz mit Prozessoren für Rechenzentren (EPYC), KI-Beschleunigern (Instinct), PC-Prozessoren (Ryzen), Grafikkarten und Chips für Spielkonsolen (PlayStation, Xbox)."
+  konkurrenz: "Konkurrenten: Intel bei Prozessoren, Nvidia bei Grafik- und KI-Chips. AMD lässt bei TSMC fertigen (keine eigenen Fabriken) und hat Intel bei Server-Prozessoren viele Marktanteile abgenommen."
   chancen: "Gewinnt Marktanteile bei Server-Prozessoren, wächst mit KI-Beschleunigern."
   risiken: "Starke Konkurrenz durch Nvidia und Intel, zyklische Nachfrage nach PCs."
 CRM:
   was: "Salesforce ist Weltmarktführer für Kundenmanagement-Software (CRM) aus der Cloud."
+  geld: "Verkauft Software-Abos für Vertrieb, Kundendienst, Marketing und Datenanalyse (Sales Cloud, Service Cloud, Slack, Tableau, MuleSoft). Fast alle Einnahmen sind wiederkehrend."
+  konkurrenz: "Konkurrenten: Microsoft Dynamics, Oracle, SAP, HubSpot. Salesforce ist Marktführer im Kundenmanagement; viele Firmen haben ihre Prozesse darauf aufgebaut und wechseln ungern."
   chancen: "Abo-Einnahmen, hohe Kundenbindung, neue KI-Funktionen (Agenten)."
   risiken: "Wachstum verlangsamt sich, Konkurrenz durch Microsoft, teure Übernahmen."
 LOGN.SW:
   was: "Logitech stellt Computerzubehör her: Mäuse, Tastaturen, Webcams, Gaming-Zubehör und Videokonferenz-Systeme."
+  geld: "Verkauft Hardware über Händler und online: Mäuse und Tastaturen, Gaming-Zubehör (Logitech G), Webcams, Headsets und Videokonferenz-Systeme für Firmen."
+  konkurrenz: "Konkurrenten: Razer und Corsair (Gaming), Microsoft und Apple (Zubehör), Poly/HP (Videokonferenz). Logitech hat eine sehr breite Produktpalette, starke Marken und eine ausgezeichnete Händlerpräsenz weltweit."
   chancen: "Starke Marke, solide Bilanz ohne Schulden, Gaming- und Büro-Markt."
   risiken: "Nachfrage schwankt stark mit PC-Verkäufen, Preisdruck, Zölle auf Produkte aus Asien."
   fakt: "Logitech wurde 1981 in Apples (Kanton Waadt) gegründet."
 VACN.SW:
   was: "VAT Group ist Weltmarktführer für Vakuumventile, die vor allem in der Chipherstellung benötigt werden."
+  geld: "Verdient an Vakuumventilen und Ersatzteilen/Service, vor allem für Maschinen zur Chipherstellung (z.B. von Applied Materials, Lam Research). Ein kleinerer Teil geht an Displays, Solar und Forschung."
+  konkurrenz: "Konkurrenten sind kleinere Ventilhersteller. VAT hat bei Halbleiter-Vakuumventilen einen Marktanteil von weit über der Hälfte – ein Ventil-Ausfall kann eine ganze Chipfabrik stoppen, daher zählt Qualität mehr als Preis."
   chancen: "Sehr hoher Marktanteil, profitiert von neuen Chipfabriken weltweit."
   risiken: "Stark abhängig vom Investitionszyklus der Halbleiterindustrie, hohe Bewertung."
 TEMN.SW:
   was: "Temenos liefert Kernbanken-Software, mit der Banken ihre Konten, Zahlungen und Kredite verwalten."
+  geld: "Verkauft Lizenzen, Abos (SaaS) und Wartung für Banken-Software: Kontoführung, Zahlungsverkehr, Vermögensverwaltung."
+  konkurrenz: "Konkurrenten: Finastra, Oracle FSS, FIS, Avaloq (Schweiz). Temenos ist einer der grössten unabhängigen Anbieter und läuft bei über 3'000 Finanzinstituten."
   chancen: "Viele Banken modernisieren ihre IT und wechseln in die Cloud."
   risiken: "Lange Verkaufszyklen, Wettbewerb, Unsicherheit nach Management-Wechseln in der Vergangenheit."
 
 # ---------------------- Kommunikation & Telekom ----------------------
 GOOGL:
   was: "Alphabet ist die Muttergesellschaft von Google: Suchmaschine, YouTube, Android, Google Cloud und das KI-Labor DeepMind."
+  geld: "Der grösste Teil stammt aus Werbung: Google-Suche, YouTube und Werbung auf Partnerseiten. Wachsend: Google Cloud, Abos (YouTube Premium, Google One) sowie Hardware und Play Store."
+  konkurrenz: "Konkurrenten: Meta und Amazon bei Werbung, Microsoft (Bing, Azure), OpenAI bei KI-Assistenten. Google hat mit rund 90 % Marktanteil die dominante Suchmaschine und riesige Datenmengen."
   chancen: "Dominanz bei Suche und Online-Werbung, wachsende Cloud, starke KI-Forschung."
   risiken: "KI-Chatbots könnten die Google-Suche verändern, Kartellverfahren in den USA und der EU."
 META:
   was: "Meta betreibt Facebook, Instagram und WhatsApp und verdient fast alles mit Online-Werbung."
+  geld: "Fast alles aus Werbung auf Facebook, Instagram, Messenger und WhatsApp. Werbetreibende zahlen für zielgenaue Anzeigen. Reality Labs (VR-Brillen, Metaverse) macht hohe Verluste."
+  konkurrenz: "Konkurrenten: Google/YouTube, TikTok, Snap, Amazon. Meta erreicht über 3 Milliarden Menschen täglich – diese Reichweite und die Daten für zielgenaue Werbung sind schwer zu kopieren."
   chancen: "Über 3 Milliarden Nutzer täglich, sehr profitables Werbegeschäft, KI verbessert die Werbung."
   risiken: "Hohe Ausgaben für KI und Metaverse, Regulierung, Abhängigkeit von Werbebudgets."
 NFLX:
   was: "Netflix ist der grösste Streamingdienst der Welt für Serien und Filme."
+  geld: "Monatliche Abo-Gebühren von Mitgliedern weltweit; dazu ein wachsendes günstigeres Abo mit Werbung sowie Live-Events (Sport)."
+  konkurrenz: "Konkurrenten: Disney+, Amazon Prime Video, YouTube, Apple TV+, HBO Max. Netflix ist am grössten, hat die meisten Abonnenten und kann darum mehr Geld pro Zuschauer in eigene Inhalte stecken."
   chancen: "Über 300 Millionen Abonnenten, Werbe-Abo und Preiserhöhungen steigern den Umsatz."
   risiken: "Hohe Kosten für Inhalte, starke Konkurrenz (Disney+, Amazon, YouTube)."
 TMUS:
   was: "T-Mobile US ist einer der drei grossen Mobilfunkanbieter der USA (Mehrheitsaktionärin ist die Deutsche Telekom)."
+  geld: "Monatliche Mobilfunk-Verträge (Privat- und Firmenkunden), Prepaid, Handy-Verkauf und zunehmend Internet über das 5G-Netz für zu Hause."
+  konkurrenz: "Konkurrenten: Verizon und AT&T. T-Mobile hat das breiteste 5G-Netz in den USA und gewinnt seit Jahren die meisten Neukunden."
   chancen: "Bestes 5G-Netz in den USA, wächst schneller als die Konkurrenz."
   risiken: "Gesättigter Markt, Preiskampf, hohe Schulden für Netz und Frequenzen."
 DIS:
   was: "Disney betreibt Freizeitparks, Kreuzfahrten, Filmstudios (Marvel, Pixar, Star Wars), TV-Sender und Disney+."
+  geld: "Erlebnisse (Freizeitparks, Hotels, Kreuzfahrten, Fanartikel) bringen den grössten Gewinnanteil. Dazu Streaming (Disney+, Hulu, ESPN+), Kinofilme, TV-Sender (ABC, ESPN) und Lizenzen."
+  konkurrenz: "Konkurrenten: Netflix und Warner Bros. (Streaming), Universal/Comcast (Freizeitparks). Disney besitzt einzigartige Figuren (Marvel, Star Wars, Pixar, Micky Maus), die es auf allen Kanälen mehrfach vermarktet."
   chancen: "Einzigartige Marken und Figuren, Freizeitparks sehr profitabel, Streaming wird profitabel."
   risiken: "Klassisches Fernsehen schrumpft, Parks hängen von der Konjunktur ab."
 VZ:
   was: "Verizon ist ein grosser US-Telekomkonzern für Mobilfunk und Glasfaser-Internet."
+  geld: "Monatliche Mobilfunk- und Glasfaser-Internetverträge in den USA, für Privat- und Geschäftskunden."
+  konkurrenz: "Konkurrenten: AT&T und T-Mobile. Verizon gilt als Anbieter mit sehr zuverlässigem Netz und hat viele zahlungskräftige Vertragskunden, wächst aber langsamer."
   chancen: "Stabile Einnahmen und hohe Dividende."
   risiken: "Kaum Wachstum, hohe Schulden, starke Konkurrenz."
 SCMN.SW:
   was: "Swisscom ist die grösste Telekomfirma der Schweiz (Mobilfunk, Internet, TV) und besitzt die italienische Fastweb."
+  geld: "Mobilfunk, Internet und TV (blue) für Privatkunden, IT- und Netzwerkdienste für Firmen in der Schweiz sowie Breitband in Italien (Fastweb + Vodafone Italia)."
+  konkurrenz: "Konkurrenten: Sunrise und Salt in der Schweiz. Swisscom hat das grösste Netz und die meisten Kunden und kann dank Qualität höhere Preise verlangen."
   chancen: "Sehr stabiles Geschäft, verlässliche Dividende, Mehrheitsaktionär ist der Bund."
   risiken: "Kaum Wachstum in der Schweiz, Preisdruck, Risiken im Italien-Geschäft."
 
 # -------------------- Konsum (zyklisch & Luxus) ----------------------
 AMZN:
   was: "Amazon ist der grösste Online-Händler im Westen und mit AWS der grösste Cloud-Anbieter der Welt."
+  geld: "Onlinehandel (eigene Verkäufe und Gebühren von Händlern), Prime-Abos, die Cloud AWS (grösster Gewinnbringer) und ein schnell wachsendes Werbegeschäft."
+  konkurrenz: "Konkurrenten: Walmart, Temu/Shein, Alibaba (Handel), Microsoft und Google (Cloud). Amazon hat das dichteste Logistiknetz und mit AWS die grösste Cloud der Welt."
   chancen: "AWS sehr profitabel, Werbegeschäft wächst stark, Prime bindet Kunden."
   risiken: "Hohe Investitionen, dünne Margen im Handel, Kartellbehörden."
 TSLA:
   was: "Tesla baut Elektroautos und Batteriespeicher und arbeitet an selbstfahrenden Autos und Robotern."
+  geld: "Grösstenteils Verkauf von Elektroautos (Model 3, Y, S, X, Cybertruck), dazu Batteriespeicher (Megapack, Powerwall), Ladenetz, Software (Fahrassistenz FSD) und CO2-Zertifikate."
+  konkurrenz: "Konkurrenten: BYD und andere chinesische Hersteller, VW, Hyundai, GM. Tesla hat eine eigene Software, ein grosses Ladenetz und eine starke Marke; Investoren bewerten vor allem die Robotaxi- und Roboter-Fantasie."
   chancen: "Starke Marke, Software und Energiespeicher, mögliches Robotaxi-Geschäft."
   risiken: "Sehr hohe Bewertung, sinkende Preise bei E-Autos, starke chinesische Konkurrenz, Abhängigkeit von Elon Musk."
 HD:
   was: "Home Depot ist die grösste Baumarktkette der Welt (USA, Kanada, Mexiko)."
+  geld: "Verkauf von Baumaterial, Werkzeug, Garten- und Haushaltsartikeln an Heimwerker und zunehmend an Profi-Handwerker in rund 2'300 Märkten und online."
+  konkurrenz: "Konkurrent: Lowe's. Home Depot ist grösser, hat mehr Profi-Kunden (die mehr und regelmässiger kaufen) und eine bessere Logistik."
   chancen: "Profitiert von Renovationen und alternden Häusern in den USA, starke Marktstellung."
   risiken: "Abhängig vom Immobilienmarkt und von Zinsen."
 MCD:
   was: "McDonald's ist die grösste Fast-Food-Kette der Welt; die meisten Restaurants werden von Franchisenehmern betrieben."
+  geld: "Verdient vor allem an Franchise-Gebühren und Mieten der rund 40'000 Restaurants, die meist von unabhängigen Betreibern geführt werden. Nur wenige Restaurants betreibt McDonald's selbst."
+  konkurrenz: "Konkurrenten: Burger King, Yum! Brands (KFC), Starbucks, Chipotle. McDonald's ist mit Abstand die grösste Kette, kauft am günstigsten ein und besitzt sehr viele Grundstücke an Top-Lagen."
   chancen: "Verdient an Mieten und Lizenzgebühren, sehr stabil, wachsende Dividende seit Jahrzehnten."
   risiken: "Preisempfindliche Kundschaft, Trend zu gesünderer Ernährung."
   fakt: "Ein grosser Teil des Gewinns stammt aus Mieten – McDonald's besitzt viele Grundstücke seiner Restaurants."
 BKNG:
   was: "Booking Holdings betreibt Reiseplattformen wie Booking.com, Priceline, Kayak und OpenTable."
+  geld: "Provisionen von Hotels und Vermietern für Buchungen über Booking.com, dazu Priceline, Agoda, Kayak und OpenTable sowie Werbung."
+  konkurrenz: "Konkurrenten: Expedia, Airbnb, Google Travel. Booking hat das grösste Hotelangebot weltweit, vor allem in Europa, und investiert sehr effizient in Online-Werbung."
   chancen: "Reisen wächst weltweit, sehr hohe Margen, grosse Aktienrückkäufe."
   risiken: "Abhängig von Reiselust und Konjunktur, Konkurrenz durch Google und KI-Assistenten."
 NKE:
   was: "Nike ist der weltgrösste Sportartikelhersteller (Schuhe, Bekleidung, Ausrüstung)."
+  geld: "Verkauf von Sportschuhen (grösster Teil), Bekleidung und Ausrüstung unter Nike, Jordan und Converse – über Händler, eigene Läden und online."
+  konkurrenz: "Konkurrenten: Adidas, Puma, On, Hoka (Deckers), Lululemon. Nike ist die wertvollste Sportmarke der Welt mit Top-Athleten unter Vertrag, hat aber Marktanteile an junge Laufschuhmarken verloren."
   chancen: "Weltbekannte Marke, Erholungspotenzial nach schwierigen Jahren."
   risiken: "Konkurrenz durch neue Marken (On, Hoka), Zölle, schwächere Nachfrage in China."
 CFR.SW:
   was: "Richemont besitzt Schmuck- und Uhrenmarken wie Cartier, Van Cleef & Arpels, IWC und Jaeger-LeCoultre."
+  geld: "Über 70 % des Umsatzes kommen aus Schmuck (Cartier, Van Cleef & Arpels, Buccellati), dazu Luxusuhren (IWC, Jaeger-LeCoultre, Panerai, Vacheron Constantin) und Mode/Accessoires."
+  konkurrenz: "Konkurrenten: LVMH (Tiffany, Bulgari), Kering, Hermès, Swatch Group. Richemont ist stärker auf Schmuck fokussiert als die Konkurrenz – Schmuck wächst stabiler als Mode und Uhren."
   chancen: "Schmuck wächst stabil, sehr starke Marken, Preissetzungsmacht."
   risiken: "Abhängig von reicher Kundschaft und China, Uhrengeschäft schwankt."
 UHR.SW:
   was: "Swatch Group ist der grösste Uhrenkonzern der Welt (Omega, Longines, Tissot, Swatch) und stellt auch Uhrwerke her."
+  geld: "Verkauf von Uhren aller Preisklassen (Breguet, Blancpain, Omega, Longines, Tissot, Swatch) und Schmuck (Harry Winston) sowie Uhrwerken und Bauteilen an andere Hersteller."
+  konkurrenz: "Konkurrenten: Richemont, Rolex (nicht börsenkotiert), Apple Watch. Swatch produziert fast alles selbst (vertikal integriert) und deckt von 100 bis 100'000 Fr. alles ab."
   chancen: "Starke Marken in allen Preisklassen, Erholungspotenzial."
   risiken: "Schwache Nachfrage in China, hohe Fixkosten, Smartwatch-Konkurrenz."
 
 # --------------------------- Konsum (Basis) ---------------------------
 NESN.SW:
   was: "Nestlé ist der grösste Nahrungsmittelkonzern der Welt (Nespresso, Maggi, KitKat, Purina-Tierfutter, Babynahrung)."
+  geld: "Verkauf von Lebensmitteln und Getränken in fast allen Ländern: Kaffee (Nespresso, Nescafé) und Tierfutter (Purina) sind die grössten und profitabelsten Bereiche, dazu Babynahrung, Süsswaren, Fertiggerichte und Wasser."
+  konkurrenz: "Konkurrenten: Unilever, Danone, Mondelez, Mars, Kraft Heinz. Nestlé ist der grösste und breiteste Lebensmittelkonzern mit über 2'000 Marken und einer enormen Präsenz in Schwellenländern."
   chancen: "Sehr breit aufgestellt, Produkte werden auch in Krisen gekauft, Dividende steigt seit Jahrzehnten."
   risiken: "Schwaches Wachstum zuletzt, starker Franken drückt die Zahlen, Rohstoffpreise (Kaffee, Kakao)."
   fakt: "Nestlé erhöht die Dividende seit über 25 Jahren jedes Jahr."
 WMT:
   was: "Walmart ist der grösste Detailhändler der Welt mit Supermärkten, Sam's Club und wachsendem Onlinehandel."
+  geld: "Verkauf von Lebensmitteln und Waren des täglichen Bedarfs in Supermärkten (Walmart US, Sam's Club, international) und online; dazu wachsende Einnahmen aus Werbung und Mitgliedschaften (Walmart+)."
+  konkurrenz: "Konkurrenten: Amazon, Costco, Target, Kroger. Walmart ist der grösste Händler der Welt, kauft am günstigsten ein und hat mit über 4'600 US-Filialen ein riesiges Netz für schnelle Lieferung."
   chancen: "Tiefe Preise ziehen Kunden in jeder Konjunkturlage an, Werbe- und Online-Geschäft wachsen."
   risiken: "Sehr dünne Margen, hohe Bewertung für einen Händler."
 COST:
   was: "Costco betreibt grosse Mitglieder-Lagerhäuser: Kunden zahlen eine Jahresgebühr und kaufen dafür günstig in grossen Mengen."
+  geld: "Mitgliedergebühren bringen den grössten Teil des Gewinns; die Waren selbst verkauft Costco mit sehr kleiner Marge in grossen Packungen."
+  konkurrenz: "Konkurrenten: Walmart (Sam's Club), BJ's, Amazon. Costco hat eine sehr begrenzte Auswahl, extrem tiefe Preise und die treuesten Kunden im Handel (über 90 % verlängern die Mitgliedschaft)."
   chancen: "Sehr treue Mitglieder (über 90 % verlängern), stabile Einnahmen aus Mitgliedergebühren."
   risiken: "Sehr hohe Bewertung, dünne Margen."
 PG:
   was: "Procter & Gamble stellt Alltagsprodukte her: Pampers, Gillette, Ariel, Head & Shoulders, Oral-B."
+  geld: "Verkauf von Haushalts- und Pflegeprodukten: Waschmittel (Ariel, Tide), Windeln (Pampers), Rasierer (Gillette), Haarpflege (Pantene), Zahnpflege (Oral-B)."
+  konkurrenz: "Konkurrenten: Unilever, Colgate-Palmolive, Kimberly-Clark, Eigenmarken der Händler. P&G hat in vielen Kategorien die Nummer-1-Marke und investiert stark in Innovation und Werbung."
   chancen: "Starke Marken, stabile Nachfrage, über 60 Jahre steigende Dividende."
   risiken: "Langsames Wachstum, Konkurrenz durch günstige Eigenmarken."
 KO:
   was: "Coca-Cola verkauft Getränke-Konzentrate und Marken (Coca-Cola, Fanta, Sprite) an Abfüller in über 200 Ländern."
+  geld: "Coca-Cola verkauft vor allem Konzentrate und Markenrechte an Abfüllfirmen, die die Getränke herstellen und verteilen. Das bringt hohe Margen bei wenig Kapitaleinsatz."
+  konkurrenz: "Konkurrenten: PepsiCo, Keurig Dr Pepper, Red Bull, Monster (Beteiligung). Coca-Cola ist die bekannteste Getränkemarke der Welt und konzentriert sich – anders als PepsiCo – fast nur auf Getränke."
   chancen: "Eine der bekanntesten Marken der Welt, hohe Margen, steigende Dividende seit über 60 Jahren."
   risiken: "Trend zu weniger Zucker, Währungsschwankungen."
   fakt: "Warren Buffetts Berkshire Hathaway hält seit 1988 Coca-Cola-Aktien."
 PEP:
   was: "PepsiCo verkauft Getränke (Pepsi, Gatorade) und Snacks (Lay's, Doritos, Quaker)."
+  geld: "Rund 60 % aus Snacks und Lebensmitteln (Frito-Lay: Lay's, Doritos, Cheetos; Quaker), Rest aus Getränken (Pepsi, Gatorade, Mountain Dew)."
+  konkurrenz: "Konkurrenten: Coca-Cola (Getränke), Mondelez und Kellanova (Snacks). PepsiCo ist der weltgrösste Snack-Hersteller – Snacks sind profitabler als Softdrinks."
   chancen: "Snacks sind sehr profitabel, breite Markenpalette, stabile Dividende."
   risiken: "Schwächeres Volumen, Abnehmspritzen könnten den Snack-Konsum senken."
 LISP.SW:
   was: "Lindt & Sprüngli ist ein Schweizer Hersteller von Premium-Schokolade (Lindor, Excellence, Goldhase; auch Ghirardelli und Russell Stover)."
+  geld: "Verkauf von Premium-Schokolade über Supermärkte, eigene Lindt-Shops und online; besonders stark sind Saisonprodukte (Goldhase, Weihnachten) und Lindor-Kugeln."
+  konkurrenz: "Konkurrenten: Ferrero, Mondelez (Milka, Toblerone), Hershey, Mars. Lindt konzentriert sich ausschliesslich auf das Premium-Segment und kann so höhere Preise verlangen."
   chancen: "Starke Premium-Marke, wächst zuverlässig, eigene Läden weltweit."
   risiken: "Stark gestiegene Kakaopreise, sehr hoher Aktienkurs pro Stück."
 BARN.SW:
   was: "Barry Callebaut ist der weltgrösste Hersteller von Schokolade und Kakaoprodukten für die Lebensmittelindustrie."
+  geld: "Verkauft Schokolade, Kakaoprodukte und Füllungen an Lebensmittelfirmen (z.B. Nestlé, Mondelez) und an Bäcker/Konditoren (Marken Callebaut, Cacao Barry). Meist werden Kostensteigerungen an die Kunden weitergegeben."
+  konkurrenz: "Konkurrenten: Cargill und Olam (ofi). Barry Callebaut ist der grösste Hersteller und übernimmt für viele Markenfirmen die komplette Schokoladenproduktion (Outsourcing)."
   chancen: "Weltmarktführer, langfristige Verträge mit Grosskunden."
   risiken: "Extrem schwankende Kakaopreise, hohe Schulden, Umbau des Konzerns."
 
 # ----------------------------- Gesundheit -----------------------------
 NOVN.SW:
   was: "Novartis ist ein Schweizer Pharmakonzern mit innovativen Medikamenten, u.a. gegen Herzschwäche (Entresto), Krebs und Autoimmunkrankheiten."
+  geld: "Verkauf patentgeschützter Medikamente: Herz-Kreislauf (Entresto, Leqvio), Krebs (Kisqali, Pluvicto), Immunologie und Neurologie (Cosentyx, Kesimpta). Die Generika-Sparte Sandoz wurde 2023 abgespalten."
+  konkurrenz: "Konkurrenten: Roche, Johnson & Johnson, AstraZeneca, Pfizer, Merck. Novartis setzt nach dem Umbau ganz auf innovative Medikamente und neue Technologien (Radioligand-Therapie, RNA)."
   chancen: "Fokus auf patentgeschützte Medikamente, volle Pipeline, hohe Dividende."
   risiken: "Patentabläufe wichtiger Medikamente, Preisdruck in den USA."
 ROG.SW:
   was: "Roche ist ein Schweizer Pharma- und Diagnostikkonzern: Krebsmedikamente, Augenheilkunde und Labortests."
+  geld: "Etwa drei Viertel aus Medikamenten (Krebs, Multiple Sklerose mit Ocrevus, Augen mit Vabysmo, Hämophilie mit Hemlibra), ein Viertel aus Diagnostik (Labormaschinen und Tests, die immer wieder nachgekauft werden)."
+  konkurrenz: "Konkurrenten: Novartis, Merck, AstraZeneca (Pharma) und Abbott, Siemens Healthineers, Danaher (Diagnostik). Roche ist weltweit die Nummer 1 in der Diagnostik und kombiniert Tests mit passenden Medikamenten."
   chancen: "Weltmarktführer in der Diagnostik, starke Forschung, Dividende steigt seit über 35 Jahren."
   risiken: "Konkurrenz durch Nachahmer (Biosimilars), Rückschläge in der Forschung."
   fakt: "Die Gründerfamilien Hoffmann und Oeri kontrollieren noch immer die Mehrheit der Stimmrechte."
 LONN.SW:
   was: "Lonza stellt im Auftrag anderer Firmen Medikamente her – besonders biotechnologische Wirkstoffe."
+  geld: "Stellt im Auftrag von Pharma- und Biotechfirmen Wirkstoffe her (vor allem Biologika wie Antikörper, auch Zell- und Gentherapien) sowie Kapseln. Bezahlt wird über langfristige Verträge."
+  konkurrenz: "Konkurrenten: Samsung Biologics, Fujifilm Diosynth, Wuxi Biologics, Thermo Fisher. Lonza ist einer der grössten und erfahrensten Auftragshersteller mit sehr hoher Qualität."
   chancen: "Biotech-Medikamente boomen, langfristige Verträge, Ausbau der Kapazitäten in den USA."
   risiken: "Hohe Investitionen, Abhängigkeit von wenigen Grosskunden."
 ALC.SW:
   was: "Alcon ist Weltmarktführer für Augenheilkunde: Kontaktlinsen, Augentropfen und Geräte für Augenoperationen."
+  geld: "Zwei Bereiche: Chirurgie (Geräte, Linsen und Verbrauchsmaterial für Grauer-Star- und Netzhautoperationen) und Vision Care (Kontaktlinsen wie Dailies, Augentropfen wie Systane)."
+  konkurrenz: "Konkurrenten: Johnson & Johnson Vision, Bausch + Lomb, CooperVision, Zeiss. Alcon ist der grösste reine Augenheilkunde-Konzern, und viele Augenärzte haben auf Alcon-Geräten gelernt."
   chancen: "Alternde Bevölkerung braucht mehr Grauer-Star-Operationen."
   risiken: "Starke Konkurrenz bei Kontaktlinsen, Preisdruck."
 GALD.SW:
   was: "Galderma ist ein Dermatologie-Spezialist: Hautpflege (Cetaphil), Ästhetik (Restylane, Dysport) und Medikamente für die Haut."
+  geld: "Drei Standbeine: Injektionen für die Ästhetik (Dysport gegen Falten, Restylane-Filler), Hautpflege (Cetaphil, Alastin) und verschreibungspflichtige Hautmedikamente (Nemluvio, Differin)."
+  konkurrenz: "Konkurrenten: AbbVie/Allergan (Botox, Juvéderm), L'Oréal, Beiersdorf (Pflege). Galderma ist ein reiner Dermatologie-Spezialist – das bietet sonst kein grosser Konzern so fokussiert an."
   chancen: "Schnell wachsender Markt für ästhetische Behandlungen, neues Medikament gegen Hautkrankheiten (Nemluvio)."
   risiken: "Relativ hohe Schulden und Bewertung, Konkurrenz im Ästhetik-Markt."
 SOON.SW:
   was: "Sonova ist Weltmarktführer für Hörgeräte (Phonak) und Cochlea-Implantate."
+  geld: "Verkauf von Hörgeräten (Phonak, Unitron), Cochlea-Implantaten (Advanced Bionics), Kopfhörern (Sennheiser Consumer) sowie über ein eigenes Netz von Hörakustik-Geschäften."
+  konkurrenz: "Konkurrenten: Demant, WS Audiology, GN, Starkey. Sonova ist Weltmarktführer, besonders stark in der Technik (Bluetooth-Hörgeräte) und besitzt eigene Fachgeschäfte."
   chancen: "Alternde Bevölkerung, viele Menschen mit Hörverlust sind noch unversorgt."
   risiken: "Konkurrenz durch günstige rezeptfreie Hörgeräte, Konsumflaute."
 LLY:
   was: "Eli Lilly ist ein US-Pharmakonzern und mit den Abnehm- und Diabetes-Medikamenten Mounjaro und Zepbound führend."
+  geld: "Verkauf von Medikamenten, vor allem Mounjaro (Diabetes) und Zepbound (Übergewicht), dazu Krebs- und Immunologie-Medikamente und Kisunla gegen Alzheimer."
+  konkurrenz: "Konkurrenten: Novo Nordisk (Wegovy, Ozempic), Pfizer, Merck. Lilly hat derzeit die wirksamsten Abnehm-Medikamente am Markt und baut die Produktion massiv aus."
   chancen: "Riesiger Markt für Abnehmspritzen, starkes Umsatzwachstum, Pillen-Version in Entwicklung."
   risiken: "Sehr hohe Bewertung, Preisdruck und Konkurrenz (Novo Nordisk)."
 JNJ:
   was: "Johnson & Johnson ist ein breit aufgestellter Gesundheitskonzern mit Medikamenten und Medizintechnik."
+  geld: "Nach der Abspaltung des Konsumgütergeschäfts (Kenvue) zwei Bereiche: innovative Medikamente (Krebs, Immunologie) und Medizintechnik (Chirurgie, Orthopädie, Herz)."
+  konkurrenz: "Konkurrenten: Merck, Pfizer, AbbVie (Pharma) sowie Medtronic und Stryker (Medizintechnik). J&J hat eine der stärksten Bilanzen der Welt (Top-Kreditrating)."
   chancen: "Sehr solide Bilanz, Dividende steigt seit über 60 Jahren."
   risiken: "Rechtsstreitigkeiten (Talkum), Patentabläufe."
 UNH:
   was: "UnitedHealth ist der grösste Krankenversicherer der USA und betreibt mit Optum auch Arztpraxen und Gesundheitsdienste."
+  geld: "Krankenversicherungen für Firmen, Privatpersonen und staatliche Programme (Medicare, Medicaid) sowie Optum: Arztpraxen, Apotheken-Abwicklung und Gesundheitsdaten."
+  konkurrenz: "Konkurrenten: Elevance, CVS/Aetna, Cigna, Humana. UnitedHealth ist mit Abstand der grösste und verdient sowohl als Versicherer als auch als Anbieter von Gesundheitsdienstleistungen."
   chancen: "Riesige Grösse, wachsender Gesundheitsmarkt."
   risiken: "Stark gestiegene Behandlungskosten, Untersuchungen durch Behörden, politische Risiken."
 ABBV:
   was: "AbbVie ist ein US-Biopharma-Konzern mit Medikamenten gegen Autoimmunkrankheiten (Skyrizi, Rinvoq) und Botox."
+  geld: "Verkauf von Medikamenten: Immunologie (Skyrizi, Rinvoq, früher Humira), Neurologie, Krebs und Ästhetik (Botox, Juvéderm von Allergan)."
+  konkurrenz: "Konkurrenten: Johnson & Johnson, Eli Lilly, Pfizer, Galderma (Ästhetik). AbbVie hat das Auslaufen des Patents seines Bestsellers Humira erfolgreich mit Nachfolgern aufgefangen."
   chancen: "Nachfolger für das alte Erfolgsmedikament Humira wachsen stark, hohe Dividende."
   risiken: "Hohe Schulden, Patentabläufe."
 
 # ------------------------- Banken & Finanzen -------------------------
 UBSG.SW:
   was: "UBS ist die grösste Bank der Schweiz und der grösste Vermögensverwalter für Reiche weltweit (seit der Übernahme der Credit Suisse 2023)."
+  geld: "Grösster Teil: Gebühren aus der weltweiten Vermögensverwaltung für reiche Kunden. Dazu Schweizer Privat- und Firmenkunden, Fonds (Asset Management) und Investment Banking."
+  konkurrenz: "Konkurrenten: Morgan Stanley, JPMorgan, Goldman Sachs (Vermögensverwaltung), Julius Bär. UBS ist der weltgrösste Vermögensverwalter für Reiche und seit der CS-Übernahme in der Schweiz konkurrenzlos gross."
   chancen: "Starke globale Vermögensverwaltung, Kostensenkungen durch die CS-Integration, Aktienrückkäufe."
   risiken: "Strengere Kapitalvorschriften in der Schweiz, Rechtsfälle aus der CS-Zeit."
 PGHN.SW:
   was: "Partners Group verwaltet Geld von Pensionskassen und Investoren in Privatmarkt-Anlagen (Firmenbeteiligungen, Immobilien, Infrastruktur)."
+  geld: "Verwaltungsgebühren (in % des verwalteten Vermögens) und Erfolgsbeteiligungen, wenn Beteiligungen mit Gewinn verkauft werden."
+  konkurrenz: "Konkurrenten: Blackstone, KKR, Apollo, EQT. Partners Group stellt für Kunden Portfolios aus vielen Privatmarkt-Anlagen zusammen und baut selbst gekaufte Firmen aktiv um."
   chancen: "Wachsendes Interesse an Privatmarkt-Anlagen, hohe Dividende."
   risiken: "Abhängig von Bewertungen und Verkaufserlösen, Zinsumfeld."
 BAER.SW:
   was: "Julius Bär ist eine Zürcher Privatbank, die ausschliesslich vermögende Kunden betreut."
+  geld: "Gebühren und Kommissionen für Vermögensverwaltung und Anlageberatung, Zinsen auf Kundengeldern und Krediten sowie Handelserträge."
+  konkurrenz: "Konkurrenten: UBS, Pictet, Lombard Odier, Vontobel. Julius Bär ist die grösste reine kotierte Privatbank der Schweiz – ohne Investment Banking."
   chancen: "Reine Vermögensverwaltung, wachsender Reichtum in Asien."
   risiken: "Kreditverluste in der Vergangenheit (Signa), Wettbewerb um Kundenberater."
 JPM:
   was: "JPMorgan Chase ist die grösste Bank der USA: Privatkunden, Investmentbanking und Vermögensverwaltung."
+  geld: "Zinserträge aus Krediten und Einlagen, Kreditkarten, Investment Banking (Börsengänge, Übernahmen), Handel und Vermögensverwaltung."
+  konkurrenz: "Konkurrenten: Bank of America, Citigroup, Goldman Sachs, Morgan Stanley. JPMorgan ist die grösste Bank der USA und gilt als besonders gut geführt (CEO Jamie Dimon)."
   chancen: "Sehr gut geführt, profitiert von hohen Zinsen und lebhaften Märkten."
   risiken: "Kreditausfälle in einer Rezession, Regulierung."
 BAC:
   was: "Bank of America ist eine der grössten US-Banken mit vielen Privatkunden und der Vermögensverwaltung Merrill."
+  geld: "Zinserträge von Millionen Privat- und Firmenkunden, Kreditkarten, Vermögensverwaltung (Merrill) und Investment Banking."
+  konkurrenz: "Konkurrenten: JPMorgan, Wells Fargo, Citigroup. Bank of America hat eine der grössten Privatkunden-Basen der USA mit sehr günstigen Einlagen."
   chancen: "Profitiert von höheren Zinsen, grosse Kundenbasis."
   risiken: "Zinsänderungen, Kreditausfälle."
   fakt: "Berkshire Hathaway (Warren Buffett) gehört zu den grössten Aktionären."
 GS:
   was: "Goldman Sachs ist eine führende Investmentbank: Börsengänge, Übernahmeberatung, Handel und Vermögensverwaltung."
+  geld: "Investment Banking (Beratung bei Übernahmen und Börsengängen), Handel mit Aktien und Anleihen sowie Vermögensverwaltung für Reiche und Institutionen."
+  konkurrenz: "Konkurrenten: Morgan Stanley, JPMorgan. Goldman Sachs ist die bekannteste Investmentbank mit Top-Platzierungen bei Firmenübernahmen."
   chancen: "Profitiert stark von lebhaften Finanzmärkten und Firmenübernahmen."
   risiken: "Gewinne schwanken stark mit den Märkten."
 V:
   was: "Visa betreibt das grösste Kartenzahlungsnetz der Welt und verdient an jeder Transaktion mit."
+  geld: "Visa erhält bei jeder Zahlung mit einer Visa-Karte eine kleine Gebühr. Visa gibt selbst keine Karten aus und vergibt keine Kredite, trägt also kein Ausfallrisiko."
+  konkurrenz: "Konkurrenten: Mastercard, American Express, PayPal, neue Echtzeit-Zahlsysteme. Visa ist das grösste Kartennetz – je mehr Händler und Kunden es nutzen, desto unverzichtbarer wird es."
   chancen: "Weltweiter Trend weg vom Bargeld, sehr hohe Margen, kaum Kreditrisiko."
   risiken: "Regulierung der Gebühren, Konkurrenz durch neue Zahlsysteme."
 MA:
   was: "Mastercard ist das zweitgrösste Kartenzahlungsnetz der Welt."
+  geld: "Wie Visa: Gebühren für die Abwicklung jeder Kartenzahlung sowie Zusatzdienste (Betrugserkennung, Datenanalyse)."
+  konkurrenz: "Konkurrenten: Visa, American Express, PayPal. Mastercard ist die klare Nummer 2 und wächst international und bei Zusatzdiensten oft etwas schneller als Visa."
   chancen: "Wie Visa: wachsende Kartenzahlungen, sehr hohe Margen."
   risiken: "Gebühren-Regulierung, Klagen von Händlern."
 
 # --------------------------- Versicherungen ---------------------------
 ZURN.SW:
   was: "Zurich Insurance ist einer der grössten Versicherer der Welt (Sach-, Lebens- und Firmenversicherungen)."
+  geld: "Versicherungsprämien für Sach- und Haftpflichtversicherungen (v.a. für Firmen) und Lebensversicherungen, dazu Anlageerträge auf die eingenommenen Prämien. In den USA gehört Farmers dazu."
+  konkurrenz: "Konkurrenten: Allianz, AXA, Chubb, Generali. Zurich ist sehr global aufgestellt und stark im Geschäft mit grossen Firmenkunden."
   chancen: "Sehr hohe, verlässliche Dividende, starke Kapitalbasis."
   risiken: "Naturkatastrophen, Schwankungen an den Finanzmärkten."
 SREN.SW:
   was: "Swiss Re ist einer der grössten Rückversicherer der Welt – sie versichert andere Versicherungen."
+  geld: "Prämien von Erstversicherern, die einen Teil ihrer Risiken (Naturkatastrophen, Leben, Gesundheit) an Swiss Re abgeben, plus Anlageerträge."
+  konkurrenz: "Konkurrenten: Munich Re, Hannover Re, Berkshire Hathaway. Swiss Re ist einer der zwei grössten Rückversicherer und hat enorme Datenmengen zu Katastrophenrisiken."
   chancen: "Steigende Preise für Rückversicherung, hohe Dividende."
   risiken: "Grosse Naturkatastrophen (Hurrikane, Erdbeben) können Verluste verursachen."
 SLHN.SW:
   was: "Swiss Life ist der grösste Lebensversicherer der Schweiz und ein grosser Immobilienbesitzer und Vermögensverwalter."
+  geld: "Berufliche Vorsorge (Pensionskassen-Lösungen für Firmen), Lebensversicherungen, Vermögensverwaltung und Immobilien sowie Finanzberatung (Swiss Life Select)."
+  konkurrenz: "Konkurrenten: AXA, Helvetia Baloise, Zurich. Swiss Life ist die Nummer 1 in der Schweizer beruflichen Vorsorge und einer der grössten Immobilienbesitzer Europas."
   chancen: "Stabile Erträge, hohe Dividende, Gebührengeschäft wächst."
   risiken: "Abhängig von Zinsen und Immobilienpreisen."
 BRK-B:
   was: "Berkshire Hathaway ist die Beteiligungsgesellschaft von Warren Buffett: Versicherungen (GEICO), Eisenbahn, Energie und grosse Aktienpakete (z.B. Apple)."
+  geld: "Gewinne der Tochterfirmen (Versicherungen GEICO und Gen Re, Eisenbahn BNSF, Energieversorger, Industrie- und Konsumfirmen) sowie Erträge aus dem riesigen Aktienportfolio."
+  konkurrenz: "Es gibt keinen direkten Konkurrenten – Berkshire ist eine einzigartige Mischung aus Versicherer und Beteiligungsfirma. Das 'Float' der Versicherungen liefert günstiges Geld für Investitionen."
   chancen: "Sehr breit aufgestellt, riesige Cash-Reserven für Gelegenheiten."
   risiken: "Führungswechsel nach Warren Buffett, Grösse bremst das Wachstum."
   fakt: "Berkshire zahlt keine Dividende – Buffett investiert die Gewinne lieber selbst."
 CB:
   was: "Chubb ist ein weltweiter Sach- und Haftpflichtversicherer mit Sitz in Zürich und Hauptgeschäft in den USA."
+  geld: "Prämien aus Sach-, Haftpflicht-, Unfall- und Krankenversicherungen für Firmen und vermögende Privatkunden in über 50 Ländern, dazu Anlageerträge."
+  konkurrenz: "Konkurrenten: AIG, Travelers, Zurich, Allianz. Chubb gilt als einer der diszipliniertesten Versicherer mit konstant niedriger Schadenquote."
   chancen: "Sehr diszipliniertes Versicherungsgeschäft, Berkshire Hathaway ist Aktionär."
   risiken: "Naturkatastrophen, Haftpflichtklagen in den USA."
 PGR:
   was: "Progressive ist einer der grössten Autoversicherer der USA und setzt stark auf Daten und Online-Abschlüsse."
+  geld: "Prämien für Auto- und zunehmend Hausratversicherungen in den USA, direkt online und über Makler verkauft."
+  konkurrenz: "Konkurrenten: State Farm, GEICO (Berkshire), Allstate. Progressive war Pionier bei datenbasierter Preisberechnung (Fahrverhalten) und ist dadurch oft profitabler."
   chancen: "Gewinnt Marktanteile, sehr datengetriebene Preisgestaltung."
   risiken: "Steigende Reparatur- und Unfallkosten."
 AIG:
   was: "AIG ist ein grosser US-Versicherer für Firmen- und Sachversicherungen."
+  geld: "Prämien aus Sach- und Haftpflichtversicherungen, vor allem für Firmen weltweit, sowie Anlageerträge. Das Lebensversicherungsgeschäft wurde abgespalten (Corebridge)."
+  konkurrenz: "Konkurrenten: Chubb, Travelers, Zurich. AIG ist nach dem Umbau ein fokussierter Firmenversicherer mit grossem internationalen Netz."
   chancen: "Umbau abgeschlossen, Aktienrückkäufe."
   risiken: "Katastrophenschäden, Erinnerung an die Rettung in der Finanzkrise 2008."
 MET:
   was: "MetLife ist einer der grössten Lebensversicherer der USA."
+  geld: "Lebensversicherungen, Gruppenversicherungen für Arbeitgeber (Zahn, Invalidität), Rentenprodukte und Vermögensverwaltung sowie Anlageerträge."
+  konkurrenz: "Konkurrenten: Prudential, Aflac, Principal. MetLife ist einer der grössten Lebensversicherer weltweit und stark bei Versicherungen über Arbeitgeber."
   chancen: "Profitiert von höheren Zinsen, stabile Dividende."
   risiken: "Zins- und Finanzmarktrisiken."
 
 # ------------------------------ Industrie ------------------------------
 ABBN.SW:
   was: "ABB ist ein Schweizer Technologiekonzern für Elektrifizierung (Stromverteilung, Ladestationen) und Automation."
+  geld: "Verkauf von Elektrotechnik (Schalter, Leistungsschalter, Ladestationen, Stromverteilung für Gebäude und Rechenzentren), Antriebe und Motoren sowie Prozessautomation. Service bringt stabile Zusatzeinnahmen."
+  konkurrenz: "Konkurrenten: Siemens, Schneider Electric, Eaton. ABB ist besonders stark in der Elektrifizierung und profitiert vom Strombedarf durch KI-Rechenzentren und Energiewende."
   chancen: "Profitiert vom Ausbau der Stromnetze und Rechenzentren, gute Margen."
   risiken: "Konjunkturabhängig, Konkurrenz durch Siemens und Schneider Electric."
 KNIN.SW:
   was: "Kühne+Nagel ist einer der grössten Logistikkonzerne der Welt (Seefracht, Luftfracht, Lagerlogistik)."
+  geld: "Verdient an der Organisation von Transporten (Seefracht, Luftfracht, Strasse) und an Lagerlogistik. Schiffe und Flugzeuge mietet K+N dazu – die Marge ist die Differenz zwischen Kunden- und Einkaufspreis."
+  konkurrenz: "Konkurrenten: DSV, DHL, DB Schenker (zu DSV). Kühne+Nagel ist die Nummer 1 in der Seefracht-Spedition und arbeitet mit wenig eigenem Kapital (asset-light)."
   chancen: "Weltmarktführer in der Seefracht-Spedition, kaum eigene Schiffe (wenig Kapital gebunden)."
   risiken: "Stark schwankende Frachtraten, Welthandel und Zölle."
 SCHP.SW:
   was: "Schindler ist ein Schweizer Hersteller von Liften und Rolltreppen und verdient viel mit deren Wartung."
+  geld: "Verkauf neuer Lifte und Rolltreppen sowie – besonders profitabel – Wartung und Modernisierung der weltweit rund 1.6 Mio. installierten Anlagen."
+  konkurrenz: "Konkurrenten: Otis, Kone, TK Elevator. Schindler ist die Nummer 2 der Welt; installierte Lifte bringen über Jahrzehnte Wartungseinnahmen."
   chancen: "Stabiles Wartungsgeschäft, Modernisierung alter Anlagen."
   risiken: "Schwacher Neubau in China, Preisdruck."
 GE:
   was: "GE Aerospace baut Flugzeugtriebwerke, die in vielen Verkehrsflugzeugen stecken, und verdient viel mit Wartung und Ersatzteilen."
+  geld: "Verkauf von Flugzeugtriebwerken (u.a. mit Safran im Joint Venture CFM für Airbus A320neo und Boeing 737 MAX) und vor allem Wartung und Ersatzteile über die ganze Lebensdauer."
+  konkurrenz: "Konkurrenten: Pratt & Whitney (RTX), Rolls-Royce. GE hat die grösste installierte Triebwerksflotte – jedes verkaufte Triebwerk bringt 20–30 Jahre Service-Einnahmen."
   chancen: "Steigender Flugverkehr, Wartungsgeschäft über Jahrzehnte."
   risiken: "Lieferkettenprobleme, Abhängigkeit von Boeing und Airbus."
 CAT:
   was: "Caterpillar ist der weltgrösste Hersteller von Bau- und Bergbaumaschinen und Motoren."
+  geld: "Verkauf von Bagger, Lader, Bergbaumaschinen, Motoren und Turbinen (auch Stromgeneratoren für Rechenzentren) sowie Ersatzteile und Service über ein weltweites Händlernetz."
+  konkurrenz: "Konkurrenten: Komatsu, Volvo CE, Deere, Hitachi. Caterpillar hat das dichteste Händler- und Servicenetz und die stärkste Marke der Branche."
   chancen: "Infrastruktur-Investitionen, Stromgeneratoren für Rechenzentren."
   risiken: "Sehr konjunkturabhängig, Rohstoffpreise."
 HON:
   was: "Honeywell ist ein US-Industriekonzern (Luftfahrt, Gebäudeautomation, Industrietechnik) und Mehrheitsaktionär der Quantenfirma Quantinuum."
+  geld: "Luftfahrttechnik (Cockpit-Elektronik, Triebwerke für Hilfssysteme), Gebäudeautomation (Brand-, Sicherheits- und Klimasteuerung), Industrieautomation und Spezialmaterialien. Beteiligung an Quantinuum (Quantencomputer)."
+  konkurrenz: "Konkurrenten: RTX, Siemens, Emerson, Johnson Controls. Honeywell spaltet sich in fokussierte Firmen auf (Luftfahrt, Automation) – dadurch sollen die Teile mehr wert sein."
   chancen: "Aufspaltung in fokussierte Firmen, Quantinuum als Zukunftswette."
   risiken: "Umbau kann Unruhe bringen, Konjunkturabhängigkeit."
 RTX:
   was: "RTX (früher Raytheon) baut Triebwerke (Pratt & Whitney), Flugzeugsysteme und Raketen-Abwehrsysteme."
+  geld: "Triebwerke (Pratt & Whitney), Flugzeugsysteme (Collins Aerospace) und Rüstung (Raytheon: Patriot-Abwehr, Raketen, Radare)."
+  konkurrenz: "Konkurrenten: GE Aerospace, Safran, Lockheed Martin, Northrop Grumman. RTX ist sowohl in der zivilen Luftfahrt als auch in der Verteidigung einer der grössten Lieferanten."
   chancen: "Hohe Rüstungsausgaben, Wartungsgeschäft."
   risiken: "Probleme mit bestimmten Triebwerken, politische Risiken."
 UNP:
   was: "Union Pacific betreibt eines der grössten Güterbahnnetze im Westen der USA."
+  geld: "Gütertransport per Bahn im Westen der USA: Container und Anhänger, Kohle, Getreide, Chemikalien und Autos."
+  konkurrenz: "Konkurrent: BNSF (Berkshire) sowie Lastwagen. Ein Schienennetz kann praktisch nicht neu gebaut werden – Union Pacific teilt sich den Westen der USA im Duopol mit BNSF."
   chancen: "Kaum Konkurrenz (Schienennetz lässt sich nicht kopieren), stabile Dividende."
   risiken: "Abhängig vom Güterverkehr, Regulierung."
 
 # --------------------------- Bau & Material ---------------------------
 HOLN.SW:
   was: "Holcim ist einer der grössten Baustoffkonzerne der Welt (Zement, Beton, Dachsysteme) mit Sitz in Zug."
+  geld: "Verkauf von Zement, Zuschlagstoffen (Kies, Sand), Fertigbeton und Lösungen für Gebäude (Dachsysteme, Isolation) in über 40 Ländern. Das Nordamerika-Geschäft wurde als Amrize abgespalten."
+  konkurrenz: "Konkurrenten: Heidelberg Materials, CRH, Cemex. Holcim setzt stark auf CO2-ärmeren Zement und Recycling-Baustoffe."
   chancen: "Fokus auf profitable Märkte, nachhaltige Baustoffe, Aktienrückkäufe."
   risiken: "Konjunkturabhängig, hoher CO2-Ausstoss bei Zement."
 SIKA.SW:
   was: "Sika stellt Spezialchemie für den Bau her: Klebstoffe, Dichtstoffe, Betonzusätze und Bodenbeläge."
+  geld: "Verkauf von Bauchemie (Betonzusätze, Mörtel, Abdichtungen, Fliesenkleber, Bodenbeläge, Dachsysteme) und Klebstoffen für Industrie und Autobau."
+  konkurrenz: "Konkurrenten: Saint-Gobain, Mapei, BASF (früher), Henkel. Sika ist in vielen Nischen Weltmarktführer und wächst seit Jahrzehnten stärker als der Baumarkt."
   chancen: "Weltmarktführer in vielen Nischen, wächst seit Jahrzehnten."
   risiken: "Schwacher Bau in China und Europa, Rohstoffkosten."
 GEBN.SW:
   was: "Geberit ist europäischer Marktführer für Sanitärtechnik: Spülkästen, Rohre, Badkeramik."
+  geld: "Verkauf von Sanitärtechnik hinter der Wand (Spülkästen, Rohrsysteme), Badkeramik und Dusch-WCs (AquaClean) an Grosshändler und Installateure."
+  konkurrenz: "Konkurrenten: Grohe (Lixil), Villeroy & Boch, Viega. Geberit hat dank Schulung von Installateuren eine sehr starke Stellung und die höchsten Margen der Branche."
   chancen: "Sehr hohe Margen, starke Stellung bei Installateuren, Renovationsgeschäft."
   risiken: "Schwacher Wohnungsbau in Europa."
 SHW:
   was: "Sherwin-Williams ist der grösste Farbenhersteller der USA mit eigenen Fachgeschäften."
+  geld: "Verkauf von Farben und Lacken über über 5'000 eigene Fachgeschäfte (vor allem an Profi-Maler), Baumärkte und an die Industrie."
+  konkurrenz: "Konkurrenten: PPG, AkzoNobel, Benjamin Moore (Berkshire). Sherwin-Williams' eigenes Filialnetz sorgt für direkten Kontakt zu Malerbetrieben und höhere Preise."
   chancen: "Starke Marke, Renovationsbedarf."
   risiken: "Abhängig vom Immobilienmarkt und Rohstoffpreisen."
 VMC:
   was: "Vulcan Materials ist der grösste Lieferant von Kies, Sand und Schotter in den USA."
+  geld: "Abbau und Verkauf von Schotter, Kies und Sand sowie Asphalt und Beton in den USA."
+  konkurrenz: "Konkurrenten: Martin Marietta, CRH. Da schwere Baustoffe nur über kurze Strecken wirtschaftlich transportiert werden, hat Vulcan mit seinen Steinbrüchen regionale Monopole."
   chancen: "Lokale Monopole (Transport schwerer Baustoffe ist teuer), Infrastruktur-Programme."
   risiken: "Bautätigkeit und Wetter."
 MLM:
   was: "Martin Marietta liefert Zuschlagstoffe (Kies, Schotter) und Baustoffe in den USA."
+  geld: "Abbau und Verkauf von Zuschlagstoffen (Schotter, Kies, Sand) und Spezialbaustoffen (Magnesia) in den USA."
+  konkurrenz: "Konkurrenten: Vulcan Materials, CRH. Martin Marietta ist besonders in den wachstumsstarken Südstaaten der USA präsent."
   chancen: "Wie Vulcan: regionale Marktmacht, Preiserhöhungen."
   risiken: "Konjunktur und Bauaktivität."
 
 # ------------------------------- Chemie -------------------------------
 GIVN.SW:
   was: "Givaudan ist Weltmarktführer für Aromen und Duftstoffe (für Lebensmittel, Getränke, Parfums und Waschmittel)."
+  geld: "Verkauf von Aromen (Taste & Wellbeing) an Lebensmittel- und Getränkefirmen und von Duftstoffen (Fragrance & Beauty) für Parfums, Kosmetik und Waschmittel – oft massgeschneidert."
+  konkurrenz: "Konkurrenten: IFF, DSM-Firmenich, Symrise. Givaudan ist Weltmarktführer; Kunden wechseln das Aroma eines Erfolgsprodukts sehr ungern."
   chancen: "Sehr stabile Nachfrage, hohe Kundenbindung, verlässliche Dividende."
   risiken: "Hohe Bewertung, Rohstoffkosten."
 EMSN.SW:
   was: "EMS-Chemie stellt Hochleistungskunststoffe her, die Metall z.B. in Autos ersetzen."
+  geld: "Verkauf von Hochleistungskunststoffen (Polyamide, Marke Grivory) vor allem an die Autoindustrie, dazu Elektronik, Industrie und Konsumgüter."
+  konkurrenz: "Konkurrenten: BASF, DuPont, Evonik. EMS ist kleiner, aber extrem profitabel und spezialisiert auf Kunststoffe, die Metall ersetzen und Autos leichter machen."
   chancen: "Sehr hohe Margen, praktisch schuldenfrei, hohe Ausschüttungen."
   risiken: "Stark abhängig von der Autoindustrie."
   fakt: "Die Familie Blocher hält die Mehrheit an EMS-Chemie."
 CLN.SW:
   was: "Clariant ist ein Schweizer Spezialchemie-Konzern (Katalysatoren, Additive, Pflegechemikalien)."
+  geld: "Verkauf von Spezialchemie: Katalysatoren (für Chemie- und Raffinerie-Prozesse), Pflegechemikalien (für Kosmetik, Reinigung) und Additive (z.B. Flammschutz)."
+  konkurrenz: "Konkurrenten: BASF, Evonik, Croda. Clariant hat sich nach vielen Verkäufen auf profitablere Nischen konzentriert."
   chancen: "Umbau zu profitableren Spezialitäten."
   risiken: "Schwache Industrienachfrage, hohe Energiekosten in Europa."
 LIN:
   was: "Linde ist der grösste Industriegase-Konzern der Welt (Sauerstoff, Stickstoff, Wasserstoff)."
+  geld: "Verkauf von Industriegasen (Sauerstoff, Stickstoff, Wasserstoff, Argon) per Pipeline, Tankwagen oder Flasche an Industrie, Spitäler und Elektronik – oft mit Verträgen über 15–20 Jahre."
+  konkurrenz: "Konkurrenten: Air Liquide, Air Products. Linde ist der grösste Gasekonzern; Anlagen direkt beim Kunden machen einen Wechsel praktisch unmöglich."
   chancen: "Langfristige Lieferverträge, sehr stabile Gewinne, Wasserstoff-Projekte."
   risiken: "Hohe Bewertung, Industrie-Konjunktur."
 APD:
   was: "Air Products ist ein grosser US-Hersteller von Industriegasen und Wasserstoff."
+  geld: "Verkauf von Industriegasen über Pipelines und Anlagen vor Ort, langfristige Lieferverträge, sowie Bau grosser Wasserstoff-Projekte."
+  konkurrenz: "Konkurrenten: Linde, Air Liquide. Air Products setzte stärker als die Konkurrenz auf grosse Wasserstoff-Projekte – das birgt Chancen, aber auch Risiken."
   chancen: "Langfristige Verträge, Wasserstoff als Zukunftsmarkt."
   risiken: "Teure Grossprojekte mit unsicherer Rendite."
 
 # ------------------------------- Bitcoin -------------------------------
 MSTR:
   was: "Strategy (früher MicroStrategy) kauft mit Geld aus Aktien- und Anleiheverkäufen Bitcoin und hält den grössten Bitcoin-Bestand aller Firmen."
+  geld: "Der Wert hängt fast nur vom Bitcoin-Bestand ab (über 600'000 BTC). Strategy finanziert Käufe mit neuen Aktien, Wandel- und Vorzugsanleihen; das kleine Software-Geschäft (Datenanalyse) bringt etwas Umsatz."
+  konkurrenz: "Konkurrenten: Bitcoin-ETFs (z.B. iShares IBIT) und andere 'Bitcoin-Treasury'-Firmen wie Metaplanet. Strategy war der Pionier und hat den mit Abstand grössten Firmenbestand an Bitcoin."
   chancen: "Hebel auf den Bitcoin-Preis."
   risiken: "Schwankt noch stärker als Bitcoin, hohe Verschuldung, Bewertung über/unter dem Bitcoin-Bestand."
   fakt: "Das ursprüngliche Software-Geschäft spielt für den Aktienkurs kaum noch eine Rolle."
 MARA:
   was: "MARA Holdings betreibt grosse Rechenzentren zum Schürfen (Minen) von Bitcoin und hält selbst Bitcoin."
+  geld: "Erhält neue Bitcoin als Belohnung für das 'Schürfen' (Rechenleistung zur Absicherung des Netzwerks) plus Transaktionsgebühren; hält einen grossen Teil davon selbst."
+  konkurrenz: "Konkurrenten: Riot Platforms, CleanSpark, Core Scientific. MARA ist einer der grössten börsenkotierten Miner und besitzt viele eigene Rechenzentren."
   chancen: "Profitiert direkt von steigenden Bitcoin-Preisen."
   risiken: "Stromkosten, Halving halbiert regelmässig die Belohnung, sehr volatil."
 ASST:
   was: "Strive (früher Asset Entities) ist eine US-Firma, die – ähnlich wie Strategy – Bitcoin als Hauptanlage hält."
+  geld: "Strive verwaltet ETFs (Vermögensverwaltung) und baut nach dem Zusammenschluss mit Asset Entities einen Bitcoin-Bestand auf – der Aktienkurs folgt vor allem dem Bitcoin."
+  konkurrenz: "Konkurrenten: Strategy, Metaplanet, Bitcoin-ETFs. Strive verbindet ein Fonds-Geschäft mit einer Bitcoin-Strategie, ist aber deutlich kleiner als Strategy."
   chancen: "Hebel auf Bitcoin."
   risiken: "Kleine, junge Firma, extrem schwankender Kurs, Verwässerung durch neue Aktien."
 3350.T:
   was: "Metaplanet ist eine japanische Firma (früher Hotels), die heute vor allem Bitcoin als Reserve kauft – das 'Strategy Japans'."
+  geld: "Kauft Bitcoin als Hauptanlage und finanziert dies über neue Aktien und Anleihen; dazu ein kleines Hotel- und Mediengeschäft."
+  konkurrenz: "Konkurrenten: Strategy, Bitcoin-ETFs. Metaplanet ist die grösste Bitcoin-Treasury-Firma Asiens – für japanische Anleger ein einfacher Weg, in Bitcoin zu investieren."
   chancen: "Hebel auf Bitcoin, Interesse japanischer Anleger."
   risiken: "Extrem volatil, abhängig von Bitcoin und Kapitalmarkt-Finanzierung, Kurs in Yen."
 ADE.DE:
   was: "Bitcoin Group SE ist eine deutsche Holding und Mehrheitsaktionärin der Kryptobörse Bitcoin.de; sie hält auch Bitcoin."
+  geld: "Gewinnbeteiligung an der Kryptobörse Bitcoin.de (Handelsgebühren) über die Futurum Bank sowie Wertveränderungen des eigenen Krypto-Bestands."
+  konkurrenz: "Konkurrenten: Coinbase, Kraken, Bitpanda, Neobroker wie Trade Republic. Bitcoin.de ist eine der ältesten deutschen Kryptobörsen und arbeitet mit einer Partnerbank."
   chancen: "Profitiert von höherem Krypto-Handelsvolumen."
   risiken: "Kleine Firma, stark von Bitcoin abhängig, Regulierung."
 
 # ------------------------------- Quanten -------------------------------
 ARQQ:
   was: "Arqit Quantum (Grossbritannien) bietet Verschlüsselungs-Software an, die auch gegen künftige Quantencomputer sicher sein soll."
+  geld: "Verkauf von Software-Abos für quantensichere Verschlüsselung (SKA-Platform) an Regierungen, Militär und Telekomfirmen – bisher mit sehr kleinem Umsatz."
+  konkurrenz: "Konkurrenten: Post-Quanten-Lösungen grosser IT-Konzerne (IBM, Thales, Google). Arqit setzt auf ein eigenes Schlüsselverfahren statt nur auf die neuen Standard-Algorithmen."
   chancen: "Bedarf an quantensicherer Verschlüsselung wächst."
   risiken: "Sehr kleiner Umsatz, Verluste, extrem schwankender Kurs."
 LAES:
   was: "SEALSQ (Tochter der Genfer WISeKey) entwickelt Sicherheitschips und Post-Quanten-Verschlüsselung."
+  geld: "Verkauf von Sicherheits-Chips (Secure Elements) für Geräte im Internet der Dinge und Entwicklung von Chips mit Post-Quanten-Verschlüsselung."
+  konkurrenz: "Konkurrenten: Infineon, NXP, STMicroelectronics. SEALSQ ist sehr klein und setzt früh auf Chips, die gegen Quantencomputer-Angriffe geschützt sind."
   chancen: "Quantensichere Chips könnten Pflicht werden."
   risiken: "Kleine Firma mit Verlusten, sehr spekulativ."
 IONQ:
   was: "IonQ baut Quantencomputer mit gefangenen Ionen und bietet sie auch über die Cloud an."
+  geld: "Verkauf und Vermietung von Quantencomputern (direkt und über Amazon, Microsoft und Google Cloud), Forschungsaufträge sowie Quanten-Netzwerk- und Sensortechnik aus Übernahmen."
+  konkurrenz: "Konkurrenten: IBM, Google, Quantinuum (Honeywell), Rigetti, D-Wave. IonQ nutzt gefangene Ionen – diese gelten als sehr genau, sind aber langsamer als supraleitende Qubits."
   chancen: "Einer der bekanntesten reinen Quantencomputer-Anbieter, Übernahmen zum Ausbau."
   risiken: "Hohe Verluste, Technologie noch nicht wirtschaftlich, sehr hohe Bewertung."
 QUBT:
   was: "Quantum Computing Inc. entwickelt photonische (lichtbasierte) Quantentechnologie und Chips."
+  geld: "Verkauf von photonischen Chips, Quanten-Optimierungsgeräten und Forschungsaufträgen – der Umsatz ist noch sehr klein."
+  konkurrenz: "Konkurrenten: IonQ, Rigetti, D-Wave, PsiQuantum (nicht kotiert). QCi setzt auf lichtbasierte Technik, die bei Raumtemperatur funktioniert."
   chancen: "Spekulative Wette auf Photonik und Quanten."
   risiken: "Sehr kleiner Umsatz, hohe Verluste, extrem volatil."
 QBTS:
   was: "D-Wave Quantum baut sogenannte Quanten-Annealer, die Optimierungsprobleme lösen."
+  geld: "Verkauf von Rechenzeit auf Quanten-Annealern über die Cloud (Leap), Systemverkäufe und Beratung für Optimierungsprobleme (z.B. Logistik, Planung)."
+  konkurrenz: "Konkurrenten: IonQ, Rigetti, IBM. D-Wave ist mit Annealing-Quantencomputern bereits kommerziell im Einsatz, diese lösen aber nur bestimmte Optimierungsprobleme."
   chancen: "Hat bereits erste zahlende Kunden für Optimierungsaufgaben."
   risiken: "Verluste, Verwässerung durch neue Aktien, extrem schwankend."
 RGTI:
   was: "Rigetti Computing entwickelt supraleitende Quantenchips und Quantencomputer."
+  geld: "Verkauf von Quantencomputern und -chips an Forschungseinrichtungen, Cloud-Zugang und staatliche Forschungsaufträge."
+  konkurrenz: "Konkurrenten: IBM, Google, IonQ. Rigetti baut supraleitende Quantenchips in eigener Fabrik und arbeitet mit Quanta Computer zusammen."
   chancen: "Technologie-Partnerschaften, staatliche Forschungsaufträge."
   risiken: "Sehr kleiner Umsatz, Verluste, extrem hohe Bewertung im Verhältnis zum Umsatz."
 IBM:
   was: "IBM verkauft Software (Red Hat), IT-Beratung und Grossrechner und ist einer der führenden Entwickler von Quantencomputern."
+  geld: "Software (Red Hat, Automatisierung, Datenbanken, KI-Plattform watsonx) bringt den grössten Gewinn, dazu IT-Beratung und Infrastruktur (Grossrechner IBM Z). Quantencomputer sind ein Zukunftsprojekt."
+  konkurrenz: "Konkurrenten: Microsoft, Oracle, Accenture, Google (Quanten). IBM hat eine der grössten Quantencomputer-Flotten und viele treue Grosskunden (Banken, Versicherungen) auf seinen Grossrechnern."
   chancen: "Stabile Software-Einnahmen, starke Quanten-Forschung, solide Dividende."
   risiken: "Beratungsgeschäft wächst kaum, Konkurrenz in der Cloud."
 INTC:
   was: "Intel entwickelt und fertigt Prozessoren für PCs und Server und baut ein Auftragsfertigungsgeschäft für Chips auf."
+  geld: "Verkauf von Prozessoren für PCs (Core) und Server (Xeon), dazu Netzwerk- und Spezialchips sowie Auftragsfertigung für andere Chipfirmen (Intel Foundry)."
+  konkurrenz: "Konkurrenten: AMD und Arm-basierte Chips (Apple, Qualcomm) bei Prozessoren, TSMC und Samsung bei der Auftragsfertigung. Intel ist einer der wenigen westlichen Hersteller mit eigenen modernen Chipfabriken."
   chancen: "Umbau unter neuer Führung, staatliche Unterstützung in den USA, forscht auch an Quanten-Chips."
   risiken: "Marktanteile an AMD und Arm-Chips verloren, sehr teure neue Fabriken."

@@ -106,7 +106,7 @@
 
       <section class="karte">
         <h2>Fear &amp; Greed <span class="etikett">Stimmung</span></h2>
-        <div id="stimmung" class="stimmung-raster"></div>
+        <div id="stimmung"></div>
       </section>
 
       <div class="raster zwei">
@@ -205,7 +205,14 @@
       <!-- Heatmap -->
       <div class="unterseite" data-unterseite="aktien:heatmap">
         <section class="karte">
-          <p class="leise klein hinweis-text">Fläche = Börsenwert, Farbe = Kursveränderung im gewählten Zeitraum. Antippen für Details.</p>
+          <div class="titel-zeile heatmap-kopf">
+            <div class="umschalter" id="heatmap-modus" role="group" aria-label="Darstellung">
+              <button type="button" data-heatmap="sektoren">Nach Branchen</button>
+              <button type="button" data-heatmap="alle">Alle gemeinsam</button>
+              <button type="button" data-heatmap="branchen">Nur Branchen</button>
+            </div>
+          </div>
+          <p class="leise klein hinweis-text" id="heatmap-hinweis">Fläche = Börsenwert, Farbe = Kursveränderung im gewählten Zeitraum. Antippen für Details.</p>
           <div id="heatmap" class="heatmap"></div>
           <div id="heatmap-legende" class="heatmap-legende"></div>
         </section>

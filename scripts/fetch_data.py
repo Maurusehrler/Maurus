@@ -1253,8 +1253,92 @@ def fear_greed_aktien() -> dict:
     ).json()
     fg = daten["fear_and_greed"]
     verlauf = [p["y"] for p in daten.get("fear_and_greed_historical", {}).get("data", [])]
-    return stimmung_eintrag(fg["score"], fg.get("previous_close"), fg.get("previous_1_week"),
-                            fg.get("previous_1_month"), fg.get("previous_1_year"), verlauf, "CNN")
+    eintrag = stimmung_eintrag(fg["score"], fg.get("previous_close"), fg.get("previous_1_week"),
+                               fg.get("previous_1_month"), fg.get("previous_1_year"), verlauf, "CNN")
+    # Die 7 Einzelfaktoren, aus denen CNN den Index berechnet
+    faktoren = [("market_momentum_sp500", "Momentum S&P 500", "S&P 500 im Vergleich zum 125-Tage-Durchschnitt"),
+                ("stock_price_strength", "Kursstärke", "Aktien auf 52-Wochen-Hoch vs. -Tief"),
+                ("stock_price_breadth", "Marktbreite", "Volumen steigender vs. fallender Aktien"),
+                ("put_call_options", "Put/Call-Verhältnis", "Absicherung mit Optionen (viele Puts = Angst)"),
+                ("market_volatility_vix", "Volatilität (VIX)", "Erwartete Schwankung im Vergleich zum Durchschnitt"),
+                ("safe_haven_demand", "Sichere Häfen", "Aktien vs. Staatsanleihen in den letzten 20 Tagen"),
+                ("junk_bond_demand", "Ramschanleihen", "Zinsaufschlag riskanter Anleihen")]
+    eintrag["faktoren"] = [{"name": n, "info": i, "wert": round(float(daten[k]["score"]), 1),
+                            "text": stimmung_text(float(daten[k]["score"]))}
+                           for k, n, i in faktoren if isinstance(daten.get(k), dict) and daten[k].get("score") is not None]
+    return eintrag
+
+
+def _abbilden(wert, schlecht, gut):
+    """Wert linear auf 0–100 abbilden (schlecht -> 0, gut -> 100)."""
+    if wert is None:
+        return None
+    return max(0.0, min(100.0, (wert - schlecht) / (gut - schlecht) * 100))
+
+
+def _std(werte):
+    m = sum(werte) / len(werte)
+    return (sum((w - m) ** 2 for w in werte) / len(werte)) ** 0.5
+
+
+def stimmung_berechnen(werte: list[float], breite: float | None = None) -> dict | None:
+    """Eigener 'Fear & Greed' aus einer Tageskursreihe (0 = extreme Angst, 100 = extreme Gier).
+
+    Faktoren: Momentum (Kurs vs. 125-Tage-Schnitt), Stärke (Lage im 52-Wochen-Band),
+    Volatilität (20 Tage vs. 1 Jahr), RSI (14 Tage) und – bei Aktienmärkten – Marktbreite
+    (Anteil Aktien über der 200-Tage-Linie).
+    """
+    if len(werte) < 260:
+        return None
+    kurs = werte[-1]
+    ma125 = sum(werte[-125:]) / 125
+    jahr = werte[-252:]
+    tief, hoch = min(jahr), max(jahr)
+    renditen = [werte[i] / werte[i - 1] - 1 for i in range(len(werte) - 251, len(werte))]
+    vol_kurz, vol_lang = _std(renditen[-20:]), _std(renditen)
+    faktoren = [
+        ("Momentum", _abbilden((kurs / ma125 - 1) * 100, -8, 8), "Kurs im Vergleich zum 125-Tage-Durchschnitt"),
+        ("Stärke", _abbilden(kurs, tief, hoch) if hoch > tief else None, "Lage im 52-Wochen-Band (Tief = 0, Hoch = 100)"),
+        ("Volatilität", _abbilden(vol_kurz / vol_lang if vol_lang else None, 1.6, 0.6), "Schwankung der letzten 20 Tage vs. Jahresschnitt (ruhig = Gier)"),
+        ("RSI", _abbilden(rsi(werte[-300:]), 25, 75), "Relative Stärke der letzten 14 Tage"),
+    ]
+    if breite is not None:
+        faktoren.append(("Marktbreite", _abbilden(breite, 20, 80), "Anteil Aktien über ihrer 200-Tage-Linie"))
+    gueltig = [w for _, w, _ in faktoren if w is not None]
+    if not gueltig:
+        return None
+    return {"wert": round(sum(gueltig) / len(gueltig), 1),
+            "faktoren": [{"name": n, "wert": round(w, 1), "info": i, "text": stimmung_text(w)} for n, w, i in faktoren if w is not None]}
+
+
+def berechne_stimmung_maerkte(kurse: dict, cfg: dict) -> list[dict]:
+    """Eigener Stimmungsindex für die Märkte aus config.yaml (stimmung_maerkte)."""
+    alle = {e["symbol"]: e for g in kurse.values() for e in g if e.get("_reihe")}
+    ergebnis = []
+    for m in cfg.get("stimmung_maerkte") or []:
+        e = alle.get(m["symbol"])
+        if not e:
+            continue
+        werte = [v for _, v in e["_reihe"]]
+        # Marktbreite aus den eigenen Aktien des Landes (z.B. alle .SW-Titel für die Schweiz)
+        breite = None
+        if m.get("breite_land"):
+            aktien = [a for a in eindeutig(kurse.get("aktien", [])) if a.get("land") == m["breite_land"] and a.get("_reihe")]
+            ueber = [[v for _, v in a["_reihe"]] for a in aktien if len(a["_reihe"]) >= 200]
+            if ueber:
+                breite = sum(1 for w in ueber if w[-1] > sum(w[-200:]) / 200) / len(ueber) * 100
+        jetzt = stimmung_berechnen(werte, breite)
+        if not jetzt:
+            continue
+        def vor(tage):
+            # gleiche Marktbreite wie heute (vereinfachend), damit die Werte vergleichbar sind
+            r = stimmung_berechnen(werte[:-tage], breite) if len(werte) > tage + 260 else None
+            return r["wert"] if r else None
+        verlauf = [r["wert"] for r in (stimmung_berechnen(werte[:len(werte) - t], breite) for t in range(250, -1, -5)) if r]
+        eintrag = stimmung_eintrag(jetzt["wert"], vor(1), vor(5), vor(21), vor(252), verlauf, "eigene Berechnung")
+        eintrag.update({"name": m["name"], "symbol": m["symbol"], "faktoren": jetzt["faktoren"]})
+        ergebnis.append(eintrag)
+    return ergebnis
 
 
 def fear_greed_krypto() -> dict:
@@ -1454,8 +1538,7 @@ def beispiel_kurse(cfg: dict) -> dict[str, list[dict]]:
         for i in listen.get(gruppe, []):
             reihe = serie(i["symbol"], vol[kat])
             e = eintrag_aus_serie(i, kat, reihe, "Beispieldaten")
-            if kat == "aktie":
-                e["_reihe"] = reihe
+            e["_reihe"] = reihe
             erg[gruppe].append(e)
     # Ein paar grosse Bewegungen einbauen, damit "Auffälligkeiten" etwas zeigen
     for gruppe, idx, faktor in [("aktien", 2, 1.064), ("aktien", 40, 1.031), ("krypto", 0, 0.946)]:
@@ -1744,6 +1827,8 @@ def main() -> int:
     frische = sum(1 for g in kurse.values() for e in g if e.get("kurs") is not None and not e.get("veraltet"))
     gesamt = sum(len(g) for g in kurse.values())
 
+    if stimmung is not None:
+        stimmung["maerkte"] = berechne_stimmung_maerkte(kurse, cfg)
     ergaenze_analyse(kurse, fundamental)
     zusammenfassung = erstelle_zusammenfassung(kurse, cfg, jetzt)
     if frische == 0 and vorher_json.get("zusammenfassung"):

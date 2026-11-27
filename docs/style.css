@@ -603,3 +603,60 @@ select.eingabe { appearance: auto; }
 .alarm-box summary h3 { margin: 0; }
 .code-zeile { display: flex; gap: 8px; align-items: center; background: var(--neutral-hg); border-radius: 8px; padding: 6px 8px; margin: 5px 0; }
 .code-zeile code { flex: 1; font-size: .68rem; overflow-x: auto; white-space: nowrap; }
+
+/* =====================================================================
+   Erweiterungen 3: Stimmung mehrerer Märkte, Insider-Grafiken, Heatmap-Modi
+   ===================================================================== */
+.stimmung-titel { margin: 1rem 0 .4rem; color: var(--text) !important; font-size: .9rem !important; }
+.stimmung-mini-raster { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 1050px) { .stimmung-mini-raster { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.stimmung-mini { background: var(--neutral-hg); border-radius: 12px; padding: 6px 8px; }
+.stimmung-mini[open] { grid-column: 1 / -1; }
+.stimmung-mini summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; }
+.stimmung-mini summary::-webkit-details-marker { display: none; }
+.stimmung-mini summary::after { content: none; }
+.mini-tacho { width: 64px; flex-shrink: 0; }
+.mini-tacho svg { width: 100%; height: auto; display: block; }
+.mini-text { display: flex; flex-direction: column; min-width: 0; font-size: .8rem; line-height: 1.3; }
+.mini-text > b { font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stimmung-details { margin-top: 10px; }
+.stimmung-details summary { font-size: .85rem; font-weight: 600; color: var(--akzent); }
+.faktoren { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.faktor { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 2em; gap: 8px; align-items: center; font-size: .8rem; }
+.faktor-name { min-width: 0; }
+.faktor-name .unter { display: block; font-size: .68rem; color: var(--leise); }
+.faktor-spur { position: relative; height: 8px; border-radius: 4px;
+  background: linear-gradient(90deg, var(--minus) 0 25%, color-mix(in srgb, var(--minus) 45%, var(--neutral-mitte)) 25% 45%, var(--neutral-mitte) 45% 55%, color-mix(in srgb, var(--plus) 45%, var(--neutral-mitte)) 55% 75%, var(--plus) 75% 100%); opacity: .85; }
+.faktor-punkt { position: absolute; top: -4px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--karte); border: 3px solid currentColor; }
+.faktor b { text-align: right; }
+
+.adt-frage, .blatt-abschnitt h4 { margin: .7rem 0 .15rem; font-size: .85rem; }
+
+/* Insider pro Monat */
+.insider-chart { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; height: 180px; margin: 6px 0; }
+.ic-spalte { display: flex; flex-direction: column; min-width: 0; }
+.ic-oben, .ic-unten { flex: 1; display: flex; justify-content: center; }
+.ic-oben { align-items: flex-end; }
+.ic-unten { align-items: flex-start; }
+.ic-balken { width: 70%; max-width: 26px; min-height: 0; }
+.ic-oben .ic-balken { border-radius: 4px 4px 0 0; background: var(--plus); }
+.ic-unten .ic-balken { border-radius: 0 0 4px 4px; background: var(--minus); }
+.ic-monat { font-size: .6rem; color: var(--leise); text-align: center; border-top: 1px solid var(--linie); border-bottom: 1px solid var(--linie); padding: 1px 0; }
+.balken.links-balken { left: 0 !important; right: auto !important; border-radius: 0 4px 4px 0; }
+
+/* Heatmap-Modi */
+.heatmap-kopf { margin-bottom: .5rem; }
+#heatmap-modus button { font-size: .78rem; padding: 5px 9px; }
+.hm-name.gross { font-size: .85rem; white-space: normal; }
+.hm-wert.gross { font-size: .8rem; }
+.hm-anzahl { font-size: .62rem; color: var(--leise); }
+.hm-zelle[data-hm-sektor] { cursor: pointer; }
+/* Mini-Tachos: Tacho oben, Text darunter (Namen nicht abschneiden) */
+.stimmung-mini summary { flex-direction: column; text-align: center; gap: 2px; }
+.mini-tacho { width: 84px; }
+.mini-text { align-items: center; }
+.mini-text > b { white-space: normal; }
+.stimmung-mini[open] summary { flex-direction: row; text-align: left; }
+.stimmung-mini[open] .mini-text { align-items: flex-start; }
+/* Pfeil nur bei Zeilen ohne Unterzeile (sonst bricht er um) */
+.zeile.klickbar .n::after { content: none; }
