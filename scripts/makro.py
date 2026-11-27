@@ -47,10 +47,11 @@ def ezb(serie: str) -> list[tuple[str, float]]:
     for z in csv.DictReader(io.StringIO(r.text)):
         try:
             tag = z["TIME_PERIOD"]
-            tag = tag + "-01" if len(tag) == 7 else tag              # Monatswerte -> Monatsanfang
-            if len(tag) == 7 + 3 and "Q" in tag:                      # Quartal "2025-Q3"
+            if "-Q" in tag:                                           # Quartal "2025-Q3" -> 2025-07-01
                 jahr, q = tag.split("-Q")
                 tag = f"{jahr}-{int(q) * 3 - 2:02d}-01"
+            elif len(tag) == 7:                                       # Monat "2025-07" -> 2025-07-01
+                tag = tag + "-01"
             punkte.append((tag, float(z["OBS_VALUE"])))
         except (KeyError, ValueError):
             pass
@@ -61,7 +62,11 @@ def ezb(serie: str) -> list[tuple[str, float]]:
 
 def nyfed_effr() -> list[tuple[str, float]]:
     """Effektiver US-Leitzins (Fed Funds) von der New York Fed."""
-    r = requests.get("https://markets.newyorkfed.org/api/rates/unsecured/effr/last/1800.json", headers=UA, timeout=30)
+    url = (f"https://markets.newyorkfed.org/api/rates/unsecured/effr/search.json"
+           f"?startDate={_start()}&endDate={date.today().isoformat()}")
+    r = requests.get(url, headers=UA, timeout=30)
+    if r.status_code != 200:   # Ersatz: die letzten 1000 Tage
+        r = requests.get("https://markets.newyorkfed.org/api/rates/unsecured/effr/last/1000.json", headers=UA, timeout=30)
     r.raise_for_status()
     punkte = [(x["effectiveDate"], float(x["percentRate"])) for x in r.json().get("refRates", [])]
     if len(punkte) < 2:
